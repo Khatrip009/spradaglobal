@@ -81,7 +81,7 @@ export default function Header() {
               </button>
 
               <Link to="/" className="flex items-center gap-3">
-                <img src="/images/SPRADA_LOGO.png" alt="Sprada2Global" className="w-32 h-10 object-contain" />
+                <img src="public/images/SPRADA_LOGO.png" alt="Sprada2Global" className="w-32 h-10 object-contain" />
                 <div className="hidden sm:block">
                   <div className="text-sm font-semibold text-slate-900 leading-tight">SPRADA2GLOBAL</div>
                   <div className="text-xs text-slate-500 -mt-0.5">Premium Agricultural Exports</div>
