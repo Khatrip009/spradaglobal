@@ -1,5 +1,8 @@
 // src/lib/api.js
-const DEFAULT_BACKEND = 'http://localhost:4200';
+// API helpers for the frontend (uses credentials: include)
+// Default backend: https://apisprada.exotech.co.in
+
+const DEFAULT_BACKEND = 'https://apisprada.exotech.co.in';
 const BASE = (import.meta.env.VITE_API_URL && String(import.meta.env.VITE_API_URL).replace(/\/$/, '')) || DEFAULT_BACKEND;
 const DEFAULT_TIMEOUT = 15000; // ms
 
@@ -179,15 +182,12 @@ export async function postVisitorEvent(visitorId, eventType, eventProps = {}) {
 export async function getReviews(limit = 5) {
   const url = buildUrl("/api/reviews", { limit });
   const r = await request(url);
-  // backend might return { reviews: [...] } or { reviews: { ... } } or an array directly
   if (!r) return [];
   if (Array.isArray(r)) return r;
   if (Array.isArray(r.reviews)) return r.reviews;
-  // older shape: r.reviews might be nested in a data object
   if (r.data && Array.isArray(r.data.reviews)) return r.data.reviews;
   return [];
 }
-
 
 export async function getReviewStats() {
   return await request("/api/reviews/stats");
@@ -215,18 +215,14 @@ export async function getBlogs(opts = {}) {
 // safe getBlogBySlug
 // --------------------
 export async function getBlogBySlug(slug) {
-  // Defensive: do nothing for falsy/invalid slugs
   if (!slug || typeof slug !== 'string' || slug.trim() === '') {
-    // Return null so callers can render "not found" or loading state without network errors
     return null;
   }
 
-  // try canonical route first
   try {
     const r = await request(`/api/blogs/${encodeURIComponent(slug)}`);
     return r.blog || r;
   } catch (e) {
-    // If the direct route fails, try a search-by-slug fallback (but only if the error is not 4xx/404)
     try {
       const fallback = await request(`/api/blogs?q=${encodeURIComponent(slug)}&limit=1`);
       if (Array.isArray(fallback) && fallback.length) return fallback[0];
@@ -239,14 +235,10 @@ export async function getBlogBySlug(slug) {
 }
 
 /* -----------------------------------------------------
-   Blog likes & comments helpers (fixed to use request())
-   (request() uses BASE and includes credentials & timeout)
+   Blog likes & comments helpers
    ----------------------------------------------------- */
-
-// likeBlog: POST to server using request() so it goes to BASE (not vite origin)
 export async function likeBlog(blogId) {
   if (!blogId) throw new Error('missing_blog_id');
-  // request() will throw on non-2xx and includes credentials
   return await request(`/api/blogs/${encodeURIComponent(blogId)}/like`, { method: 'POST', body: JSON.stringify({}) });
 }
 
