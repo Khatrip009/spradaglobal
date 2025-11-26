@@ -2,7 +2,8 @@
 // Lightweight auth client for token-based endpoints
 // Default BASE: https://apisprada.exotech.co.in
 
-const BASE = import.meta.env.VITE_API_BASE_URL || process.env.REACT_APP_API_BASE_URL || 'https://apisprada.exotech.co.in';
+const RAW_BASE = import.meta.env.VITE_API_BASE_URL || process.env.REACT_APP_API_BASE_URL || 'https://apisprada.exotech.co.in';
+const BASE = String(RAW_BASE).replace(/\/+$/, '');
 
 function getAccessToken() {
   return localStorage.getItem('accessToken');
