@@ -5,8 +5,14 @@ import App from "./App";
 import "./index.css";
 import "./App.css";
 import "./components/ui/toast.css";
-// --- API base (important: do NOT hit :5173 for API) ---
-const API_BASE = (import.meta.env.VITE_API_URL || "http://localhost:4200").replace(/\/$/, "");
+
+// --- API base (do NOT hit :5173 for API in production)
+// VITE_API_URL overrides this during local dev: e.g. VITE_API_URL=http://localhost:4200
+const DEFAULT_API = 'https://apisprada.exotech.co.in';
+const API_BASE = (import.meta.env.VITE_API_URL || DEFAULT_API).replace(/\/$/, "");
+
+// Vite base URL for assets / service worker (handles GitHub Pages subpaths)
+const BASE_URL = (import.meta.env.BASE_URL || "/").replace(/\/$/, "") + "/";
 
 // --- Simple helpers ---
 function getCookie(name) {
@@ -24,7 +30,7 @@ function setCookie(name, value, days = 365) {
   if (typeof document === "undefined") return;
   const expires = new Date(Date.now() + days * 864e5).toUTCString();
   // set Secure flag only on HTTPS so local dev (http://localhost) works
-  const secure = location && location.protocol === "https:" ? "; Secure" : "";
+  const secure = typeof location !== "undefined" && location.protocol === "https:" ? "; Secure" : "";
   // HttpOnly cannot be set from JS; path and SameSite included
   document.cookie = `${name}=${encodeURIComponent(
     value
@@ -48,7 +54,7 @@ async function postJson(path, body) {
     throw err;
   }
 
-  const text = await res.text();
+  const text = await res.text().catch(() => "");
   let json;
   try {
     json = text ? JSON.parse(text) : {};
@@ -135,7 +141,9 @@ async function sendPageView(visitorId) {
 async function registerServiceWorker() {
   if (typeof navigator === "undefined" || !("serviceWorker" in navigator)) return;
   try {
-    const reg = await navigator.serviceWorker.register("/sw.js");
+    // register relative to BASE_URL so it works on project subpaths (GitHub Pages)
+    const swPath = `${BASE_URL}sw.js`;
+    const reg = await navigator.serviceWorker.register(swPath);
     console.info("Service worker registered:", reg.scope || reg);
   } catch (e) {
     console.warn("Service worker registration failed:", e && e.message ? e.message : e);
@@ -148,10 +156,6 @@ async function bootstrapAnalyticsAndSW() {
     const visitorId = await ensureVisitorId();
     if (visitorId) {
       await sendPageView(visitorId);
-    } else {
-      // if we didn't get a visitorId, option: still send session-based event
-      // but we avoid sending null visitor_id (server may reject)
-      // If you'd like session-based events, send session_id instead of visitor_id.
     }
   } catch (e) {
     // already logged in helpers
@@ -184,7 +188,7 @@ if (rootEl) {
   );
 } else {
   // If root is missing, log a clear message instead of throwing
-  // This can help developers during server-side rendering or dev misconfiguration
+  // This helps debugging during deployment mistakes.
   // eslint-disable-next-line no-console
   console.error("React root element '#root' not found — App not mounted.");
 }
