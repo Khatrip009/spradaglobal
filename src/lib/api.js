@@ -44,7 +44,7 @@ function buildUrl(path, qs = {}) {
   return params.toString() ? `${url}?${params.toString()}` : url;
 }
 
-async function request(path, opts = {}) {
+export async function request(path, opts = {}) {
   const url = path.startsWith('http') ? path : `${BASE}${path}`;
   const timeout = typeof opts.timeout === 'number' ? opts.timeout : DEFAULT_TIMEOUT;
   const controller = new AbortController();

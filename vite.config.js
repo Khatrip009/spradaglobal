@@ -4,7 +4,7 @@ import path from 'path';
 
 export default defineConfig({
   plugins: [react()],
-  base: '/spradaglobal/',   // correct for GitHub Pages subfolder
+  base: '/',   // correct for GitHub Pages subfolder
   resolve: {
     alias: {
       '@': path.resolve(__dirname, 'src'),
