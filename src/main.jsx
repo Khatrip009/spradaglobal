@@ -2,19 +2,19 @@
 import React, { StrictMode } from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App";
+
 import "./index.css";
 import "./App.css";
 import "./components/ui/toast.css";
 
-// --- API base (do NOT hit :5173 for API in production)
-// VITE_API_URL overrides this during local dev: e.g. VITE_API_URL=http://localhost:4200
-const DEFAULT_API = 'https://apisprada.exotech.co.in';
+// --- API base ---
+const DEFAULT_API = "https://apisprada.exotech.co.in";
 const API_BASE = (import.meta.env.VITE_API_URL || DEFAULT_API).replace(/\/$/, "");
 
-// Vite base URL for assets / service worker (handles GitHub Pages subpaths)
+// --- Vite base URL for GitHub Pages ---
 const BASE_URL = (import.meta.env.BASE_URL || "/").replace(/\/$/, "") + "/";
 
-// --- Simple helpers ---
+// --- Cookie helpers ---
 function getCookie(name) {
   if (typeof document === "undefined") return null;
   const cookies = (document.cookie || "").split("; ");
@@ -29,16 +29,16 @@ function getCookie(name) {
 function setCookie(name, value, days = 365) {
   if (typeof document === "undefined") return;
   const expires = new Date(Date.now() + days * 864e5).toUTCString();
-  // set Secure flag only on HTTPS so local dev (http://localhost) works
   const secure = typeof location !== "undefined" && location.protocol === "https:" ? "; Secure" : "";
-  // HttpOnly cannot be set from JS; path and SameSite included
   document.cookie = `${name}=${encodeURIComponent(
     value
   )}; expires=${expires}; path=/; SameSite=Lax${secure}`;
 }
 
+// --- HTTP helper ---
 async function postJson(path, body) {
   const url = `${API_BASE}${path}`;
+
   let res;
   try {
     res = await fetch(url, {
@@ -50,17 +50,19 @@ async function postJson(path, body) {
   } catch (networkErr) {
     const err = new Error("network_error");
     err.status = 0;
-    err.body = { message: networkErr && networkErr.message ? networkErr.message : String(networkErr) };
+    err.body = { message: networkErr.message || String(networkErr) };
     throw err;
   }
 
   const text = await res.text().catch(() => "");
   let json;
+
   try {
     json = text ? JSON.parse(text) : {};
   } catch {
     json = { _raw: text };
   }
+
   if (!res.ok) {
     const err = new Error(json?.error || `HTTP ${res.status}`);
     err.status = res.status;
@@ -70,116 +72,93 @@ async function postJson(path, body) {
   return json;
 }
 
-// --- Visitor registration & analytics ---
+// --- Analytics: visitor id + page view ---
 const SESSION_COOKIE = "exotech_sid";
 const LS_VISITOR_ID = "visitor_id";
 
 async function ensureVisitorId() {
-  // 1) generate / ensure a session id cookie
   let sessionId = getCookie(SESSION_COOKIE);
   if (!sessionId) {
     sessionId = `sess_${Math.random().toString(36).slice(2)}_${Date.now().toString(36)}`;
     setCookie(SESSION_COOKIE, sessionId);
   }
 
-  // 2) reuse visitor id if already stored
   try {
     const stored = localStorage.getItem(LS_VISITOR_ID);
     if (stored) return stored;
-  } catch {
-    // ignore localStorage errors (private mode)
-  }
+  } catch {}
 
-  // 3) call backend to upsert / identify visitor
   try {
-    const ip = null; // backend can infer IP
     const ua = typeof navigator !== "undefined" ? navigator.userAgent : null;
-    const meta = { source: "sprada-fe", first_path: typeof window !== "undefined" ? window.location.pathname : null };
+    const meta = { source: "sprada-fe", first_path: window.location.pathname };
 
     const json = await postJson("/api/visitors/identify", {
       session_id: sessionId,
-      ip,
+      ip: null,
       ua,
       meta,
     });
 
     const vid = json?.visitor_id || json?.visitorId || json?.id || null;
     if (vid) {
-      try {
-        localStorage.setItem(LS_VISITOR_ID, vid);
-      } catch {
-        // ignore
-      }
+      localStorage.setItem(LS_VISITOR_ID, vid);
       return vid;
     }
   } catch (e) {
-    // keep this as a warning so analytics failures don't block app
-    console.warn("visitor identify failed", e && e.body ? e.body : e);
+    console.warn("visitor identify failed", e.body || e);
   }
 
   return null;
 }
 
 async function sendPageView(visitorId) {
-  // avoid sending null visitor_id to backend (some servers reject non-UUIDs)
   const payload = visitorId ? { visitor_id: visitorId } : {};
   payload.event_type = "page_view";
   payload.event_props = {
-    path: typeof window !== "undefined" ? window.location.pathname : null,
-    search: typeof window !== "undefined" ? window.location.search : null,
-    referrer: typeof document !== "undefined" ? document.referrer || null : null,
+    path: window.location.pathname,
+    search: window.location.search,
+    referrer: document.referrer || null,
   };
 
   try {
     await postJson("/api/visitors/event", payload);
   } catch (e) {
-    console.warn("visitor event failed", e && e.body ? e.body : e);
+    console.warn("visitor event failed", e.body || e);
   }
 }
 
-// --- Service worker registration (no auto push subscribe here) ---
+// --- Service worker registration ---
 async function registerServiceWorker() {
-  if (typeof navigator === "undefined" || !("serviceWorker" in navigator)) return;
+  if (!("serviceWorker" in navigator)) return;
   try {
-    // register relative to BASE_URL so it works on project subpaths (GitHub Pages)
     const swPath = `${BASE_URL}sw.js`;
     const reg = await navigator.serviceWorker.register(swPath);
     console.info("Service worker registered:", reg.scope || reg);
   } catch (e) {
-    console.warn("Service worker registration failed:", e && e.message ? e.message : e);
+    console.warn("SW registration failed:", e);
   }
 }
 
-// --- Bootstrap logic on first load ---
 async function bootstrapAnalyticsAndSW() {
   try {
     const visitorId = await ensureVisitorId();
-    if (visitorId) {
-      await sendPageView(visitorId);
-    }
-  } catch (e) {
-    // already logged in helpers
-  }
+    if (visitorId) await sendPageView(visitorId);
+  } catch {}
 
-  // register SW *after* initial analytics call, non-blocking
   try {
     await registerServiceWorker();
-  } catch {
-    // already logged
-  }
+  } catch {}
 }
 
-// Kick off bootstrapping once DOM is ready
-if (typeof window !== "undefined") {
-  if (document.readyState === "complete" || document.readyState === "interactive") {
-    bootstrapAnalyticsAndSW();
-  } else {
-    window.addEventListener("DOMContentLoaded", bootstrapAnalyticsAndSW, { once: true });
-  }
+// Run bootstrap
+if (document.readyState === "complete" || document.readyState === "interactive") {
+  bootstrapAnalyticsAndSW();
+} else {
+  window.addEventListener("DOMContentLoaded", bootstrapAnalyticsAndSW, { once: true });
 }
 
-// --- React root ---
-const rootEl = typeof document !== "undefined" ? document.getElementById("root") : null;
+// Render React
+const rootEl = document.getElementById("root");
 if (rootEl) {
   ReactDOM.createRoot(rootEl).render(
     <StrictMode>
@@ -187,8 +166,5 @@ if (rootEl) {
     </StrictMode>
   );
 } else {
-  // If root is missing, log a clear message instead of throwing
-  // This helps debugging during deployment mistakes.
-  // eslint-disable-next-line no-console
-  console.error("React root element '#root' not found — App not mounted.");
+  console.error("React root '#root' not found.");
 }

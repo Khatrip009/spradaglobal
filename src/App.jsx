@@ -14,54 +14,46 @@ import BlogDetailsPage from "./components/pages/BlogDetailsPage";
 import ContactPage from "./components/pages/ContactPage";
 import FAQPage from "./components/pages/FAQPage";
 import ProductsPage from "./components/pages/ProductsPage";
-/* Ensure filename matches — I used ServicePage as your comment suggested */
 import ServicesPage from "./components/pages/ServicePage";
 import ProductDetail from "./components/pages/ProductDetail";
 import CategoryPage from "./components/pages/CategoryPage";
 
-/* Toast provider (HMR-stable) */
 import { ToastProvider } from "./components/ui/ToastProvider";
 
-/* Global styles */
 import "./index.css";
 import "./App.css";
 
 function App() {
   return (
     <ToastProvider>
-      <BrowserRouter>
+      <BrowserRouter basename={import.meta.env.BASE_URL}>
         <div className="app-root min-h-screen flex flex-col">
-          {/* Global header */}
           <Header />
 
           <main className="flex-1">
             <Routes>
-              {/* Primary pages */}
               <Route path="/" element={<HomePage />} />
               <Route path="/home" element={<Navigate to="/" replace />} />
+
               <Route path="/about" element={<AboutPage />} />
               <Route path="/contact" element={<ContactPage />} />
               <Route path="/faq" element={<FAQPage />} />
 
-              {/* Blog listing and detail (IMPORTANT: :slug param name) */}
               <Route path="/blog" element={<BlogPage />} />
               <Route path="/blog/:slug" element={<BlogDetailsPage />} />
 
-              {/* Products / categories (specific routes before wildcard) */}
               <Route path="/products" element={<ProductsPage />} />
               <Route path="/product/:slug" element={<ProductDetail />} />
               <Route path="/products/:slug" element={<ProductDetail />} />
               <Route path="/products/category/:slug" element={<CategoryPage />} />
 
-              {/* Services */}
               <Route path="/services" element={<ServicesPage />} />
 
-              {/* Fallback */}
+              {/* fallback */}
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </main>
 
-          {/* Global footer */}
           <Footer />
         </div>
       </BrowserRouter>
