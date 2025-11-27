@@ -7,27 +7,12 @@ self.addEventListener('activate', (event) => {
   event.waitUntil(self.clients.claim());
 });
 
-// compute base path for assets: e.g. "/spradaglobal/" or "/"
-const SW_BASE = (function () {
-  try {
-    const p = self.location.pathname || "/";
-    // if path ends with /sw.js remove that part
-    if (p.endsWith('/sw.js')) {
-      return p.slice(0, -7) || '/';
-    }
-    // fallback: use root
-    return '/';
-  } catch (e) {
-    return '/';
-  }
-})();
-
 self.addEventListener('push', (event) => {
   try {
     const data = (event.data && event.data.json && event.data.json()) || (event.data && event.data.text && JSON.parse(event.data.text())) || {};
     const title = data.title || data.heading || 'Notification';
     const body = data.body || data.message || '';
-    // Resolve icon relative to service worker scope so it works on subpaths
+    // Resolve icon relative to SW scope so it works under /spradaglobal/
     const icon = data.icon || (self.registration && self.registration.scope ? new URL('images/SPRADA_LOGO.png', self.registration.scope).href : 'images/SPRADA_LOGO.png');
     const url = data.url || '/';
     const tag = data.tag || 'general';
@@ -47,7 +32,6 @@ self.addEventListener('push', (event) => {
   }
 });
 
-
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
   const urlToOpen = (event.notification.data && event.notification.data.url) || '/';
@@ -62,9 +46,25 @@ self.addEventListener('notificationclick', (event) => {
   );
 });
 
-// fetch pass-through with safe fallback to cache if offline
+// safer fetch pass-through with guaranteed Response
 self.addEventListener('fetch', (event) => {
   event.respondWith(
-    fetch(event.request).catch(() => caches.match(event.request))
+    (async () => {
+      try {
+        // attempt network first
+        const netResp = await fetch(event.request);
+        return netResp;
+      } catch (err) {
+        // network failed — try cache
+        try {
+          const cached = await caches.match(event.request);
+          if (cached) return cached;
+        } catch (cacheErr) {
+          // ignore caches errors
+        }
+        // final fallback: return a 503 Response (so respondWith always gets a Response)
+        return new Response('Service Unavailable', { status: 503, statusText: 'Service Unavailable' });
+      }
+    })()
   );
 });
