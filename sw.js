@@ -27,8 +27,8 @@ self.addEventListener('push', (event) => {
     const data = (event.data && event.data.json && event.data.json()) || (event.data && event.data.text && JSON.parse(event.data.text())) || {};
     const title = data.title || data.heading || 'Notification';
     const body = data.body || data.message || '';
-    // pick provided icon or fallback to images/SPRADA_LOGO.png under SW_BASE
-    const icon = data.icon || (SW_BASE + 'images/SPRADA_LOGO.png');
+    // Resolve icon relative to service worker scope so it works on subpaths
+    const icon = data.icon || (self.registration && self.registration.scope ? new URL('images/SPRADA_LOGO.png', self.registration.scope).href : 'images/SPRADA_LOGO.png');
     const url = data.url || '/';
     const tag = data.tag || 'general';
 
@@ -46,6 +46,7 @@ self.addEventListener('push', (event) => {
     console.error('push event error', e);
   }
 });
+
 
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
