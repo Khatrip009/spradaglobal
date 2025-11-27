@@ -1,4 +1,7 @@
-// src/components/pages/HomePage.jsx (with small subcomponents)
+// src/components/pages/HomePage.jsx (ready to paste)
+// Small note: this preserves your original imports and structure; only
+// minimal changes added to make the hero image robust.
+
 import React, { useEffect, useState, useCallback, useRef } from "react";
 import { motion } from "framer-motion";
 import { Image } from "../ui/image";
@@ -19,7 +22,6 @@ import ABOUT_IMG from "../../assets/ABOUT_IMG.jpg";
    - CategoryCard
    - CertBadge
    - ValueCard
-   These are small, pure, and easy to extract to separate files later.
    -------------------------------------------------- */
 
 function CategoryCard({ name, description, count, thumb, to, onClick }) {
@@ -138,7 +140,7 @@ function isUuid(s) {
 }
 
 /* --------------------------------------------------
-   HomePage component (updated for darker overlay + bigger CTAs on phones)
+   HomePage component (updated for robust hero)
    -------------------------------------------------- */
 export default function HomePage() {
   const [hero, setHero] = useState({
@@ -159,6 +161,9 @@ export default function HomePage() {
   const [visitorsCount, setVisitorsCount] = useState(null);
   const [loading, setLoading] = useState(true);
   const [loadingReviews, setLoadingReviews] = useState(false);
+
+  // new: track whether hero background image has finished loading
+  const [heroImageLoaded, setHeroImageLoaded] = useState(false);
 
   const categoriesRef = useRef(null);
   const [currentTestimonial, setCurrentTestimonial] = useState(0);
@@ -227,7 +232,8 @@ export default function HomePage() {
                 const incomingHero = home.hero || {};
                 const incomingImage = incomingHero.image || "";
                 const safeImage = (typeof incomingImage === "string" && (incomingImage.startsWith("/images/") || incomingImage.startsWith("/img/"))) ? LOCAL_HERO_PRODUCTS : (incomingImage || LOCAL_HERO_PRODUCTS);
-                setHero(prev => ({ ...prev, ...incomingHero, image: safeImage }));
+                // only set hero.image when safeImage is truthy
+                setHero(prev => ({ ...prev, ...incomingHero, image: safeImage || prev.image }));
               }
               if (Array.isArray(home.categories) && home.categories.length) setProductCategories(home.categories);
               if (Array.isArray(home.featured) && home.featured.length) setFeatured(home.featured);
@@ -285,11 +291,12 @@ export default function HomePage() {
     return () => { mounted = false; };
   }, []);
 
+  // ensure we have a sane hero.image - fallback if something odd happens
   useEffect(() => {
     if (!hero.image || (typeof hero.image === "string" && hero.image.startsWith("/images/"))) {
       setHero(prev => ({ ...prev, image: LOCAL_HERO_PRODUCTS }));
     }
-  }, []);
+  }, []); // run once on mount
 
   useEffect(() => {
     const start = () => {
@@ -332,48 +339,76 @@ export default function HomePage() {
   console.log("[HomePage] hero.image resolved to:", hero.image);
 
   return (
-    <div className="min-h-screen bg-background text-slate-800 antialiased">
+    <div className="min-h-screen bg-background text-slate-800 antialiased overflow-x-hidden">
       {/* HERO */}
-      <motion.section className="relative overflow-hidden" initial="hidden" animate="visible" variants={containerVariants}>
-        {/* background image */}
-        <div className="absolute inset-0 -z-20">
-          <img src={LOCAL_HERO_PRODUCTS} alt={hero.title || "Hero background"} className="w-full h-full object-cover block min-h-[40vh] md:min-h-[60vh]" draggable={false} style={{ pointerEvents: "none", userSelect: "none" }} onError={(e) => { if (e && e.currentTarget) { e.currentTarget.onerror = null; e.currentTarget.src = LOCAL_HERO_BG; setHero(prev => ({ ...prev, image: LOCAL_HERO_BG })); } }} />
+      {/* HERO */}
+<motion.section
+  className="relative overflow-hidden"
+  initial="hidden"
+  animate="visible"
+  variants={containerVariants}
+  aria-label="Hero"
+>
+  {/* Use CSS background instead of an absolute <img> to avoid layout overflow on mobile */}
+  <div
+    className="absolute inset-0 z-0 w-full h-full bg-center bg-cover bg-no-repeat"
+    style={{
+      backgroundImage: `url("${hero.image || LOCAL_HERO_PRODUCTS}")`,
+      // Make sure background renders crisply and stays centered
+      backgroundPosition: "center center",
+      backgroundSize: "cover",
+      backgroundRepeat: "no-repeat",
+      // Prevent the background itself from generating extra scroll
+      willChange: "transform",
+    }}
+    aria-hidden="true"
+  />
+
+  {/* safer overlay (solid gradient) */}
+  <div
+    className="absolute inset-0 z-10"
+    style={{ background: "linear-gradient(rgba(6,12,8,0.64), rgba(6,12,8,0.36))" }}
+    aria-hidden="true"
+  />
+
+  <div className="relative z-20 max-w-[1100px] mx-auto px-4 sm:px-6 py-10 md:py-20">
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+      <div className="text-left">
+        <motion.h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-heading font-extrabold leading-tight mb-3 text-white" variants={heroVariants}>
+          {hero.title || "SPRADA2GLOBAL EXIM"}
+        </motion.h1>
+        <motion.p className="text-md sm:text-lg md:text-xl mb-4 opacity-95 text-white" variants={heroVariants}>
+          {hero.subtitle || "Rich Quality, Reach to World"}
+        </motion.p>
+        <motion.p className="text-sm md:text-base mb-6 max-w-xl leading-relaxed text-white/90" variants={heroVariants}>
+          {hero.description || "Your trusted partner in premium agricultural exports. We connect the finest Indian produce with global markets, ensuring compliance and quality at every step."}
+        </motion.p>
+
+        {/* Bigger CTAs on phones: full-width stacked buttons, larger padding */}
+        <motion.div className="flex flex-col sm:flex-row gap-3 sm:gap-4" variants={heroVariants}>
+          <Link to="/contact" className="w-full sm:w-auto">
+            <Button className="w-full sm:w-auto bg-white text-[#164946] font-semibold py-3 sm:py-2 px-4 rounded shadow-sm hover:shadow-md transition">Request a Quote</Button>
+          </Link>
+          <Link to="/products" className="w-full sm:w-auto">
+            <Button variant="outline" className="w-full sm:w-auto border-white text-white hover:bg-white hover:text-[#33504F] py-3 sm:py-2 px-4 rounded transition">View Products</Button>
+          </Link>
+        </motion.div>
+
+        <div className="mt-6 text-sm flex items-center gap-6 text-white/90">
+          <div>{visitorsCount == null ? "Visitors: —" : `Visitors: ${Number(visitorsCount).toLocaleString()}`}</div>
+          <div className="hidden sm:block">Notifications available</div>
         </div>
+      </div>
 
-        {/* darker gradient overlay for better contrast on text */}
-        <div className="absolute inset-0 -z-10" style={{ background: "linear-gradient(rgba(6,12,8,0.64), rgba(6,12,8,0.36))" }} />
-
-        <div className="relative z-10 max-w-[1100px] mx-auto px-4 sm:px-6 py-10 md:py-20">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
-            <div className="text-left">
-              <motion.h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-heading font-extrabold leading-tight mb-3 text-white" variants={heroVariants}>{hero.title || "SPRADA2GLOBAL EXIM"}</motion.h1>
-              <motion.p className="text-md sm:text-lg md:text-xl mb-4 opacity-95 text-white" variants={heroVariants}>{hero.subtitle || "Rich Quality, Reach to World"}</motion.p>
-              <motion.p className="text-sm md:text-base mb-6 max-w-xl leading-relaxed text-white/90" variants={heroVariants}>{hero.description || "Your trusted partner in premium agricultural exports. We connect the finest Indian produce with global markets, ensuring compliance and quality at every step."}</motion.p>
-
-              {/* Bigger CTAs on phones: full-width stacked buttons, larger padding */}
-              <motion.div className="flex flex-col sm:flex-row gap-3 sm:gap-4" variants={heroVariants}>
-                <Link to="/contact" className="w-full sm:w-auto">
-                  <Button className="w-full sm:w-auto bg-white text-[#164946] font-semibold py-3 sm:py-2 px-4 rounded shadow-sm hover:shadow-md transition">Request a Quote</Button>
-                </Link>
-                <Link to="/products" className="w-full sm:w-auto">
-                  <Button variant="outline" className="w-full sm:w-auto border-white text-white hover:bg-white hover:text-[#33504F] py-3 sm:py-2 px-4 rounded transition">View Products</Button>
-                </Link>
-              </motion.div>
-
-              <div className="mt-6 text-sm flex items-center gap-6 text-white/90">
-                <div>{visitorsCount == null ? "Visitors: —" : `Visitors: ${Number(visitorsCount).toLocaleString()}`}</div>
-                <div className="hidden sm:block">Notifications available</div>
-              </div>
-            </div>
-
-            <div className="hidden md:flex justify-center items-center">
-              <div className="w-full max-w-md">
-                <Image src={hero.illu || WIX_HERO_ILLU} alt="Export illustration" width={700} className="w-full h-auto rounded-lg shadow-2xl" />
-              </div>
-            </div>
-          </div>
+      <div className="hidden md:flex justify-center items-center">
+        <div className="w-full max-w-md">
+          <Image src={hero.illu || WIX_HERO_ILLU} alt="Export illustration" width={700} className="w-full h-auto rounded-lg shadow-2xl" />
         </div>
-      </motion.section>
+      </div>
+    </div>
+  </div>
+</motion.section>
+
 
       {/* Why Choose */}
       <section id="why" className="py-10 md:py-16 bg-white">
