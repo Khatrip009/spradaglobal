@@ -10,6 +10,7 @@ import { Search, Calendar, ArrowRight, BookOpen, Award, Lightbulb, TrendingUp, P
 import * as api from "../../lib/api";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "../ui/ToastProvider";
+import bloghero from '../../assets/blog-hero.jpg';
 
 const filterCategories = [
   { id: "All", label: "All Posts", icon: BookOpen },
@@ -109,7 +110,7 @@ export default function BlogPage() {
   return (
     <div className="min-h-screen bg-[#E8E9E2]">
       {/* Header hero */}
-      <section className="relative py-12 sm:py-20 md:py-28 bg-cover bg-center" style={{ backgroundImage: `linear-gradient(rgba(51,80,79,0.85), rgba(51,80,79,0.85)), url('/images/blog-hero.jpg')` }}>
+      <section className="relative py-12 sm:py-20 md:py-28 bg-cover bg-center" style={{ backgroundImage: `linear-gradient(rgba(51,80,79,0.85), rgba(51,80,79,0.85)), url(${bloghero})` }}>
         <div className="max-w-[100rem] mx-auto px-6 sm:px-12 text-center text-white">
           <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
             <div className="mb-4 flex items-center justify-center gap-3">

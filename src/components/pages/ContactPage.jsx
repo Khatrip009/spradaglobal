@@ -6,6 +6,7 @@ import { Card, CardContent } from '../ui/card';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Textarea } from '../ui/textarea';
+import heroimage from "../../assets/contact-hero.jpg";
 import {
   MapPin,
   Mail,
@@ -125,15 +126,16 @@ const ContactPage = () => {
       <section
         className="relative py-28 md:py-32 lg:py-40 bg-cover bg-center"
         style={{
-          backgroundImage: `linear-gradient(rgba(232,233,226,0.95), rgba(232,233,226,0.95)), url('${LOCAL_MAP_IMAGE}')`
-        }}
+            backgroundImage: `linear-gradient(rgba(232,233,226,0.7  ), rgba(232,233,226,0.7)), url(${heroimage})`
+          }}
+
       >
         <div className="max-w-[100rem] mx-auto px-6 lg:px-12">
           <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7 }} className="text-center">
             <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-heading font-bold text-[#33504F] mb-3">Contact Us</h1>
-            <p className="text-sm sm:text-base md:text-lg text-[#666666] max-w-3xl mx-auto leading-relaxed">
+            <p className="text-sm sm:text-base md:text-lg text-[#2E2C2CFF] max-w-3xl mx-auto leading-relaxed">
               Ready to partner with India's leading peanut exporter? Get in touch with our team for premium quality products, competitive pricing, and reliable international shipping.
-            </p>
+            </p>  
           </motion.div>
         </div>
       </section>
