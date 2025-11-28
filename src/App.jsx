@@ -1,6 +1,6 @@
 // src/App.jsx
 import React from "react";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { HashRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 
 /* Layout */
 import Header from "./components/layout/Header";
@@ -26,7 +26,10 @@ import "./App.css";
 function App() {
   return (
     <ToastProvider>
-      <BrowserRouter basename={import.meta.env.BASE_URL}>
+      {/* Using HashRouter ensures direct refreshes never 404 on static hosts.
+          If you later prefer clean URLs, switch back to BrowserRouter and add
+          server-side rewrites (see docs). */}
+      <Router basename={import.meta.env.BASE_URL || "/"}>
         <div className="app-root min-h-screen flex flex-col">
           <Header />
 
@@ -49,14 +52,14 @@ function App() {
 
               <Route path="/services" element={<ServicesPage />} />
 
-              {/* fallback */}
+              {/* fallback - redirect unknown hashes to home */}
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </main>
 
           <Footer />
         </div>
-      </BrowserRouter>
+      </Router>
     </ToastProvider>
   );
 }

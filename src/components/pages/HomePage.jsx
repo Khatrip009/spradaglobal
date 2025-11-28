@@ -1,7 +1,4 @@
-// src/components/pages/HomePage.jsx (ready to paste)
-// Small note: this preserves your original imports and structure; only
-// minimal changes added to make the hero image robust.
-
+// src/components/pages/HomePage.jsx
 import React, { useEffect, useState, useCallback, useRef } from "react";
 import { motion } from "framer-motion";
 import { Image } from "../ui/image";
@@ -18,10 +15,7 @@ import HERO_BG from "../../assets/HERO_BG.jpg";
 import ABOUT_IMG from "../../assets/ABOUT_IMG.jpg";
 
 /* --------------------------------------------------
-   Small presentational subcomponents (keeps page clean)
-   - CategoryCard
-   - CertBadge
-   - ValueCard
+   Small presentational subcomponents
    -------------------------------------------------- */
 
 function CategoryCard({ name, description, count, thumb, to, onClick }) {
@@ -78,7 +72,7 @@ function ValueCard({ title, description }) {
 }
 
 /* --------------------------------------------------
-   Constants & demo assets (kept inline for portability)
+   Constants & demo assets
    -------------------------------------------------- */
 const LOCAL_HERO_PRODUCTS = HERO_PRODUCTS;
 const LOCAL_HERO_BG = HERO_BG;
@@ -86,7 +80,6 @@ const WIX_HERO_ILLU = HERO_ILLU;
 const WIX_ABOUT_IMG = ABOUT_IMG;
 const WIX_CATEGORY_IMG = "https://static.wixstatic.com/media/a92b5b_b378a6a57ed64e5c8aac0b76bbc4abc0~mv2.png?originWidth=576&originHeight=384";
 
-/* small inline SVG fallback (for when remote icons 403) */
 const SVG_FALLBACK = `data:image/svg+xml;utf8,${encodeURIComponent(
   `<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 24 24' fill='none' stroke='%23164946' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'><rect x='2' y='2' width='20' height='20' rx='3' ry='3' fill='%23e6f6f4'/><path d='M7 12h10M7 8h10M7 16h10' /></svg>`
 )}`;
@@ -107,7 +100,7 @@ const DEFAULT_WORKFLOW = [
 ];
 
 /* --------------------------------------------------
-   Helper functions (kept same behavior)
+   Helpers
    -------------------------------------------------- */
 function readCookie(name) {
   if (typeof document === "undefined") return null;
@@ -140,11 +133,11 @@ function isUuid(s) {
 }
 
 /* --------------------------------------------------
-   HomePage component (updated for robust hero)
+   HomePage component
    -------------------------------------------------- */
 export default function HomePage() {
   const [hero, setHero] = useState({
-    title: "SPRADA2GLOBAL EXIM",
+    title: "SPRADA2GLOBLA", // as requested
     subtitle: "Rich Quality, Reach to World",
     image: LOCAL_HERO_PRODUCTS,
     illu: WIX_HERO_ILLU,
@@ -162,7 +155,7 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true);
   const [loadingReviews, setLoadingReviews] = useState(false);
 
-  // new: track whether hero background image has finished loading
+  // track hero image loaded (unused now but handy)
   const [heroImageLoaded, setHeroImageLoaded] = useState(false);
 
   const categoriesRef = useRef(null);
@@ -170,9 +163,9 @@ export default function HomePage() {
   const testimonialTimerRef = useRef(null);
   const testimonialsContainerRef = useRef(null);
 
-  const heroVariants = { hidden: { opacity: 0, y: -12 }, visible: { opacity: 1, y: 0 } };
-  const containerVariants = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { duration: 0.5, delayChildren: 0.2, staggerChildren: 0.08 } } };
-  const fadeUp = { hidden: { opacity: 0, y: 10 }, visible: { opacity: 1, y: 0 } };
+  const heroVariants = { hidden: { opacity: 0, y: -10 }, visible: { opacity: 1, y: 0 } };
+  const containerVariants = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { duration: 0.5, delayChildren: 0.18, staggerChildren: 0.06 } } };
+  const fadeUp = { hidden: { opacity: 0, y: 8 }, visible: { opacity: 1, y: 0 } };
 
   useEffect(() => {
     let mounted = true;
@@ -227,12 +220,10 @@ export default function HomePage() {
           if (api.getHome) {
             const home = await api.getHome().catch(() => null);
             if (home && mounted) {
-              console.log("[HomePage] getHome() payload:", home);
               if (home.hero) {
                 const incomingHero = home.hero || {};
                 const incomingImage = incomingHero.image || "";
                 const safeImage = (typeof incomingImage === "string" && (incomingImage.startsWith("/images/") || incomingImage.startsWith("/img/"))) ? LOCAL_HERO_PRODUCTS : (incomingImage || LOCAL_HERO_PRODUCTS);
-                // only set hero.image when safeImage is truthy
                 setHero(prev => ({ ...prev, ...incomingHero, image: safeImage || prev.image }));
               }
               if (Array.isArray(home.categories) && home.categories.length) setProductCategories(home.categories);
@@ -291,7 +282,7 @@ export default function HomePage() {
     return () => { mounted = false; };
   }, []);
 
-  // ensure we have a sane hero.image - fallback if something odd happens
+  // fallback hero image if something odd
   useEffect(() => {
     if (!hero.image || (typeof hero.image === "string" && hero.image.startsWith("/images/"))) {
       setHero(prev => ({ ...prev, image: LOCAL_HERO_PRODUCTS }));
@@ -339,76 +330,97 @@ export default function HomePage() {
   console.log("[HomePage] hero.image resolved to:", hero.image);
 
   return (
-    <div className="min-h-screen bg-background text-slate-800 antialiased overflow-x-hidden">
+    // ensure header does not overlap hero: uses CSS variable --header-height if your header sets it,
+    // otherwise falls back to 96px. You can change fallback by editing the inline style below.
+    <div className="min-h-screen bg-background text-slate-800 antialiased overflow-x-hidden" style={{ paddingTop: "var(--header-height, 96px)" }}>
       {/* HERO */}
-      {/* HERO */}
-<motion.section
-  className="relative overflow-hidden"
-  initial="hidden"
-  animate="visible"
-  variants={containerVariants}
-  aria-label="Hero"
->
-  {/* Use CSS background instead of an absolute <img> to avoid layout overflow on mobile */}
-  <div
-    className="absolute inset-0 z-0 w-full h-full bg-center bg-cover bg-no-repeat"
-    style={{
-      backgroundImage: `url("${hero.image || LOCAL_HERO_PRODUCTS}")`,
-      // Make sure background renders crisply and stays centered
-      backgroundPosition: "center center",
-      backgroundSize: "cover",
-      backgroundRepeat: "no-repeat",
-      // Prevent the background itself from generating extra scroll
-      willChange: "transform",
-    }}
-    aria-hidden="true"
-  />
+      <motion.section
+        className="relative overflow-hidden"
+        initial="hidden"
+        animate="visible"
+        variants={containerVariants}
+        aria-label="Hero"
+      >
+        {/* background image via CSS for stable layout */}
+        <div
+          className="absolute inset-0 z-0 w-full h-full bg-center bg-cover bg-no-repeat"
+          style={{
+            backgroundImage: `url("${hero.image || LOCAL_HERO_PRODUCTS}")`,
+            backgroundPosition: "center center",
+            backgroundSize: "cover",
+            backgroundRepeat: "no-repeat",
+            willChange: "transform",
+          }}
+          aria-hidden="true"
+        />
 
-  {/* safer overlay (solid gradient) */}
-  <div
-    className="absolute inset-0 z-10"
-    style={{ background: "linear-gradient(rgba(6,12,8,0.64), rgba(6,12,8,0.36))" }}
-    aria-hidden="true"
-  />
+        {/* global subtle overlay */}
+        <div
+          className="absolute inset-0 z-10"
+          style={{ background: "linear-gradient(rgba(6,12,8,0.56), rgba(6,12,8,0.32))" }}
+          aria-hidden="true"
+        />
 
-  <div className="relative z-20 max-w-[1100px] mx-auto px-4 sm:px-6 py-10 md:py-20">
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
-      <div className="text-left">
-        <motion.h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-heading font-extrabold leading-tight mb-3 text-white" variants={heroVariants}>
-          {hero.title || "SPRADA2GLOBAL EXIM"}
-        </motion.h1>
-        <motion.p className="text-md sm:text-lg md:text-xl mb-4 opacity-95 text-white" variants={heroVariants}>
-          {hero.subtitle || "Rich Quality, Reach to World"}
-        </motion.p>
-        <motion.p className="text-sm md:text-base mb-6 max-w-xl leading-relaxed text-white/90" variants={heroVariants}>
-          {hero.description || "Your trusted partner in premium agricultural exports. We connect the finest Indian produce with global markets, ensuring compliance and quality at every step."}
-        </motion.p>
+        {/* extra LEFT-side gradient to darken text area (only left side) */}
+        <div
+          className="absolute inset-0 z-11 pointer-events-none"
+          style={{
+            background: "linear-gradient(to right, rgba(0,0,0,0.72) 0%, rgba(0,0,0,0.45) 30%, rgba(0,0,0,0.18) 55%, transparent 75%)"
+          }}
+          aria-hidden="true"
+        />
 
-        {/* Bigger CTAs on phones: full-width stacked buttons, larger padding */}
-        <motion.div className="flex flex-col sm:flex-row gap-3 sm:gap-4" variants={heroVariants}>
-          <Link to="/contact" className="w-full sm:w-auto">
-            <Button className="w-full sm:w-auto bg-white text-[#164946] font-semibold py-3 sm:py-2 px-4 rounded shadow-sm hover:shadow-md transition">Request a Quote</Button>
-          </Link>
-          <Link to="/products" className="w-full sm:w-auto">
-            <Button variant="outline" className="w-full sm:w-auto border-white text-white hover:bg-white hover:text-[#33504F] py-3 sm:py-2 px-4 rounded transition">View Products</Button>
-          </Link>
-        </motion.div>
+        <div className="relative z-20 max-w-[1200px] mx-auto px-4 sm:px-6 py-12 md:py-24">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+            {/* TEXT COLUMN */}
+            <div className="text-left">
+              <motion.h1
+                className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl leading-tight font-heading font-extrabold mb-3 text-white drop-shadow-[0_6px_14px_rgba(0,0,0,0.65)]"
+                variants={heroVariants}
+                aria-label="Company name"
+              >
+                {/* Big company name as requested */}
+                {hero.title || "SPRADA2GLOBLA"}
+              </motion.h1>
 
-        <div className="mt-6 text-sm flex items-center gap-6 text-white/90">
-          <div>{visitorsCount == null ? "Visitors: —" : `Visitors: ${Number(visitorsCount).toLocaleString()}`}</div>
-          <div className="hidden sm:block">Notifications available</div>
+              {/* stylish tagline */}
+              <motion.div className="mb-4" variants={heroVariants}>
+                <p className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-semibold italic tracking-wide text-white/95 drop-shadow-[0_4px_10px_rgba(0,0,0,0.55)]">
+                  {hero.subtitle || "Rich Quality, Reach to World"}
+                </p>
+                {/* optional decorative underline / accent */}
+                <div className="mt-2 w-20 h-1 bg-gradient-to-r from-[#D7B15B] to-[#164946] rounded-full" />
+              </motion.div>
+
+              <motion.p className="text-sm md:text-base mb-6 max-w-xl leading-relaxed text-white/90" variants={heroVariants}>
+                {hero.description || "Your trusted partner in premium agricultural exports. We connect the finest Indian produce with global markets, ensuring compliance and quality at every step."}
+              </motion.p>
+
+              {/* CTAs */}
+              <motion.div className="flex flex-col sm:flex-row gap-3 sm:gap-4" variants={heroVariants}>
+                <Link to="/contact" className="w-full sm:w-auto">
+                  <Button className="w-full sm:w-auto bg-white text-[#164946] font-semibold py-3 sm:py-2 px-5 rounded shadow-sm hover:shadow-md transition">Request a Quote</Button>
+                </Link>
+                <Link to="/products" className="w-full sm:w-auto">
+                  <Button variant="outline" className="w-full sm:w-auto border-white text-white hover:bg-white hover:text-[#33504F] py-3 sm:py-2 px-5 rounded transition">View Products</Button>
+                </Link>
+              </motion.div>
+
+              <div className="mt-6 text-sm flex items-center gap-6 text-white/90">
+                <div>{visitorsCount == null ? "Visitors: —" : `Visitors: ${Number(visitorsCount).toLocaleString()}`}</div>
+                <div className="hidden sm:block">Notifications available</div>
+              </div>
+            </div>
+
+            {/* ILLU / RIGHT COLUMN */}
+            <div className="hidden md:flex justify-center items-center">
+              <div className="w-full max-w-md">
+                <Image src={hero.illu || WIX_HERO_ILLU} alt="Export illustration" width={700} className="w-full h-auto rounded-lg shadow-2xl" />
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
-
-      <div className="hidden md:flex justify-center items-center">
-        <div className="w-full max-w-md">
-          <Image src={hero.illu || WIX_HERO_ILLU} alt="Export illustration" width={700} className="w-full h-auto rounded-lg shadow-2xl" />
-        </div>
-      </div>
-    </div>
-  </div>
-</motion.section>
-
+      </motion.section>
 
       {/* Why Choose */}
       <section id="why" className="py-10 md:py-16 bg-white">
@@ -543,7 +555,7 @@ export default function HomePage() {
         </div>
       </section>
 
-     {/* About */}
+      {/* About */}
       <section className="py-10 md:py-16 bg-white">
         <div className="max-w-[1100px] mx-auto px-4 sm:px-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
@@ -568,7 +580,6 @@ export default function HomePage() {
           </div>
         </div>
       </section>
-
 
       {/* Workflow */}
       <section className="py-10 md:py-16 bg-slate-50">

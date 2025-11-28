@@ -205,7 +205,7 @@ const ContactPage = () => {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label htmlFor="phone" className="text-sm font-medium text-[#33504F] block mb-1">Phone Number</label>
-                      <Input id="phone" name="phone" value={formData.phone} onChange={handleInputChange} placeholder="+91 98765 43210" />
+                      <Input id="phone" name="phone" value={formData.phone} onChange={handleInputChange} placeholder="+91 72010 65465" />
                     </div>
 
                     <div>

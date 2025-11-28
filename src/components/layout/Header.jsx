@@ -84,10 +84,7 @@ export default function Header() {
               <Link to="/" className="flex items-center gap-3">
                 {/* Use absolute-root path so bundlers resolve public folder assets consistently */}
                 <img src="/images/SPRADA_LOGO.png" alt="Sprada2Global" className="w-32 h-10 object-contain" />
-                <div className="hidden sm:block">
-                  <div className="text-sm font-semibold text-slate-900 leading-tight">SPRADA2GLOBAL</div>
-                  <div className="text-xs text-slate-500 -mt-0.5">Premium Agricultural Exports</div>
-                </div>
+                
               </Link>
             </div>
 
@@ -200,7 +197,7 @@ export default function Header() {
             >
               <div className="flex items-center justify-between p-4 border-b">
                 <Link to="/" onClick={() => setDrawerOpen(false)} className="flex items-center gap-3">
-                  <img src="/images/SPRADA_LOGO.png" alt="logo" className="w-8 h-8 object-contain" />
+                  <img src="/images/SPRADA_LOGO.png" alt="logo" className="w-10 h-8 object-contain" />
                   <span className="font-semibold text-slate-900">SPRADA2GLOBAL</span>
                 </Link>
 

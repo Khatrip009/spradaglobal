@@ -22,8 +22,8 @@ import {
 const OFFICE_ADDRESS_LINE1 = '359, A R Mall, Mota Varachha, Surat';
 const OFFICE_ADDRESS_LINE2 = 'Gujarat, India - 394101';
 const CONTACT_EMAIL = 'sprada2globalexim@gmail.com';
-const PHONE_NUMBER = '+91 12345 67890';
-const WHATSAPP_NUMBER = '911234567890'; // used for floating widget (no +)
+const PHONE_NUMBER = '+91 72010 65465';
+const WHATSAPP_NUMBER = '917201065465'; // used for floating widget (no +)
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
