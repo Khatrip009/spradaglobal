@@ -159,7 +159,7 @@ const ContactPage = () => {
             <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-heading font-bold text-[#33504F] mb-3">Contact Us</h1>
             <p className="text-sm sm:text-base md:text-lg text-[#2E2C2CFF] max-w-3xl mx-auto leading-relaxed">
               Ready to partner with India's leading peanut exporter? Get in touch with our team for premium quality products, competitive pricing, and reliable international shipping.
-            </p>
+            </p>  
           </motion.div>
         </div>
       </section>
@@ -272,16 +272,8 @@ const ContactPage = () => {
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                      <label htmlFor="phone" className="text-sm font-medium text-[#33504F] block mb-1">
-                        Phone Number
-                      </label>
-                      <Input
-                        id="phone"
-                        name="phone"
-                        value={formData.phone}
-                        onChange={handleInputChange}
-                        placeholder="+91 72010 65465"
-                      />
+                      <label htmlFor="phone" className="text-sm font-medium text-[#33504F] block mb-1">Phone Number</label>
+                      <Input id="phone" name="phone" value={formData.phone} onChange={handleInputChange} placeholder="+91 72010 65465" />
                     </div>
 
                     <div>

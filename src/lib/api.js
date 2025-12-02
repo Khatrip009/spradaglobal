@@ -2,13 +2,11 @@
 // API helpers for the frontend (uses credentials: include)
 // Default backend: http://localhost:4200
 
-const DEFAULT_BACKEND = 'http://localhost:4200';
-const RAW_BASE =
-  (import.meta.env.VITE_API_URL && String(import.meta.env.VITE_API_URL)) ||
-  DEFAULT_BACKEND;
-
+const DEFAULT_BACKEND = 'https://apisprada.exotech.co.in';
+const RAW_BASE = (import.meta.env.VITE_API_URL && String(import.meta.env.VITE_API_URL)) || DEFAULT_BACKEND;
 export const BASE = RAW_BASE.replace(/\/+$/, ''); // remove trailing slash
-export const UPLOADS_BASE = (import.meta.env.VITE_UPLOADS_BASE || BASE).replace(/\/$/, "");
+// Optional uploads base for rewritten uploads paths. Allow env override.
+export const UPLOADS_BASE = ((import.meta.env.VITE_UPLOADS_BASE_URL || '') || (BASE + '/uploads')).replace(/\/+$/, '');
 const DEFAULT_TIMEOUT = 15000; // ms
 
 /* -----------------------------------------------------
@@ -45,9 +43,6 @@ export function buildUrl(path, qs = {}) {
   return params.toString() ? `${url}?${params.toString()}` : url;
 }
 
-/* -----------------------------------------------------
-   REQUEST WRAPPER (timeout + JSON parsing)
------------------------------------------------------ */
 export async function request(path, opts = {}) {
   const url = path.startsWith('http') ? path : `${BASE}${path}`;
   const timeout = typeof opts.timeout === 'number' ? opts.timeout : DEFAULT_TIMEOUT;

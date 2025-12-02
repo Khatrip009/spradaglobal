@@ -411,7 +411,12 @@ export default function HomePage() {
                 <div className="hidden sm:block">Notifications available</div>
               </div>
             </div>
-
+            {/* ILLU / RIGHT COLUMN */}
+            <div className="hidden md:flex justify-center items-center">
+              <div className="w-full max-w-md">
+                <Image src={hero.illu || WIX_HERO_ILLU} alt="Export illustration" width={700} className="w-full h-auto rounded-lg shadow-2xl" />
+              </div>
+            </div>
           </div>
         </div>
       </motion.section>
