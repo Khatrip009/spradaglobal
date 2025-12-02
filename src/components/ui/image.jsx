@@ -2,8 +2,9 @@ import React, { forwardRef, useEffect, useImperativeHandle, useRef, useState } f
 
 /**
  * Lightweight Image component (no external image-kit dependency).
- * - Props: src, alt, className, width, height, layout, objectFit, placeholder (url), lazy (bool)
- * - Exposes a `load` method via ref (if caller needs it).
+ * - Props: src, alt, className, width, height, style, placeholder, lazy (bool), objectFit,
+ *   onLoad, allowClick (bool: default false) -> when false the component prevents click
+ *   events from bubbling up (defensive against parent links / delegated handlers).
  *
  * Example:
  * <Image src="/img/foo.jpg" alt="Foo" width={800} height={600} placeholder="/img/foo-blur.jpg" />
@@ -21,6 +22,7 @@ const Image = forwardRef(function Image(
     lazy = true,
     objectFit = "cover",
     onLoad,
+    allowClick = false, // default: prevent click propagation (defensive)
     ...rest
   },
   ref
@@ -44,6 +46,18 @@ const Image = forwardRef(function Image(
     setShowPlaceholder(!!placeholder);
   }, [src, placeholder]);
 
+  // defensive click handler: preventDefault+stopPropagation by default unless allowClick=true
+  const handleClick = (e) => {
+    if (!allowClick) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    // If the caller provided an onClick inside rest, call it after stopping (preserve expected local handlers)
+    if (typeof rest.onClick === "function") {
+      try { rest.onClick(e); } catch (err) { /* ignore */ }
+    }
+  };
+
   return (
     <div
       className={`relative overflow-hidden inline-block ${className}`}
@@ -52,9 +66,11 @@ const Image = forwardRef(function Image(
         height: height ? (typeof height === "number" ? `${height}px` : height) : undefined,
         ...style,
       }}
+      // If someone clicks the wrapper, handle defensively as well
+      onClick={handleClick}
     >
       {/* placeholder (blur or small image) */}
-      {showPlaceholder && (
+      {showPlaceholder && placeholder && (
         <img
           src={placeholder}
           aria-hidden="true"
@@ -63,6 +79,8 @@ const Image = forwardRef(function Image(
             opacity: isLoaded ? 0 : 1,
             objectFit,
           }}
+          // prevent bubbling for placeholder too
+          onClick={handleClick}
         />
       )}
 
@@ -86,6 +104,8 @@ const Image = forwardRef(function Image(
           transition: "opacity 200ms ease-in-out, transform 200ms ease-in-out",
           opacity: isLoaded ? 1 : 0,
         }}
+        // defensive: stop clicks from bubbling unless allowClick set
+        onClick={handleClick}
         {...rest}
       />
     </div>

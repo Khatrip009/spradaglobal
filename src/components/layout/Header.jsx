@@ -58,7 +58,8 @@ export default function Header() {
     }
   }, [drawerOpen]);
 
-  const bgClass = scrolled ? "bg-white/95 backdrop-blur-md shadow-md" : "bg-white/90 backdrop-blur-sm";
+  // Make header solid on all screen sizes; only change shadow on scroll
+  const bgClass = scrolled ? "bg-white shadow-md" : "bg-white shadow-sm";
 
   return (
     <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${bgClass}`}>
@@ -81,11 +82,9 @@ export default function Header() {
               </button>
 
               <Link to="/" className="flex items-center gap-3">
-                <img src="public/images/SPRADA_LOGO.png" alt="Sprada2Global" className="w-32 h-10 object-contain" />
-                <div className="hidden sm:block">
-                  <div className="text-sm font-semibold text-slate-900 leading-tight">SPRADA2GLOBAL</div>
-                  <div className="text-xs text-slate-500 -mt-0.5">Premium Agricultural Exports</div>
-                </div>
+                {/* Use absolute-root path so bundlers resolve public folder assets consistently */}
+                <img src="/images/SPRADA_LOGO.png" alt="Sprada2Global" className="w-32 h-10 object-contain" />
+                
               </Link>
             </div>
 
@@ -146,7 +145,7 @@ export default function Header() {
                 Request Quote
               </Link>
 
-              {/* Hamburger / close for desktop (keeps right spacing) */}
+              {/* spacer for layout consistency on desktop */}
               <div className="hidden lg:block w-2" />
             </div>
           </div>
@@ -198,7 +197,7 @@ export default function Header() {
             >
               <div className="flex items-center justify-between p-4 border-b">
                 <Link to="/" onClick={() => setDrawerOpen(false)} className="flex items-center gap-3">
-                  <img src="/images/SPRADA_LOGO.png" alt="logo" className="w-8 h-8 object-contain" />
+                  <img src="/images/SPRADA_LOGO.png" alt="logo" className="w-10 h-8 object-contain" />
                   <span className="font-semibold text-slate-900">SPRADA2GLOBAL</span>
                 </Link>
 
@@ -234,10 +233,8 @@ export default function Header() {
                 <form
                   onSubmit={(e) => {
                     e.preventDefault();
-                    // lightweight client-side opt-in; backend hookup optional
                     const email = e.currentTarget.email?.value;
                     if (email) {
-                      // show a tiny vanilla confirmation — replace with proper UX as needed
                       alert("Thanks — we'll keep you posted");
                       e.currentTarget.reset();
                       setDrawerOpen(false);

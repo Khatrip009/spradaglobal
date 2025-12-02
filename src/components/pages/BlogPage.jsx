@@ -1,5 +1,5 @@
 // src/components/pages/BlogPage.jsx
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import { motion } from "framer-motion";
 import { Image } from "../ui/image";
 import { Card, CardContent } from "../ui/card";
@@ -11,6 +11,7 @@ import * as api from "../../lib/api";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "../ui/ToastProvider";
 
+/* Filter buttons (UI) */
 const filterCategories = [
   { id: "All", label: "All Posts", icon: BookOpen },
   { id: "Quality", label: "Quality", icon: Award },
@@ -19,37 +20,131 @@ const filterCategories = [
   { id: "Products", label: "Products", icon: Package }
 ];
 
+/* Convert various forms of image paths into an absolute URL */
+/**
+ * Normalize image URL to a usable absolute URL.
+ * - If url is absolute (http/https) return it unchanged, except:
+ *     * if it points to the current origin and looks like an uploads path, rewrite to api.UPLOADS_BASE if provided
+ * - If url is root-relative (/uploads/...), prefix with api.UPLOADS_BASE if available, otherwise leave as-is
+ * - If url is relative, prefix with api.UPLOADS_BASE if available
+ */
+function makeAbsoluteImageUrl(url, fallback = "/images/placeholder.png") {
+  try {
+    if (!url) return fallback;
+    if (typeof url !== "string") return fallback;
+    const trimmed = url.trim();
+    if (trimmed === "") return fallback;
+
+    // absolute url -> keep, but if it points to current origin's /uploads and UPLOADS_BASE provided, rewrite
+    if (/^https?:\/\//i.test(trimmed)) {
+      try {
+        const u = new URL(trimmed);
+        const currentOrigin = window.location.origin.replace(/\/$/, "");
+        // if image points to same origin and path contains /uploads and UPLOADS_BASE is configured, rewrite
+        if ((u.origin === currentOrigin || u.origin === (window.location.protocol + '//' + window.location.host))
+            && u.pathname.match(/\/uploads(\/|$)/) && api.UPLOADS_BASE) {
+          return `${api.UPLOADS_BASE}${u.pathname}${u.search || ""}`;
+        }
+      } catch (e) {
+        // ignore URL parse errors
+      }
+      return trimmed;
+    }
+
+    // protocol-relative (//example.com/...)
+    if (/^\/\//.test(trimmed)) return `${window.location.protocol}${trimmed}`;
+
+    // root-relative: /uploads/...
+    if (trimmed.startsWith("/")) {
+      if (api.UPLOADS_BASE) return `${api.UPLOADS_BASE.replace(/\/$/, "")}${trimmed}`;
+      return trimmed;
+    }
+
+    // relative path: prefer UPLOADS_BASE
+    if (api.UPLOADS_BASE) return `${api.UPLOADS_BASE.replace(/\/$/, "")}/${trimmed.replace(/^\//, "")}`;
+
+    // fallback: assume same-origin relative
+    return `${window.location.origin.replace(/\/$/, "")}/${trimmed.replace(/^\//, "")}`;
+  } catch (err) {
+    return fallback;
+  }
+}
+
+
 export default function BlogPage() {
   const navigate = useNavigate();
   const toast = useToast();
+
+  // UI state
   const [query, setQuery] = useState("");
+  const [debouncedQuery, setDebouncedQuery] = useState("");
   const [activeFilter, setActiveFilter] = useState("All");
   const [page, setPage] = useState(1);
   const [limit] = useState(9);
+
+  // data state
   const [blogs, setBlogs] = useState([]);
   const [total, setTotal] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [optimisticLikes, setOptimisticLikes] = useState({}); // map blogId -> {count,user_liked}
 
-  const load = useCallback(async () => {
+  // optimistic likes store
+  const [optimisticLikes, setOptimisticLikes] = useState({});
+
+  // abort controller ref for cancelling stale requests
+  const abortRef = useRef(null);
+
+  // debounce query (300ms)
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedQuery(query.trim()), 300);
+    return () => clearTimeout(t);
+  }, [query]);
+
+  const load = useCallback(async (opts = {}) => {
+    const pageArg = opts.page ?? page;
     setLoading(true);
     setError(null);
+
+    // cancel previous
+    if (abortRef.current) {
+      try { abortRef.current.abort(); } catch {}
+    }
+    abortRef.current = new AbortController();
+    const signal = abortRef.current.signal;
+
     try {
-      const res = await api.getBlogs({ q: query, page, limit });
-      const list = (res && res.blogs) ? res.blogs : (Array.isArray(res) ? res : []);
-      // best-effort client-side filter by category string if category exists
-      let fetched = list;
-      if (activeFilter !== "All") {
-        fetched = fetched.filter(b => {
+      const qs = {};
+      if (debouncedQuery) qs.q = debouncedQuery;
+      if (pageArg) qs.page = pageArg;
+      if (limit) qs.limit = limit;
+
+      const res = await api.getBlogs(qs);
+
+      if (signal.aborted) return;
+
+      // unify response shape
+      let list = Array.isArray(res) ? res : (res.blogs || res.items || []);
+      let fetchedTotal = res.total ?? res.total_count ?? (Array.isArray(res) ? res.length : null);
+
+      // client-side filter if activeFilter isn't All
+      if (activeFilter && activeFilter !== "All") {
+        const filterLower = activeFilter.toLowerCase();
+        list = list.filter(b => {
           const cat = (b.category && (typeof b.category === "string" ? b.category : (b.category.name || b.category.id))) || "";
-          return String(cat).toLowerCase().includes(String(activeFilter).toLowerCase()) ||
-                 String(b.meta_title || "").toLowerCase().includes(String(activeFilter).toLowerCase());
+          const meta = String(b.meta_title || b.meta_description || "").toLowerCase();
+          return String(cat).toLowerCase().includes(filterLower) || meta.includes(filterLower) || String(b.title || "").toLowerCase().includes(filterLower);
         });
+        // if server total exists, we show it but users should expect client-side filtered counts may differ
+        fetchedTotal = fetchedTotal != null ? fetchedTotal : list.length;
       }
-      setBlogs(fetched);
-      setTotal(typeof res.total === "number" ? Number(res.total) : null);
+
+      setBlogs(list || []);
+      setTotal(typeof fetchedTotal === "number" ? Number(fetchedTotal) : null);
     } catch (err) {
+      if (err && err.name === "AbortError") {
+        // request was canceled; ignore
+        return;
+      }
       console.error("[BlogPage] getBlogs error", err);
       setError("Failed to load articles");
       setBlogs([]);
@@ -57,45 +152,52 @@ export default function BlogPage() {
     } finally {
       setLoading(false);
     }
-  }, [query, page, limit, activeFilter]);
+  }, [debouncedQuery, page, limit, activeFilter]);
 
-  useEffect(() => { load(); }, [load]);
+  // reload on query / page / filter change
+  useEffect(() => {
+    if (page < 1) setPage(1);
+    load({ page });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debouncedQuery, page, activeFilter]);
 
-  const totalPages = total != null ? Math.max(1, Math.ceil(total / limit)) : Math.max(1, Math.ceil((blogs.length || 0) / limit));
+  const totalPages = useMemo(() => {
+    if (total != null) return Math.max(1, Math.ceil(total / limit));
+    return Math.max(1, Math.ceil((blogs.length || 0) / limit));
+  }, [total, limit, blogs.length]);
 
-  // Programmatic navigate to detail by slug and ensure remount (navigate pushes new history entry)
+  // navigate to detail
   const handleReadMore = (slug) => {
-    if (!slug) {
+    if (!slug || typeof slug !== "string" || slug.trim() === "") {
       toast.show("Article unavailable", { duration: 3000 });
       return;
     }
-    // push to history (default navigate does push); ensure encoded slug
     navigate(`/blog/${encodeURIComponent(slug)}`);
-    // scroll to top for better UX
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  // optimistic like for a blog card
+  // optimistic like
   const handleLikeCard = async (blogId) => {
-    // if no blogId, noop
     if (!blogId) return;
-    // optimistic update
-    setOptimisticLikes(prev => {
-      const current = prev[blogId] || { count: null, user_liked: false };
-      // if count unknown, derive from blogs list
-      const original = blogs.find(b => b.id === blogId);
-      const baseCount = (original && original.likes_count != null) ? Number(original.likes_count) : (current.count || 0);
-      const next = { count: (current.user_liked ? baseCount - 1 : baseCount + 1), user_liked: !current.user_liked };
-      return { ...prev, [blogId]: next };
-    });
+
+    const original = blogs.find(b => b.id === blogId) || {};
+    const originalCount = Number(original.likes_count ?? 0);
+    const current = optimisticLikes[blogId] || { count: originalCount, user_liked: false };
+
+    const toggled = {
+      count: current.user_liked ? Math.max(0, current.count - 1) : (current.count + 1),
+      user_liked: !current.user_liked
+    };
+
+    setOptimisticLikes(prev => ({ ...prev, [blogId]: toggled }));
 
     try {
       await api.likeBlog(blogId);
-      toast.show("Thanks!", { description: "Your like was recorded", duration: 2000 });
-      // reload listing counts for accuracy (cheap)
-      load();
+      // refresh current list to get authoritative numbers
+      load({ page });
+      toast.show("Thanks for liking!", { duration: 1500 });
     } catch (err) {
-      // revert optimistic
+      // rollback
       setOptimisticLikes(prev => {
         const cp = { ...prev };
         delete cp[blogId];
@@ -106,9 +208,34 @@ export default function BlogPage() {
     }
   };
 
+  const displayedLikes = (post) => {
+    const opt = optimisticLikes[post.id];
+    if (opt && typeof opt.count === "number") return opt.count;
+    return Number(post.likes_count ?? 0);
+  };
+  const userLiked = (post) => {
+    const opt = optimisticLikes[post.id];
+    if (opt && typeof opt.user_liked === "boolean") return opt.user_liked;
+    return !!post.user_liked;
+  };
+
+  // Small card skeleton for loading state
+  const CardSkeleton = () => (
+    <div className="animate-pulse space-y-3">
+      <div className="w-full h-44 bg-gray-200 rounded-md" />
+      <div className="h-4 bg-gray-200 rounded w-3/4" />
+      <div className="h-3 bg-gray-200 rounded w-full" />
+      <div className="h-3 bg-gray-200 rounded w-5/6" />
+      <div className="flex gap-2 mt-3">
+        <div className="h-9 w-24 bg-gray-200 rounded" />
+        <div className="h-9 w-20 bg-gray-200 rounded" />
+      </div>
+    </div>
+  );
+
   return (
     <div className="min-h-screen bg-[#E8E9E2]">
-      {/* Header hero */}
+      {/* Hero */}
       <section className="relative py-12 sm:py-20 md:py-28 bg-cover bg-center" style={{ backgroundImage: `linear-gradient(rgba(51,80,79,0.85), rgba(51,80,79,0.85)), url('/images/blog-hero.jpg')` }}>
         <div className="max-w-[100rem] mx-auto px-6 sm:px-12 text-center text-white">
           <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
@@ -127,12 +254,24 @@ export default function BlogPage() {
           <div className="flex flex-col lg:flex-row gap-6 items-center justify-between">
             <div className="relative flex-1 max-w-md w-full">
               <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-[#666666] w-5 h-5" aria-hidden />
-              <Input type="text" placeholder="Search articles..." value={query} onChange={(e) => { setQuery(e.target.value); setPage(1); }} className="pl-12 pr-4 py-2 border-2 border-[#CFD0C8] rounded-lg" aria-label="Search articles" />
+              <Input
+                type="text"
+                placeholder="Search articles..."
+                value={query}
+                onChange={(e) => { setQuery(e.target.value); setPage(1); }}
+                className="pl-12 pr-4 py-2 border-2 border-[#CFD0C8] rounded-lg"
+                aria-label="Search articles"
+              />
             </div>
 
             <div className="flex flex-wrap gap-2">
               {filterCategories.map((category) => (
-                <Button key={category.id} onClick={() => { setActiveFilter(category.id); setPage(1); }} className={`flex items-center gap-2 px-3 py-2 rounded-lg font-semibold ${activeFilter === category.id ? 'bg-[#33504F] text-white' : 'border-2 border-[#CFD0C8] text-[#666666]'}`} aria-pressed={activeFilter === category.id}>
+                <Button
+                  key={category.id}
+                  onClick={() => { setActiveFilter(category.id); setPage(1); }}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-lg font-semibold ${activeFilter === category.id ? 'bg-[#33504F] text-white' : 'border-2 border-[#CFD0C8] text-[#666666]'}`}
+                  aria-pressed={activeFilter === category.id}
+                >
                   <category.icon className="w-4 h-4" aria-hidden />{category.label}
                 </Button>
               ))}
@@ -145,7 +284,13 @@ export default function BlogPage() {
       <section className="py-10 sm:py-16 bg-[#E8E9E2]">
         <div className="max-w-[100rem] mx-auto px-6 sm:px-12">
           {loading ? (
-            <div className="text-center py-12 text-sm text-[#666]">Loading articles...</div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <Card key={i} className="p-4">
+                  <CardContent className="p-0"><CardSkeleton /></CardContent>
+                </Card>
+              ))}
+            </div>
           ) : error ? (
             <div className="text-center py-12 text-sm text-red-600">{error}</div>
           ) : blogs.length > 0 ? (
@@ -153,26 +298,42 @@ export default function BlogPage() {
               {blogs.map((post, index) => {
                 const slugExists = typeof post.slug === 'string' && post.slug.trim() !== '';
                 const targetSlug = slugExists ? post.slug : null;
-                const optimistic = optimisticLikes[post.id];
-                const likesCount = optimistic && optimistic.count != null ? optimistic.count : (post.likes_count || 0);
-                const userLiked = optimistic && optimistic.user_liked != null ? optimistic.user_liked : false;
+                const likesCount = displayedLikes(post);
+                const liked = userLiked(post);
+
+                const dateStr = new Date(post.published_at || post.created_at || Date.now()).toLocaleDateString();
+                const thumb = makeAbsoluteImageUrl(post.image || post.og_image || post.image || null, "/images/placeholder.png");
 
                 return (
                   <motion.div key={post.id || post.slug || index} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: index * 0.04 }}>
                     <Card className="h-full bg-white hover:shadow-xl transition-all duration-300 rounded-2xl overflow-hidden group">
                       <div className="relative overflow-hidden">
-                        <Image src={post.image || '/images/placeholder.png'} alt={post.title || 'Article image'} width={400} height={240} className="w-full h-48 sm:h-56 object-cover group-hover:scale-105 transition-transform duration-500" />
-                        <div className="absolute top-3 right-3"><Badge className="font-semibold px-2 py-1 bg-[#33504F] text-white">{post.category || 'Article'}</Badge></div>
+                        <Image src={thumb} alt={post.title || 'Article image'} width={800} height={480} className="w-full h-48 sm:h-56 object-cover group-hover:scale-105 transition-transform duration-500" />
+                        <div className="absolute top-3 right-3"><Badge className="font-semibold px-2 py-1 bg-[#33504F] text-white">{(post.category && (post.category.name || post.category)) || 'Article'}</Badge></div>
                       </div>
 
                       <CardContent className="p-4">
-                        <div className="text-sm text-[#666666] mb-3 flex items-center gap-2"><Calendar className="w-4 h-4" aria-hidden />{new Date(post.published_at || post.created_at).toLocaleDateString()}</div>
+                        <div className="text-sm text-[#666666] mb-3 flex items-center gap-2"><Calendar className="w-4 h-4" aria-hidden />{dateStr}</div>
                         <h3 className="text-lg font-heading font-semibold text-[#33504F] mb-2 line-clamp-2 group-hover:text-[#D7B15B]">{post.title}</h3>
-                        <p className="text-sm text-[#666666] leading-relaxed mb-4 line-clamp-3">{post.excerpt}</p>
+                        <p className="text-sm text-[#666666] leading-relaxed mb-4 line-clamp-3">{post.excerpt || post.meta_description || ''}</p>
 
                         <div className="flex gap-2">
-                          <Button onClick={() => handleReadMore(targetSlug)} className="flex-1 bg-[#33504F] text-white py-2 rounded-lg">Read More <ArrowRight className="w-4 h-4 ml-2" /></Button>
-                          <Button onClick={() => handleLikeCard(post.id)} className={`px-4 py-2 rounded-lg border ${userLiked ? 'bg-[#D7B15B] text-[#33504F]' : ''}`}>{userLiked ? '💚' : '👍'} {likesCount}</Button>
+                          <Button
+                            onClick={() => handleReadMore(targetSlug)}
+                            className="flex-1 bg-[#33504F] text-white py-2 rounded-lg"
+                            disabled={!targetSlug}
+                            aria-disabled={!targetSlug}
+                          >
+                            Read More <ArrowRight className="w-4 h-4 ml-2" />
+                          </Button>
+
+                          <Button
+                            onClick={() => handleLikeCard(post.id)}
+                            className={`px-4 py-2 rounded-lg border ${liked ? 'bg-[#D7B15B] text-[#33504F]' : ''}`}
+                            aria-pressed={liked}
+                          >
+                            {liked ? '💚' : '👍'} {likesCount}
+                          </Button>
                         </div>
                       </CardContent>
                     </Card>
@@ -181,7 +342,11 @@ export default function BlogPage() {
               })}
             </div>
           ) : (
-            <div className="text-center py-12"><BookOpen className="w-12 h-12 text-[#CFD0C8] mx-auto mb-4" /><h3 className="text-xl font-heading text-[#33504F]">No articles found</h3></div>
+            <div className="text-center py-12">
+              <BookOpen className="w-12 h-12 text-[#CFD0C8] mx-auto mb-4" />
+              <h3 className="text-xl font-heading text-[#33504F]">No articles found</h3>
+              <p className="text-sm text-[#666] mt-2">Try changing your search or filters.</p>
+            </div>
           )}
         </div>
       </section>
@@ -190,9 +355,9 @@ export default function BlogPage() {
       <section className="py-8 bg-[#E8E9E2]">
         <div className="max-w-[100rem] mx-auto px-6 sm:px-12">
           <div className="flex flex-wrap items-center justify-center gap-2">
-            <Button onClick={() => setPage(Math.max(1, page - 1))} disabled={page === 1} className="border-2 border-[#CFD0C8] text-[#666666]">Previous</Button>
+            <Button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1 || loading} className="border-2 border-[#CFD0C8] text-[#666666]">Previous</Button>
             <div className="px-4 py-2 text-sm text-[#666]">Page {page}{total != null ? ` of ${totalPages}` : ''}</div>
-            <Button onClick={() => setPage(Math.min(totalPages, page + 1))} disabled={page === totalPages} className="border-2 border-[#CFD0C8] text-[#666666]">Next</Button>
+            <Button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages || loading} className="border-2 border-[#CFD0C8] text-[#666666]">Next</Button>
           </div>
         </div>
       </section>

@@ -22,14 +22,8 @@ import {
 const OFFICE_ADDRESS_LINE1 = '359, A R Mall, Mota Varachha, Surat';
 const OFFICE_ADDRESS_LINE2 = 'Gujarat, India - 394101';
 const CONTACT_EMAIL = 'sprada2globalexim@gmail.com';
-const PHONE_NUMBER = '+91 12345 67890';
-const WHATSAPP_NUMBER = '911234567890'; // used for floating widget (no +)
-
-const languages = [
-  { code: "en", label: "EN" },
-  { code: "hi", label: "हिं" },
-  { code: "es", label: "ES" },
-];
+const PHONE_NUMBER = '+91 72010 65465';
+const WHATSAPP_NUMBER = '917201065465'; // used for floating widget (no +)
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
@@ -44,15 +38,6 @@ const Footer = () => {
   const [reviewStats, setReviewStats] = useState(null);
   const [recentReviews, setRecentReviews] = useState([]);
   const [reviewsOpen, setReviewsOpen] = useState(false);
-
-  // Language selector
-  const [lang, setLang] = useState(() => {
-    try {
-      return localStorage.getItem("site_lang") || "en";
-    } catch {
-      return "en";
-    }
-  });
 
   // Count-up animation for visitors
   useEffect(() => {
@@ -113,13 +98,6 @@ const Footer = () => {
     };
   }, []);
 
-  // language selector persistence
-  useEffect(() => {
-    try {
-      localStorage.setItem("site_lang", lang);
-    } catch {}
-  }, [lang]);
-
   // helper: render star icons for avg rating
   function renderStars(avg) {
     const full = Math.floor(avg || 0);
@@ -145,23 +123,6 @@ const Footer = () => {
 
   return (
     <>
-      {/* Sticky language selector (left) */}
-      <div className="fixed left-3 top-1/3 z-50">
-        <div className="bg-white/5 backdrop-blur-sm rounded-xl p-2 shadow-lg flex flex-col items-center gap-2">
-          {languages.map((l) => (
-            <button
-              key={l.code}
-              onClick={() => setLang(l.code)}
-              className={`w-10 h-10 rounded-md flex items-center justify-center text-xs font-semibold ${lang === l.code ? "bg-[#D7B15B] text-[#073a35] shadow-md" : "text-white/90 hover:bg-white/6"}`}
-              aria-pressed={lang === l.code}
-              aria-label={`Switch to ${l.code}`}
-            >
-              {l.label}
-            </button>
-          ))}
-        </div>
-      </div>
-
       {/* Floating WhatsApp support widget (bottom-right) */}
       <a
         href={waLink}
