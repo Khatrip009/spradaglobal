@@ -2,7 +2,7 @@
 // API helpers for the frontend (uses credentials: include)
 // Default backend: https://apisprada.exotech.co.in
 
-const DEFAULT_BACKEND = 'https://apisprada.exotech.co.in';
+const DEFAULT_BACKEND = 'http://localhost:4200';
 const RAW_BASE = (import.meta.env.VITE_API_URL && String(import.meta.env.VITE_API_URL)) || DEFAULT_BACKEND;
 const BASE = RAW_BASE.replace(/\/+$/, ''); // remove trailing slash
 const DEFAULT_TIMEOUT = 15000; // ms
