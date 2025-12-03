@@ -1,5 +1,12 @@
+// src/App.jsx
 import React from "react";
-import { HashRouter as Router, Routes, Route, Navigate, useLocation } from "react-router-dom";
+import {
+  HashRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+  useLocation,
+} from "react-router-dom";
 
 /* Layout */
 import Header from "./components/layout/Header";
@@ -19,78 +26,161 @@ import CategoryPage from "./components/pages/CategoryPage";
 
 import { ToastProvider } from "./components/ui/ToastProvider";
 
+import { AnimatePresence, motion } from "framer-motion";
+
 import "./index.css";
 import "./App.css";
 
-/**
- * ScrollToTop
- * Scrolls window to top whenever the location pathname/hash changes.
- * Using useEffect with useLocation ensures navigation always starts at top.
- * NOTE: this component must be rendered *inside* a Router so useLocation() works.
- */
+/* Scroll to top on route change */
 function ScrollToTop() {
   const { pathname, hash } = useLocation();
 
   React.useEffect(() => {
-    // For hash navigation, try to scroll to the element; otherwise scroll to top
     if (hash) {
       const id = hash.replace("#", "");
       const el = document.getElementById(id);
       if (el) {
-        el.scrollIntoView({ behavior: "auto", block: "start" });
+        el.scrollIntoView({ behavior: "smooth", block: "start" });
         return;
       }
     }
 
-    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
   }, [pathname, hash]);
 
   return null;
 }
 
+/* Smooth animated wrapper for page transitions */
+function AnimatedPage({ children }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 30 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -20 }}
+      transition={{ duration: 0.35, ease: "easeOut" }}
+      className="min-h-screen"
+    >
+      {children}
+    </motion.div>
+  );
+}
+
+/* Routing wrapper with page transitions */
+function RouteWrapper() {
+  const location = useLocation();
+
+  return (
+    <main className="flex-1">
+      <AnimatePresence mode="wait">
+        <Routes location={location} key={location.pathname}>
+          <Route
+            path="/"
+            element={
+              <AnimatedPage>
+                <HomePage />
+              </AnimatedPage>
+            }
+          />
+
+          <Route path="/home" element={<Navigate to="/" replace />} />
+
+          <Route
+            path="/about"
+            element={
+              <AnimatedPage>
+                <AboutPage />
+              </AnimatedPage>
+            }
+          />
+
+          <Route
+            path="/contact"
+            element={
+              <AnimatedPage>
+                <ContactPage />
+              </AnimatedPage>
+            }
+          />
+
+          <Route
+            path="/faq"
+            element={
+              <AnimatedPage>
+                <FAQPage />
+              </AnimatedPage>
+            }
+          />
+
+          <Route
+            path="/blog"
+            element={
+              <AnimatedPage>
+                <BlogPage />
+              </AnimatedPage>
+            }
+          />
+
+          <Route
+            path="/blog/:slug"
+            element={
+              <AnimatedPage>
+                <BlogDetailsPage />
+              </AnimatedPage>
+            }
+          />
+
+          <Route
+            path="/products"
+            element={
+              <AnimatedPage>
+                <ProductsPage />
+              </AnimatedPage>
+            }
+          />
+
+          <Route
+            path="/products/category/:slug"
+            element={
+              <AnimatedPage>
+                <CategoryPage />
+              </AnimatedPage>
+            }
+          />
+
+          <Route
+            path="/products/:slug"
+            element={
+              <AnimatedPage>
+                <ProductDetail />
+              </AnimatedPage>
+            }
+          />
+
+          <Route
+            path="/services"
+            element={
+              <AnimatedPage>
+                <ServicesPage />
+              </AnimatedPage>
+            }
+          />
+
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </AnimatePresence>
+    </main>
+  );
+}
+
 function App() {
   return (
     <ToastProvider>
-    {/* Using HashRouter ensures direct refreshes never 404 on static hosts.
-        If you later prefer clean URLs, switch back to BrowserRouter and add
-        server-side rewrites (see docs). */}
       <Router basename={import.meta.env.BASE_URL || "/"}>
         <div className="app-root min-h-screen flex flex-col">
           <Header />
-
-          {/* ScrollToTop must be inside Router */}
           <ScrollToTop />
-
-          <main className="flex-1">
-            <Routes>
-              {/* Primary pages */}
-              <Route path="/" element={<HomePage />} />
-              <Route path="/home" element={<Navigate to="/" replace />} />
-
-              <Route path="/about" element={<AboutPage />} />
-              <Route path="/contact" element={<ContactPage />} />
-              <Route path="/faq" element={<FAQPage />} />
-
-              {/* Blogs */}
-              <Route path="/blog" element={<BlogPage />} />
-              <Route path="/blog/:slug" element={<BlogDetailsPage />} />
-
-              {/* Products & categories
-                  IMPORTANT: place the more specific 'category' route before the generic
-                  '/products/:slug' route to avoid the category slug being captured as
-                  a product slug. */}
-              <Route path="/products" element={<ProductsPage />} />
-              <Route path="/products/category/:slug" element={<CategoryPage />} />
-              <Route path="/products/:slug" element={<ProductDetail />} />
-
-              {/* Services */}
-              <Route path="/services" element={<ServicesPage />} />
-
-              {/* fallback - redirect unknown hashes to home */}
-              <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
-          </main>
-
+          <RouteWrapper />
           <Footer />
         </div>
       </Router>
