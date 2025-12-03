@@ -114,7 +114,7 @@ function slugifyName(name = "") {
     .replace(/&/g, " and ")
     .replace(/[^\w\- ]+/g, "")
     .replace(/\s+/g, "-")
-    .replace(/-+/g, "-")
+    .replace(/\-+/g, "-")
     .replace(/(^-|-$)/g, "");
 }
 function isUuid(s) {
@@ -141,6 +141,7 @@ export default function HomePage() {
   const [testimonials, setTestimonials] = useState(null);
   const [blogs, setBlogs] = useState(null);
   const [featured, setFeatured] = useState(null);
+  const [visitorsCount, setVisitorsCount] = useState(null);
   const [loading, setLoading] = useState(true);
   const [loadingReviews, setLoadingReviews] = useState(true);
 
