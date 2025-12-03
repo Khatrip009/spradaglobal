@@ -14,7 +14,12 @@ import HERO_ILLU from "../../assets/HERO_ILLU.jpg";
 import HERO_BG from "../../assets/HERO_BG.jpg";
 import ABOUT_IMG from "../../assets/ABOUT_IMG.jpg";
 
-
+const DEFAULT_COMPANY_VALUES = [
+  { id: "v1", title: "Premium Quality", description: "Sourced from the finest farms with rigorous quality control at every step." },
+  { id: "v2", title: "Trusted Sourcing", description: "Direct partnerships with verified farmers ensuring authentic and fresh produce." },
+  { id: "v3", title: "Certifications", description: "Fully certified with international standards for food safety and quality." },
+  { id: "v4", title: "Global Reach", description: "Serving customers across continents with reliable logistics and timely delivery." }
+];
 const DEFAULT_WORKFLOW = [
   { id: "w1", stepNumber: 1, stepName: "Sourcing", stepDescription: "Direct sourcing from verified Manufacturing Units" },
   { id: "w2", stepNumber: 2, stepName: "Sorting & Cleaning", stepDescription: "Rigorous quality control and cleaning" },
@@ -406,7 +411,7 @@ export default function HomePage() {
       </motion.section>
 
       {/* Why Choose */}
-      <section id="why" className="py-10 md:py-16 bg-white">
+            <section id="why" className="py-10 md:py-16 bg-white">
         <div className="max-w-[1100px] mx-auto px-4 sm:px-6">
           <div className="text-center mb-8">
             <h2 className="text-2xl md:text-3xl font-heading font-semibold text-[#1f5a53]">Why Choose Sprada2Global</h2>
@@ -414,26 +419,20 @@ export default function HomePage() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {(companyValues === null) ? (
-              // skeletons while loading values
-              [...Array(4)].map((_, i) => (
-                <div key={i} className="animate-pulse p-4 bg-white rounded-lg shadow-sm">
-                  <div className="h-8 bg-slate-200 rounded mb-4 w-12" />
-                  <div className="h-4 bg-slate-200 rounded mb-2 w-3/4" />
-                  <div className="h-3 bg-slate-200 rounded w-5/6" />
-                </div>
-              ))
-            ) : (companyValues.length ? companyValues.map((value, i) => (
+            {companyValues && companyValues.length ? companyValues.map((value, i) => (
               <motion.div key={value.id || i} initial="hidden" whileInView="visible" variants={fadeUp} viewport={{ once: true }}>
                 <ValueCard title={value.title} description={value.description} />
               </motion.div>
-            )) : (
-              <div className="col-span-full text-center text-slate-600">No company values available.</div>
+            )) : DEFAULT_COMPANY_VALUES.map((v, i) => (
+              <motion.div key={i} initial="hidden" whileInView="visible" variants={fadeUp} viewport={{ once: true }}>
+                <ValueCard title={v.title} description={v.description} />
+              </motion.div>
             ))}
           </div>
         </div>
       </section>
 
+      {/* Product Categories */}
       {/* Product Categories */}
       <section className="py-10 md:py-16 bg-slate-50">
         <div className="max-w-[1100px] mx-auto px-4 sm:px-6">
@@ -457,12 +456,7 @@ export default function HomePage() {
 
             <div ref={categoriesRef} tabIndex={0} onKeyDown={onCategoryKey} className="overflow-x-auto no-scrollbar px-2 py-2 -mx-2 scroll-smooth" role="list" aria-label="Product categories">
               <div className="flex gap-4">
-                {(productCategories === null) ? (
-                  // skeleton placeholders horizontally
-                  [...Array(3)].map((_, i) => (
-                    <div key={i} className="min-w-[210px] max-w-[220px] shrink-0 animate-pulse p-4 bg-white rounded-lg shadow-sm" />
-                  ))
-                ) : (productCategories.length ? productCategories.map((category, i) => {
+                {productCategories.map((category, i) => {
                   const id = category.id || category._id || null;
                   const name = category.name || category.categoryName || category.title || category.slug || "Category";
                   const description = category.description || category.shortDescription || "";
@@ -493,16 +487,14 @@ export default function HomePage() {
                       <CategoryCard name={name} description={description} count={count} thumb={thumb} to={categoryPath} onClick={onClickCategory} />
                     </div>
                   );
-                }) : (
-                  <div className="min-w-[210px] max-w-[220px] shrink-0 flex items-center justify-center text-slate-600">No categories available.</div>
-                ))}
+                })}
               </div>
             </div>
           </div>
 
           {/* Large: grid */}
           <div className="hidden lg:block">
-            {(productCategories === null) ? (
+            {(!productCategories || productCategories.length === 0) ? (
               <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 {[...Array(6)].map((_, i) => (
                   <div key={i} className="animate-pulse p-4 bg-white rounded-lg shadow-sm">
@@ -512,7 +504,7 @@ export default function HomePage() {
                   </div>
                 ))}
               </div>
-            ) : (productCategories.length ? (
+            ) : (
               <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 {productCategories.map((category, i) => {
                   const id = category.id || category._id || null;
@@ -547,9 +539,7 @@ export default function HomePage() {
                   );
                 })}
               </div>
-            ) : (
-              <div className="text-center text-slate-600">No categories available.</div>
-            ))}
+            )}
           </div>
         </div>
       </section>
