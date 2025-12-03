@@ -7,14 +7,9 @@ import { Card, CardContent } from '../ui/card';
 import { Button } from '../ui/button';
 import { CheckCircle, ArrowLeft, X, ArrowLeft as PrevIcon, ArrowRight as NextIcon } from 'lucide-react';
 import * as api from '../../lib/api';
+import { toAbsoluteImageUrl } from "../../lib/api";
 
-function makeAbsoluteImageUrl(url) {
-  if (!url) return null;
-  if (/^https?:\/\//i.test(url)) return url;
-  if (/^\/\//.test(url)) return `${window.location.protocol}${url}`;
-  if (url.startsWith('/')) return `${api.BASE}${url}`;
-  return `${api.BASE}/${url}`;
-}
+
 
 function displayTradeType(product) {
   if (!product) return 'both';
@@ -239,26 +234,26 @@ const ProductDetail = () => {
         if (!p) { setError('Product not found'); return; }
 
         const normalized = { ...p };
-        normalized.primary_image = makeAbsoluteImageUrl(p.primary_image || p.og_image || p.image || (p.metadata && (p.metadata.image || p.metadata.og_image)) || null);
-        normalized.og_image = makeAbsoluteImageUrl(p.og_image || null);
-        normalized.image = makeAbsoluteImageUrl(p.image || null);
+        normalized.primary_image = toAbsoluteImageUrl(p.primary_image || p.og_image || p.image || (p.metadata && (p.metadata.image || p.metadata.og_image)) || null);
+        normalized.og_image = toAbsoluteImageUrl(p.og_image || null);
+        normalized.image = toAbsoluteImageUrl(p.image || null);
 
         const meta = p.metadata || {};
         const metaImages = [];
         if (Array.isArray(meta.images)) {
           meta.images.forEach((it) => {
             if (!it) return;
-            if (typeof it === 'string') metaImages.push(makeAbsoluteImageUrl(it));
-            else if (it.url) metaImages.push(makeAbsoluteImageUrl(it.url));
-            else if (it.filename) metaImages.push(makeAbsoluteImageUrl(`/uploads/products/${it.filename}`));
+            if (typeof it === 'string') metaImages.push(toAbsoluteImageUrl(it));
+            else if (it.url) metaImages.push(toAbsoluteImageUrl(it.url));
+            else if (it.filename) metaImages.push(toAbsoluteImageUrl(`/uploads/products/${it.filename}`));
           });
         }
         if (Array.isArray(meta.gallery)) {
           meta.gallery.forEach((it) => {
             if (!it) return;
-            if (typeof it === 'string') metaImages.push(makeAbsoluteImageUrl(it));
-            else if (it.url) metaImages.push(makeAbsoluteImageUrl(it.url));
-            else if (it.filename) metaImages.push(makeAbsoluteImageUrl(`/uploads/products/${it.filename}`));
+            if (typeof it === 'string') metaImages.push(toAbsoluteImageUrl(it));
+            else if (it.url) metaImages.push(toAbsoluteImageUrl(it.url));
+            else if (it.filename) metaImages.push(toAbsoluteImageUrl(`/uploads/products/${it.filename}`));
           });
         }
         normalized._metaImages = metaImages;

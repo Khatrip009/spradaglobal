@@ -9,6 +9,56 @@ export const BASE = RAW_BASE.replace(/\/+$/, ''); // remove trailing slash
 export const UPLOADS_BASE = ((import.meta.env.VITE_UPLOADS_BASE_URL || '') || (BASE + '/uploads')).replace(/\/+$/, '');
 const DEFAULT_TIMEOUT = 15000; // ms
 
+// ---------- Image URL normalizer (client) ----------
+/**
+ * toAbsoluteImageUrl(url)
+ * - returns null for empty/falsy
+ * - leaves http(s) absolute URLs unchanged
+ * - converts paths starting with /uploads or uploads/ to UPLOADS_BASE + path
+ * - converts bare filenames to UPLOADS_BASE/<filename>
+ * - for local FS paths (like /mnt/data/...) tries to extract filename and return UPLOADS_BASE/<filename>
+ */
+export function toAbsoluteImageUrl(url) {
+  if (!url || typeof url !== "string") return null;
+  const trimmed = url.trim();
+  if (!trimmed) return null;
+
+  // Already absolute
+  if (/^https?:\/\//i.test(trimmed)) return trimmed;
+
+  // If it's a protocol-relative //example...
+  if (/^\/\//.test(trimmed)) return `${window.location.protocol}${trimmed}`;
+
+  // If it looks like a server-root uploads path: /uploads/...
+  if (/^\/(?:src\/)?uploads\//i.test(trimmed)) {
+    // ensure single slash separation
+    return `${UPLOADS_BASE}${trimmed.replace(/^\/+/, "/")}`;
+  }
+
+  // If it looks like relative uploads path: uploads/...
+  if (/^(?:src\/)?uploads\//i.test(trimmed)) {
+    return `${UPLOADS_BASE}/${trimmed.replace(/^\/+/, "")}`;
+  }
+
+  // If it's a local filesystem stray path (best-effort)
+  // e.g. /mnt/data/..., C:\path\to\file.jpg
+  // Extract basename and assume it lives under uploads
+  const fsMatch = trimmed.match(/([^\\/]+)\.(jpe?g|png|gif|webp|svg|bmp)$/i);
+  if (fsMatch) {
+    const filename = fsMatch[0];
+    return `${UPLOADS_BASE}/${encodeURIComponent(filename)}`;
+  }
+
+  // Bare filename fallback (e.g. '1764492415427-xxx.jpg' or 'file.jpg')
+  if (!trimmed.startsWith("/")) {
+    return `${UPLOADS_BASE}/${trimmed.replace(/^\/+/, "")}`;
+  }
+
+  // Fallback: prefix with BASE
+  return `${BASE}${trimmed}`;
+}
+
+
 /* -----------------------------------------------------
    IN-MEMORY CACHE (very lightweight)
 ----------------------------------------------------- */
@@ -283,6 +333,10 @@ export async function getReviewStats() {
 /* -----------------------------------------------------
    BLOGS
 ----------------------------------------------------- */
+/* -----------------------------------------------------
+   BLOGS (with image normalization using toAbsoluteImageUrl)
+----------------------------------------------------- */
+
 function normalizeCategory(cat) {
   if (!cat) return null;
   if (typeof cat === "string") return { name: cat };
@@ -293,6 +347,49 @@ function normalizeCategory(cat) {
     };
   }
   return null;
+}
+
+function normalizeBlogImages(b) {
+  if (!b || typeof b !== "object") return b;
+
+  // top-level image fields
+  if (b.og_image) b.og_image = toAbsoluteImageUrl(b.og_image);
+  if (b.image) b.image = toAbsoluteImageUrl(b.image);
+  if (b.thumbnail) b.thumbnail = toAbsoluteImageUrl(b.thumbnail);
+
+  // author avatar
+  if (b.author && b.author.avatar) {
+    b.author.avatar = toAbsoluteImageUrl(b.author.avatar);
+  }
+
+  // content -> lead -> hero_image
+  if (b.content && b.content.lead && b.content.lead.hero_image && b.content.lead.hero_image.url) {
+    b.content.lead.hero_image.url = toAbsoluteImageUrl(b.content.lead.hero_image.url);
+  }
+
+  // content.blocks images / galleries
+  if (b.content && Array.isArray(b.content.blocks)) {
+    b.content.blocks = b.content.blocks.map(block => {
+      if (!block || typeof block !== "object") return block;
+      if (block.type === "image" && block.url) {
+        return { ...block, url: toAbsoluteImageUrl(block.url) };
+      }
+      if (block.type === "gallery" && Array.isArray(block.items)) {
+        return {
+          ...block,
+          items: block.items.map(it => ({ ...it, url: toAbsoluteImageUrl(it.url) }))
+        };
+      }
+      return block;
+    });
+  }
+
+  // images array (if backend returns explicit images)
+  if (Array.isArray(b.images)) {
+    b.images = b.images.map(i => ({ ...i, url: toAbsoluteImageUrl(i.url) }));
+  }
+
+  return b;
 }
 
 export async function getBlogs(opts = {}) {
@@ -306,10 +403,7 @@ export async function getBlogs(opts = {}) {
   // CASE A: backend returned array
   if (Array.isArray(r)) {
     return {
-      blogs: r.map(b => ({
-        ...b,
-        category: normalizeCategory(b.category)
-      })),
+      blogs: r.map(b => normalizeBlogImages({ ...b, category: normalizeCategory(b.category) })),
       total: r.length,
       page: opts.page || 1,
       limit: opts.limit || r.length
@@ -320,10 +414,7 @@ export async function getBlogs(opts = {}) {
   const blogs = r.blogs || r.items || [];
 
   return {
-    blogs: blogs.map(b => ({
-      ...b,
-      category: normalizeCategory(b.category)
-    })),
+    blogs: blogs.map(b => normalizeBlogImages({ ...b, category: normalizeCategory(b.category) })),
     total: r.total ?? r.total_count ?? blogs.length ?? null,
     page: r.page || opts.page || 1,
     limit: r.limit || opts.limit || blogs.length || null
@@ -339,10 +430,10 @@ export async function getBlogBySlug(slug) {
 
     if (!blog) return null;
 
-    return {
+    return normalizeBlogImages({
       ...blog,
       category: normalizeCategory(blog.category)
-    };
+    });
   } catch {
     // Fallback: search by q=slug
     try {
@@ -355,15 +446,16 @@ export async function getBlogBySlug(slug) {
 
       if (!b) return null;
 
-      return {
+      return normalizeBlogImages({
         ...b,
         category: normalizeCategory(b.category)
-      };
+      });
     } catch {
       return null;
     }
   }
 }
+
 /**
  * Toggle like for a blog post.
  * Calls POST /api/blogs/:id/like

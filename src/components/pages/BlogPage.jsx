@@ -11,6 +11,7 @@ import * as api from "../../lib/api";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "../ui/ToastProvider";
 import bloghero from '../../assets/blog-hero.jpg';
+import { toAbsoluteImageUrl } from "../../lib/api";
 
 /* Filter buttons (UI) */
 const filterCategories = [
@@ -29,47 +30,7 @@ const filterCategories = [
  * - If url is root-relative (/uploads/...), prefix with api.UPLOADS_BASE if available, otherwise leave as-is
  * - If url is relative, prefix with api.UPLOADS_BASE if available
  */
-function makeAbsoluteImageUrl(url, fallback = "/images/placeholder.png") {
-  try {
-    if (!url) return fallback;
-    if (typeof url !== "string") return fallback;
-    const trimmed = url.trim();
-    if (trimmed === "") return fallback;
 
-    // absolute url -> keep, but if it points to current origin's /uploads and UPLOADS_BASE provided, rewrite
-    if (/^https?:\/\//i.test(trimmed)) {
-      try {
-        const u = new URL(trimmed);
-        const currentOrigin = window.location.origin.replace(/\/$/, "");
-        // if image points to same origin and path contains /uploads and UPLOADS_BASE is configured, rewrite
-        if ((u.origin === currentOrigin || u.origin === (window.location.protocol + '//' + window.location.host))
-            && u.pathname.match(/\/uploads(\/|$)/) && api.UPLOADS_BASE) {
-          return `${api.UPLOADS_BASE}${u.pathname}${u.search || ""}`;
-        }
-      } catch (e) {
-        // ignore URL parse errors
-      }
-      return trimmed;
-    }
-
-    // protocol-relative (//example.com/...)
-    if (/^\/\//.test(trimmed)) return `${window.location.protocol}${trimmed}`;
-
-    // root-relative: /uploads/...
-    if (trimmed.startsWith("/")) {
-      if (api.UPLOADS_BASE) return `${api.UPLOADS_BASE.replace(/\/$/, "")}${trimmed}`;
-      return trimmed;
-    }
-
-    // relative path: prefer UPLOADS_BASE
-    if (api.UPLOADS_BASE) return `${api.UPLOADS_BASE.replace(/\/$/, "")}/${trimmed.replace(/^\//, "")}`;
-
-    // fallback: assume same-origin relative
-    return `${window.location.origin.replace(/\/$/, "")}/${trimmed.replace(/^\//, "")}`;
-  } catch (err) {
-    return fallback;
-  }
-}
 
 
 export default function BlogPage() {
@@ -303,7 +264,7 @@ export default function BlogPage() {
                 const liked = userLiked(post);
 
                 const dateStr = new Date(post.published_at || post.created_at || Date.now()).toLocaleDateString();
-                const thumb = makeAbsoluteImageUrl(post.image || post.og_image || post.image || null, "/images/placeholder.png");
+                const thumb = toAbsoluteImageUrl(post.image || post.og_image || post.image || null, "/images/placeholder.png");
 
                 return (
                   <motion.div key={post.id || post.slug || index} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: index * 0.04 }}>

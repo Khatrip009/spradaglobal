@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import * as api from '../../lib/api';
+import { toAbsoluteImageUrl } from "../../lib/api";
 
 const fallbackProducts = [
   { id: 1, title: "Peanuts", description: "Premium groundnuts in various grades", image: "https://static.wixstatic.com/media/a92b5b_062c18c7afda4cce9d104b22566f08d1~mv2.png", metadata: {} },
@@ -52,14 +53,6 @@ function initialsFromName(name = '') {
   return name.split(/\s+/).map(s => s[0]).filter(Boolean).slice(0,2).join('').toUpperCase();
 }
 
-function makeAbsoluteImageUrl(url) {
-  if (!url) return null;
-  if (/^https?:\/\//i.test(url)) return url;
-  if (/^\/\//.test(url)) return `${window.location.protocol}${url}`;
-  if (url.startsWith('/')) return `${api.BASE}${url}`;
-  return `${api.BASE}/${url}`;
-}
-
 const ProductsPage = () => {
   const navigate = useNavigate();
 
@@ -86,7 +79,7 @@ const ProductsPage = () => {
           const slug = c?.slug || (typeof name === 'string' ? name.toLowerCase().replace(/\s+/g, '-') : `${idx}`);
           const id = c?.id || slug || idx;
           const thumbRaw = c?.thumb || c?.image || (c?.metadata && (c.metadata.thumb || c.metadata.image)) || null;
-          const thumb = makeAbsoluteImageUrl(thumbRaw);
+          const thumb = toAbsoluteImageUrl(thumbRaw);
           return { id, slug, name, count: Number(c?.product_count ?? c?.count ?? 0), thumb, trade_type: c?.trade_type || c?.tradeType || null };
         });
         setCategories(normalized);
@@ -122,7 +115,7 @@ const ProductsPage = () => {
 
       const normalized = list.map(p => {
         const raw = p.primary_image || p.og_image || p.image || (p.metadata && (p.metadata.image || p.metadata.og_image)) || null;
-        const primary_image = makeAbsoluteImageUrl(raw) || null;
+        const primary_image = toAbsoluteImageUrl(raw) || null;
         const product_trade_type = (p.trade_type == null) ? null : String(p.trade_type);
         const effective_trade_type = p.effective_trade_type || product_trade_type || (p.category && p.category.trade_type) || 'both';
         const categoryObj = p.category ? {
