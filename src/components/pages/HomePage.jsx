@@ -14,10 +14,9 @@ import HERO_ILLU from "../../assets/HERO_ILLU.jpg";
 import HERO_BG from "../../assets/HERO_BG.jpg";
 import ABOUT_IMG from "../../assets/ABOUT_IMG.jpg";
 
-/* --------------------------------------------------
-   Small presentational subcomponents
-   -------------------------------------------------- */
-
+/* -------------------------
+   small presentational components (same as you had)
+   ------------------------- */
 function CategoryCard({ name, description, count, thumb, to, onClick }) {
   return (
     <Link to={to} onClick={onClick} title={name} className="block">
@@ -71,37 +70,19 @@ function ValueCard({ title, description }) {
   );
 }
 
-/* --------------------------------------------------
-   Constants & demo assets
-   -------------------------------------------------- */
+/* -------------------------
+   Constants & placeholders
+   ------------------------- */
 const LOCAL_HERO_PRODUCTS = HERO_PRODUCTS;
-const LOCAL_HERO_BG = HERO_BG;
-const WIX_HERO_ILLU = HERO_ILLU;
-const WIX_ABOUT_IMG = ABOUT_IMG;
 const WIX_CATEGORY_IMG = "https://static.wixstatic.com/media/a92b5b_b378a6a57ed64e5c8aac0b76bbc4abc0~mv2.png?originWidth=576&originHeight=384";
 
 const SVG_FALLBACK = `data:image/svg+xml;utf8,${encodeURIComponent(
   `<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 24 24' fill='none' stroke='%23164946' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'><rect x='2' y='2' width='20' height='20' rx='3' ry='3' fill='%23e6f6f4'/><path d='M7 12h10M7 8h10M7 16h10' /></svg>`
 )}`;
 
-const DEFAULT_COMPANY_VALUES = [
-  { id: "v1", title: "Premium Quality", description: "Sourced from the finest farms with rigorous quality control at every step." },
-  { id: "v2", title: "Trusted Sourcing", description: "Direct partnerships with verified farmers ensuring authentic and fresh produce." },
-  { id: "v3", title: "Certifications", description: "Fully certified with international standards for food safety and quality." },
-  { id: "v4", title: "Global Reach", description: "Serving customers across continents with reliable logistics and timely delivery." }
-];
-
-const DEFAULT_WORKFLOW = [
-  { id: "w1", stepNumber: 1, stepName: "Sourcing", stepDescription: "Direct sourcing from verified farmers" },
-  { id: "w2", stepNumber: 2, stepName: "Sorting & Cleaning", stepDescription: "Rigorous quality control and cleaning" },
-  { id: "w3", stepNumber: 3, stepName: "Packaging", stepDescription: "Professional packaging for export" },
-  { id: "w4", stepNumber: 4, stepName: "Quality Testing", stepDescription: "Comprehensive quality assurance" },
-  { id: "w5", stepNumber: 5, stepName: "Export Logistics", stepDescription: "Reliable global shipping" }
-];
-
-/* --------------------------------------------------
-   Helpers
-   -------------------------------------------------- */
+/* -------------------------
+   small helpers
+   ------------------------- */
 function readCookie(name) {
   if (typeof document === "undefined") return null;
   const m = document.cookie.match(new RegExp('(?:^|; )' + name + '=([^;]*)'));
@@ -132,31 +113,28 @@ function isUuid(s) {
   return /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(s.trim());
 }
 
-/* --------------------------------------------------
-   HomePage component
-   -------------------------------------------------- */
+/* -------------------------
+   HomePage
+   ------------------------- */
 export default function HomePage() {
   const [hero, setHero] = useState({
-    title: "SPRADA2GLOBLA", // as requested
-    subtitle: "Rich Quality, Reach to World",
+    title: "SPRADA2GLOBAL",
+    subtitle: "Rich Quality, Reach to the World",
     image: LOCAL_HERO_PRODUCTS,
-    illu: WIX_HERO_ILLU,
+    illu: null,
     description: ""
   });
 
-  const [companyValues, setCompanyValues] = useState([]);
-  const [productCategories, setProductCategories] = useState([]);
-  const [workflowSteps, setWorkflowSteps] = useState([]);
-  const [certifications, setCertifications] = useState([]);
-  const [testimonials, setTestimonials] = useState([]);
-  const [blogs, setBlogs] = useState([]);
-  const [featured, setFeatured] = useState([]);
+  const [companyValues, setCompanyValues] = useState(null); // null = loading, [] = loaded-empty
+  const [productCategories, setProductCategories] = useState(null);
+  const [workflowSteps, setWorkflowSteps] = useState(null);
+  const [certifications, setCertifications] = useState(null);
+  const [testimonials, setTestimonials] = useState(null);
+  const [blogs, setBlogs] = useState(null);
+  const [featured, setFeatured] = useState(null);
   const [visitorsCount, setVisitorsCount] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [loadingReviews, setLoadingReviews] = useState(false);
-
-  // track hero image loaded (unused now but handy)
-  const [heroImageLoaded, setHeroImageLoaded] = useState(false);
+  const [loadingReviews, setLoadingReviews] = useState(true);
 
   const categoriesRef = useRef(null);
   const [currentTestimonial, setCurrentTestimonial] = useState(0);
@@ -167,12 +145,15 @@ export default function HomePage() {
   const containerVariants = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { duration: 0.5, delayChildren: 0.18, staggerChildren: 0.06 } } };
   const fadeUp = { hidden: { opacity: 0, y: 8 }, visible: { opacity: 1, y: 0 } };
 
+  /* -------------------------
+     load testimonials separately
+     ------------------------- */
   useEffect(() => {
     let mounted = true;
+    setLoadingReviews(true);
     async function loadReviews() {
-      setLoadingReviews(true);
       try {
-        const rev = await api.getReviews(10).catch(() => null);
+        const rev = (api.getReviews) ? await api.getReviews(10).catch(() => null) : null;
         if (!mounted) return;
         if (Array.isArray(rev) && rev.length) {
           setTestimonials(rev.map((r, i) => ({
@@ -185,10 +166,11 @@ export default function HomePage() {
             created_at: r.created_at || r.createdAt || null
           })));
         } else {
-          setTestimonials([]);
+          setTestimonials([]); // loaded, but empty
         }
       } catch (err) {
         console.warn("[HomePage] loadReviews error", err);
+        setTestimonials([]); // fail safe
       } finally {
         if (mounted) setLoadingReviews(false);
       }
@@ -197,11 +179,16 @@ export default function HomePage() {
     return () => { mounted = false; };
   }, []);
 
+  /* -------------------------
+     bootstrap: fetch all home-related data from server
+     ------------------------- */
   useEffect(() => {
     let mounted = true;
     setLoading(true);
+
     async function bootstrap() {
       try {
+        // optionally identify visitor (non-blocking)
         try {
           let sessionId = readCookie("sprada_session_id");
           if (!sessionId) {
@@ -209,103 +196,139 @@ export default function HomePage() {
             setCookie("sprada_session_id", sessionId, 365);
           }
           if (api.postVisitorIdentify) {
-            try {
-              const identifyRes = await api.postVisitorIdentify(sessionId, null, (typeof navigator !== "undefined" ? navigator.userAgent : null), { path: (typeof window !== "undefined" ? window.location.pathname : null) }).catch(() => null);
-              if (identifyRes && identifyRes.visitor_id) setCookie("sprada_visitor_id", identifyRes.visitor_id, 365);
-            } catch (e) { }
+            api.postVisitorIdentify(sessionId, null, (typeof navigator !== "undefined" ? navigator.userAgent : null), { path: (typeof window !== "undefined" ? window.location.pathname : null) }).catch(() => null);
           }
         } catch (e) { console.warn("[HomePage] visitor cookie error", e); }
 
-        try {
-          if (api.getHome) {
-            const home = await api.getHome().catch(() => null);
-            if (home && mounted) {
-              if (home.hero) {
-                const incomingHero = home.hero || {};
-                const incomingImage = incomingHero.image || "";
-                const safeImage = (typeof incomingImage === "string" && (incomingImage.startsWith("/images/") || incomingImage.startsWith("/img/"))) ? LOCAL_HERO_PRODUCTS : (incomingImage || LOCAL_HERO_PRODUCTS);
-                setHero(prev => ({ ...prev, ...incomingHero, image: safeImage || prev.image }));
-              }
-              if (Array.isArray(home.categories) && home.categories.length) setProductCategories(home.categories);
-              if (Array.isArray(home.featured) && home.featured.length) setFeatured(home.featured);
-              if (Array.isArray(home.blogs) && home.blogs.length) setBlogs(home.blogs.slice(0, 3));
-            }
-          }
-        } catch (e) { console.warn("[HomePage] getHome failed", e); }
+        // Parallel fetches — prefer api.getHome but fall back to specific endpoints if absent
+        const promises = [];
 
-        try {
-          const cats = await api.getCategories().catch(async () => {
-            try {
-              if (api.request) {
-                const resp = await api.request("/api/categories?include_counts=true");
-                if (Array.isArray(resp)) return resp;
-                if (resp.categories) return resp.categories;
-                if (resp.items) return resp.items;
-              }
-            } catch (_) { }
-            return null;
-          });
-          if (cats) {
-            if (Array.isArray(cats)) setProductCategories(cats);
-            else if (cats.categories && Array.isArray(cats.categories)) setProductCategories(cats.categories);
-            else if (cats.items && Array.isArray(cats.items)) setProductCategories(cats.items);
-          }
-        } catch (e) { console.warn("[HomePage] getCategories error", e); }
+        if (api.getHome) promises.push(api.getHome().catch(() => null));
+        else promises.push(Promise.resolve(null));
 
-        try {
-          if (api.getMetricsVisitorsSummary) {
-            const m = await api.getMetricsVisitorsSummary().catch(() => null);
-            if (m) {
-              const total = m.total_visitors || m.total || m.totalVisitors || null;
-              setVisitorsCount(total || null);
-            }
-          }
-        } catch (e) { console.warn("[HomePage] getMetricsVisitorsSummary error", e); }
+        if (api.getCategories) promises.push(api.getCategories().catch(() => null));
+        else promises.push(Promise.resolve(null));
 
-        if (mounted) {
-          if ((!companyValues || companyValues.length === 0) && DEFAULT_COMPANY_VALUES.length) setCompanyValues(DEFAULT_COMPANY_VALUES);
-          if (!workflowSteps || workflowSteps.length === 0) setWorkflowSteps(DEFAULT_WORKFLOW);
-          if ((!productCategories || productCategories.length === 0)) {
-            setProductCategories([
-              { id: "c1", categoryName: "Peanuts", slug: "peanuts", categoryImage: WIX_CATEGORY_IMG, count: 12 },
-              { id: "c2", categoryName: "Sesame Seeds", slug: "sesame-seeds", categoryImage: WIX_CATEGORY_IMG, count: 8 },
-              { id: "c3", categoryName: "Spices", slug: "spices", categoryImage: WIX_CATEGORY_IMG, count: 22 }
-            ]);
+        if (api.getFeatured) promises.push(api.getFeatured().catch(() => null));
+        else promises.push(Promise.resolve(null));
+
+        if (api.getBlogs) promises.push(api.getBlogs().catch(() => null));
+        else promises.push(Promise.resolve(null));
+
+        if (api.getCertifications) promises.push(api.getCertifications().catch(() => null));
+        else promises.push(Promise.resolve(null));
+
+        if (api.getMetricsVisitorsSummary) promises.push(api.getMetricsVisitorsSummary().catch(() => null));
+        else promises.push(Promise.resolve(null));
+
+        const [
+          homeRes,
+          categoriesRes,
+          featuredRes,
+          blogsRes,
+          certificationsRes,
+          metricsRes
+        ] = await Promise.all(promises);
+
+        if (!mounted) return;
+
+        // 1) homeRes (single endpoint preferred)
+        if (homeRes) {
+          if (homeRes.hero) {
+            const incomingHero = homeRes.hero || {};
+            const incomingImage = incomingHero.image || "";
+            const safeImage = (typeof incomingImage === "string" && (incomingImage.startsWith("/images/") || incomingImage.startsWith("/img/"))) ? LOCAL_HERO_PRODUCTS : (incomingImage || LOCAL_HERO_PRODUCTS);
+            setHero(prev => ({ ...prev, ...incomingHero, image: safeImage || prev.image }));
           }
-          if ((!certifications || certifications.length === 0)) setCertifications(["IEC", "MSME", "RCMC", "FSSAI", "GST"]);
+          if (Array.isArray(homeRes.categories)) setProductCategories(homeRes.categories);
+          else if (Array.isArray(homeRes.categories || homeRes.categoriesList)) setProductCategories(homeRes.categories || homeRes.categoriesList);
+
+          if (Array.isArray(homeRes.featured)) setFeatured(homeRes.featured);
+          if (Array.isArray(homeRes.blogs)) setBlogs(homeRes.blogs.slice(0, 3));
+          if (Array.isArray(homeRes.certifications)) setCertifications(homeRes.certifications);
+          if (Array.isArray(homeRes.values)) setCompanyValues(homeRes.values);
+          if (Array.isArray(homeRes.workflow)) setWorkflowSteps(homeRes.workflow);
         }
-      } catch (err) { console.error("[HomePage] bootstrap error", err); }
-      finally { if (mounted) setLoading(false); }
+
+        // 2) categories endpoint fallback (only if productCategories is still null)
+        if ((productCategories === null || productCategories === undefined) && categoriesRes) {
+          if (Array.isArray(categoriesRes)) setProductCategories(categoriesRes);
+          else if (categoriesRes.categories && Array.isArray(categoriesRes.categories)) setProductCategories(categoriesRes.categories);
+        }
+
+        // 3) featured endpoint fallback
+        if ((featured === null || featured === undefined) && featuredRes) {
+          if (Array.isArray(featuredRes)) setFeatured(featuredRes);
+          else if (featuredRes.featured && Array.isArray(featuredRes.featured)) setFeatured(featuredRes.featured);
+        }
+
+        // 4) blogs endpoint fallback
+        if ((blogs === null || blogs === undefined) && blogsRes) {
+          if (Array.isArray(blogsRes)) setBlogs(blogsRes.slice(0, 3));
+          else if (blogsRes.blogs && Array.isArray(blogsRes.blogs)) setBlogs(blogsRes.blogs.slice(0, 3));
+        }
+
+        // 5) certifications endpoint
+        if (certificationsRes && Array.isArray(certificationsRes)) setCertifications(certificationsRes);
+        else if (certificationsRes && certificationsRes.items && Array.isArray(certificationsRes.items)) setCertifications(certificationsRes.items);
+
+        // 6) metrics
+        if (metricsRes) {
+          const total = metricsRes.total_visitors || metricsRes.total || metricsRes.totalVisitors || null;
+          setVisitorsCount(total || null);
+        }
+
+        // If server didn't provide company values/workflow, set to empty arrays (loaded-empty)
+        if (companyValues === null) setCompanyValues([]);
+        if (workflowSteps === null) setWorkflowSteps([]);
+
+        // IMPORTANT: do NOT inject mock product categories / certifications here.
+        // If you want demo mode (local mock), toggle it explicitly (see comments below).
+
+      } catch (err) {
+        console.error("[HomePage] bootstrap error", err);
+        // mark loads as completed but empty (so UI shows placeholders)
+        if (companyValues === null) setCompanyValues([]);
+        if (workflowSteps === null) setWorkflowSteps([]);
+        if (productCategories === null) setProductCategories([]);
+        if (certifications === null) setCertifications([]);
+        if (featured === null) setFeatured([]);
+        if (blogs === null) setBlogs([]);
+      } finally {
+        if (mounted) setLoading(false);
+      }
     }
 
     bootstrap();
     return () => { mounted = false; };
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // run once on mount
 
-  // fallback hero image if something odd
+  // fallback hero image if something odd — only ensures not-empty image (doesn't seed other data)
   useEffect(() => {
     if (!hero.image || (typeof hero.image === "string" && hero.image.startsWith("/images/"))) {
       setHero(prev => ({ ...prev, image: LOCAL_HERO_PRODUCTS }));
     }
   }, []); // run once on mount
 
+  // testimonial rotation — unchanged
   useEffect(() => {
     const start = () => {
       if (testimonialTimerRef.current) clearInterval(testimonialTimerRef.current);
       testimonialTimerRef.current = setInterval(() => {
-        setCurrentTestimonial((p) => (p + 1) % (testimonials.length || 1));
+        setCurrentTestimonial((p) => (p + 1) % (testimonials?.length || 1));
       }, 6000);
     };
 
     if (testimonials && testimonials.length > 1) start();
 
     return () => { if (testimonialTimerRef.current) clearInterval(testimonialTimerRef.current); };
-  }, [testimonials.length]);
+  }, [testimonials?.length]);
 
-  const nextTestimonial = useCallback(() => setCurrentTestimonial((p) => (p + 1) % (testimonials.length || 1)), [testimonials.length]);
-  const prevTestimonial = useCallback(() => setCurrentTestimonial((p) => (p - 1 + (testimonials.length || 1)) % (testimonials.length || 1)), [testimonials.length]);
+  const nextTestimonial = useCallback(() => setCurrentTestimonial((p) => (p + 1) % (testimonials?.length || 1)), [testimonials?.length]);
+  const prevTestimonial = useCallback(() => setCurrentTestimonial((p) => (p - 1 + (testimonials?.length || 1)) % (testimonials?.length || 1)), [testimonials?.length]);
   const pauseRotation = () => { if (testimonialTimerRef.current) clearInterval(testimonialTimerRef.current); };
-  const resumeRotation = () => { if (testimonials.length > 1) testimonialTimerRef.current = setInterval(() => setCurrentTestimonial((p) => (p + 1) % (testimonials.length || 1)), 6000); };
+  const resumeRotation = () => { if (testimonials?.length > 1) testimonialTimerRef.current = setInterval(() => setCurrentTestimonial((p) => (p + 1) % (testimonials?.length || 1)), 6000); };
 
   const scrollCategories = (dir = "right") => {
     const el = categoriesRef.current;
@@ -313,7 +336,6 @@ export default function HomePage() {
     const distance = Math.round(el.clientWidth * 0.8);
     el.scrollBy({ left: dir === "left" ? -distance : distance, behavior: "smooth" });
   };
-
   const onCategoryKey = (e) => {
     if (e.key === "ArrowLeft") scrollCategories("left");
     if (e.key === "ArrowRight") scrollCategories("right");
@@ -327,68 +349,33 @@ export default function HomePage() {
     );
   }
 
-  console.log("[HomePage] hero.image resolved to:", hero.image);
-
   return (
-    // ensure header does not overlap hero: uses CSS variable --header-height if your header sets it,
-    // otherwise falls back to 96px. You can change fallback by editing the inline style below.
     <div className="min-h-screen bg-background text-slate-800 antialiased overflow-x-hidden" style={{ paddingTop: "var(--header-height, 96px)" }}>
       {/* HERO */}
-      <motion.section
-        className="relative overflow-hidden"
-        initial="hidden"
-        animate="visible"
-        variants={containerVariants}
-        aria-label="Hero"
-      >
-        {/* background image via CSS for stable layout */}
-        <div
-          className="absolute inset-0 z-0 w-full h-full bg-center bg-cover bg-no-repeat"
-          style={{
-            backgroundImage: `url("${hero.image || LOCAL_HERO_PRODUCTS}")`,
-            backgroundPosition: "center center",
-            backgroundSize: "cover",
-            backgroundRepeat: "no-repeat",
-            willChange: "transform",
-          }}
-          aria-hidden="true"
-        />
+      <motion.section className="relative overflow-hidden" initial="hidden" animate="visible" variants={containerVariants} aria-label="Hero">
+        <div className="absolute inset-0 z-0 w-full h-full bg-center bg-cover bg-no-repeat" style={{
+          backgroundImage: `url("${hero.image || LOCAL_HERO_PRODUCTS}")`,
+          backgroundPosition: "center center",
+          backgroundSize: "cover",
+          backgroundRepeat: "no-repeat",
+          willChange: "transform",
+        }} aria-hidden="true" />
 
-        {/* global subtle overlay */}
-        <div
-          className="absolute inset-0 z-10"
-          style={{ background: "linear-gradient(rgba(6,12,8,0.56), rgba(6,12,8,0.32))" }}
-          aria-hidden="true"
-        />
+        <div className="absolute inset-0 z-10" style={{ background: "linear-gradient(rgba(6,12,8,0.56), rgba(6,12,8,0.32))" }} aria-hidden="true" />
 
-        {/* extra LEFT-side gradient to darken text area (only left side) */}
-        <div
-          className="absolute inset-0 z-11 pointer-events-none"
-          style={{
-            background: "linear-gradient(to right, rgba(0,0,0,0.72) 0%, rgba(0,0,0,0.45) 30%, rgba(0,0,0,0.18) 55%, transparent 75%)"
-          }}
-          aria-hidden="true"
-        />
+        <div className="absolute inset-0 z-11 pointer-events-none" style={{ background: "linear-gradient(to right, rgba(0,0,0,0.72) 0%, rgba(0,0,0,0.45) 30%, rgba(0,0,0,0.18) 55%, transparent 75%)" }} aria-hidden="true" />
 
         <div className="relative z-20 max-w-[1200px] mx-auto px-4 sm:px-6 py-12 md:py-24">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
-            {/* TEXT COLUMN */}
             <div className="text-left">
-              <motion.h1
-                className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl leading-tight font-heading font-extrabold mb-3 text-white drop-shadow-[0_6px_14px_rgba(0,0,0,0.65)]"
-                variants={heroVariants}
-                aria-label="Company name"
-              >
-                {/* Big company name as requested */}
-                {hero.title || "SPRADA2GLOBLA"}
+              <motion.h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl leading-tight font-heading font-extrabold mb-3 text-white drop-shadow-[0_6px_14px_rgba(0,0,0,0.65)]" variants={heroVariants} aria-label="Company name">
+                {hero.title || "SPRADA2GLOBAL"}
               </motion.h1>
 
-              {/* stylish tagline */}
               <motion.div className="mb-4" variants={heroVariants}>
                 <p className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-semibold italic tracking-wide text-white/95 drop-shadow-[0_4px_10px_rgba(0,0,0,0.55)]">
-                  {hero.subtitle || "Rich Quality, Reach to World"}
+                  {hero.subtitle || "Rich Quality, Reach to the World"}
                 </p>
-                {/* optional decorative underline / accent */}
                 <div className="mt-2 w-20 h-1 bg-gradient-to-r from-[#D7B15B] to-[#164946] rounded-full" />
               </motion.div>
 
@@ -396,7 +383,6 @@ export default function HomePage() {
                 {hero.description || "Your trusted partner in premium agricultural exports. We connect the finest Indian produce with global markets, ensuring compliance and quality at every step."}
               </motion.p>
 
-              {/* CTAs */}
               <motion.div className="flex flex-col sm:flex-row gap-3 sm:gap-4" variants={heroVariants}>
                 <Link to="/contact" className="w-full sm:w-auto">
                   <Button className="w-full sm:w-auto bg-white text-[#164946] font-semibold py-3 sm:py-2 px-5 rounded shadow-sm hover:shadow-md transition">Request a Quote</Button>
@@ -405,17 +391,6 @@ export default function HomePage() {
                   <Button variant="outline" className="w-full sm:w-auto border-white text-white hover:bg-white hover:text-[#33504F] py-3 sm:py-2 px-5 rounded transition">View Products</Button>
                 </Link>
               </motion.div>
-
-              <div className="mt-6 text-sm flex items-center gap-6 text-white/90">
-                <div>{visitorsCount == null ? "Visitors: —" : `Visitors: ${Number(visitorsCount).toLocaleString()}`}</div>
-                <div className="hidden sm:block">Notifications available</div>
-              </div>
-            </div>
-            {/* ILLU / RIGHT COLUMN */}
-            <div className="hidden md:flex justify-center items-center">
-              <div className="w-full max-w-md">
-                <Image src={hero.illu || WIX_HERO_ILLU} alt="Export illustration" width={700} className="w-full h-auto rounded-lg shadow-2xl" />
-              </div>
             </div>
           </div>
         </div>
@@ -430,14 +405,21 @@ export default function HomePage() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {companyValues && companyValues.length ? companyValues.map((value, i) => (
+            {(companyValues === null) ? (
+              // skeletons while loading values
+              [...Array(4)].map((_, i) => (
+                <div key={i} className="animate-pulse p-4 bg-white rounded-lg shadow-sm">
+                  <div className="h-8 bg-slate-200 rounded mb-4 w-12" />
+                  <div className="h-4 bg-slate-200 rounded mb-2 w-3/4" />
+                  <div className="h-3 bg-slate-200 rounded w-5/6" />
+                </div>
+              ))
+            ) : (companyValues.length ? companyValues.map((value, i) => (
               <motion.div key={value.id || i} initial="hidden" whileInView="visible" variants={fadeUp} viewport={{ once: true }}>
                 <ValueCard title={value.title} description={value.description} />
               </motion.div>
-            )) : DEFAULT_COMPANY_VALUES.map((v, i) => (
-              <motion.div key={i} initial="hidden" whileInView="visible" variants={fadeUp} viewport={{ once: true }}>
-                <ValueCard title={v.title} description={v.description} />
-              </motion.div>
+            )) : (
+              <div className="col-span-full text-center text-slate-600">No company values available.</div>
             ))}
           </div>
         </div>
@@ -448,7 +430,7 @@ export default function HomePage() {
         <div className="max-w-[1100px] mx-auto px-4 sm:px-6">
           <div className="text-center mb-6">
             <h2 className="text-2xl md:text-3xl font-heading font-semibold text-[#1f5a53]">Our Product Categories</h2>
-            <p className="text-sm md:text-base text-slate-600 mt-2">Discover our premium range carefully selected and processed to meet international standards.</p>
+            <p className="text-sm md:text-base text-slate-600 mt-2">Discover our premium range carefully selected and processed Products to meet international standards.</p>
           </div>
 
           {/* Small/medium: horizontal scroller */}
@@ -466,7 +448,12 @@ export default function HomePage() {
 
             <div ref={categoriesRef} tabIndex={0} onKeyDown={onCategoryKey} className="overflow-x-auto no-scrollbar px-2 py-2 -mx-2 scroll-smooth" role="list" aria-label="Product categories">
               <div className="flex gap-4">
-                {productCategories.map((category, i) => {
+                {(productCategories === null) ? (
+                  // skeleton placeholders horizontally
+                  [...Array(3)].map((_, i) => (
+                    <div key={i} className="min-w-[210px] max-w-[220px] shrink-0 animate-pulse p-4 bg-white rounded-lg shadow-sm" />
+                  ))
+                ) : (productCategories.length ? productCategories.map((category, i) => {
                   const id = category.id || category._id || null;
                   const name = category.name || category.categoryName || category.title || category.slug || "Category";
                   const description = category.description || category.shortDescription || "";
@@ -497,14 +484,16 @@ export default function HomePage() {
                       <CategoryCard name={name} description={description} count={count} thumb={thumb} to={categoryPath} onClick={onClickCategory} />
                     </div>
                   );
-                })}
+                }) : (
+                  <div className="min-w-[210px] max-w-[220px] shrink-0 flex items-center justify-center text-slate-600">No categories available.</div>
+                ))}
               </div>
             </div>
           </div>
 
           {/* Large: grid */}
           <div className="hidden lg:block">
-            {(!productCategories || productCategories.length === 0) ? (
+            {(productCategories === null) ? (
               <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 {[...Array(6)].map((_, i) => (
                   <div key={i} className="animate-pulse p-4 bg-white rounded-lg shadow-sm">
@@ -514,7 +503,7 @@ export default function HomePage() {
                   </div>
                 ))}
               </div>
-            ) : (
+            ) : (productCategories.length ? (
               <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 {productCategories.map((category, i) => {
                   const id = category.id || category._id || null;
@@ -549,7 +538,9 @@ export default function HomePage() {
                   );
                 })}
               </div>
-            )}
+            ) : (
+              <div className="text-center text-slate-600">No categories available.</div>
+            ))}
           </div>
         </div>
       </section>
@@ -559,16 +550,11 @@ export default function HomePage() {
         <div className="max-w-[1100px] mx-auto px-4 sm:px-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
             <div className="w-full">
-              <Image
-                src={WIX_ABOUT_IMG}
-                alt="About Sprada2Global Exim"
-                width={500}
-                className="w-full h-[140px] sm:h-[180px] md:h-[340px] lg:h-[420px] xl:h-[480px] object-cover rounded-lg shadow-lg"
-              />
+              <Image src={ABOUT_IMG} alt="About Sprada2Global Exim" width={500} className="w-full h-[140px] sm:h-[180px] md:h-[340px] lg:h-[420px] xl:h-[480px] object-cover rounded-lg shadow-lg" />
             </div>
             <div>
               <h2 className="text-2xl md:text-3xl font-heading font-semibold text-[#1f5a53] mb-3">About Sprada2Global Exim</h2>
-              <p className="text-sm md:text-base text-slate-700 mb-4 leading-relaxed">With years of experience in agricultural exports, we have built a reputation for delivering premium quality products to markets worldwide. Our commitment to excellence and sustainable practices sets us apart in the industry.</p>
+              <p className="text-sm md:text-base text-slate-700 mb-4 leading-relaxed">With years of experience in exports and imports, we have built a reputation for delivering premium quality products to markets worldwide. Our commitment to excellence and sustainable practices sets us apart in the industry.</p>
               <ul className="space-y-3 mb-4">
                 <li className="flex items-start gap-3"><CheckCircle className="w-5 h-5 text-[#D7B15B] mt-1" /><span className="text-sm text-slate-700">Direct sourcing from verified farmers across India</span></li>
                 <li className="flex items-start gap-3"><CheckCircle className="w-5 h-5 text-[#D7B15B] mt-1" /><span className="text-sm text-slate-700">State-of-the-art processing and packaging facilities</span></li>
@@ -591,22 +577,41 @@ export default function HomePage() {
           <div className="relative">
             <div className="hidden lg:block absolute top-1/2 left-4 right-4 h-px bg-[#D7B15B] opacity-40 z-0" />
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 relative z-10">
-              {workflowSteps && workflowSteps.length ? workflowSteps.map((s, i) => (
-                <motion.div key={s.id || i} initial="hidden" whileInView="visible" variants={fadeUp} viewport={{ once: true }} className="text-center">
-                  <div className="bg-white rounded-full w-16 h-16 mx-auto mb-3 flex items-center justify-center shadow-md border-4 border-[#D7B15B]">
-                    {s.stepImage ? <Image src={s.stepImage} alt={s.stepName || ''} width={48} className="w-10 h-10 object-contain" /> : <span className="text-lg font-bold text-[#164946]">{s.stepNumber || (i + 1)}</span>}
+              {(workflowSteps === null) ? (
+                // skeletons while loading
+                [...Array(5)].map((_, i) => (
+                  <div key={i} className="text-center animate-pulse">
+                    <div className="bg-white rounded-full w-16 h-16 mx-auto mb-3 flex items-center justify-center shadow-md border-4 border-[#D7B15B]" />
+                    <h3 className="text-md font-medium text-[#164946] mb-2 h-4 bg-slate-200 rounded mx-auto w-28" />
+                    <p className="text-sm text-slate-600 h-3 bg-slate-200 rounded mx-auto w-40" />
                   </div>
-                  <h3 className="text-md font-medium text-[#164946] mb-2">{s.stepName || s.name}</h3>
-                  <p className="text-sm text-slate-600">{s.stepDescription || s.description}</p>
-                </motion.div>
-              )) : DEFAULT_WORKFLOW.map((s, i) => (
-                <motion.div key={i} initial="hidden" whileInView="visible" variants={fadeUp} viewport={{ once: true }} className="text-center">
-                  <div className="bg-white rounded-full w-16 h-16 mx-auto mb-3 flex items-center justify-center shadow-md border-4 border-[#D7B15B]">
-                    <span className="text-lg font-bold text-[#164946]">{i + 1}</span>
-                  </div>
-                  <h3 className="text-md font-medium text-[#164946] mb-2">{s.stepName || s.name}</h3>
-                  <p className="text-sm text-slate-600">{s.stepDescription || s.description}</p>
-                </motion.div>
+                ))
+              ) : (workflowSteps.length ? workflowSteps.map((s, i) => {
+                const rawName = s.stepName || s.name || `Step ${i+1}`;
+                const rawDesc = s.stepDescription || s.description || "";
+
+                let description = rawDesc;
+                if (/sourcing/i.test(rawName)) {
+                  description = description.replace(/\bfarmers\b/ig, 'manufacturing units');
+                  if (!/manufacturing units/i.test(description) && !/farmers/i.test(rawDesc)) {
+                    description = description || 'Direct sourcing from verified manufacturing units';
+                  }
+                }
+                let displayName = rawName.replace(/\bExport\s*/i, '').trim() || rawName || `Step ${i + 1}`;
+                const stepNumber = s.stepNumber || (i + 1);
+                const stepImage = s.stepImage || null;
+
+                return (
+                  <motion.div key={s.id || i} initial="hidden" whileInView="visible" variants={fadeUp} viewport={{ once: true }} className="text-center">
+                    <div className="bg-white rounded-full w-16 h-16 mx-auto mb-3 flex items-center justify-center shadow-md border-4 border-[#D7B15B]">
+                      {stepImage ? <Image src={stepImage} alt={displayName} width={48} className="w-10 h-10 object-contain" /> : <span className="text-lg font-bold text-[#164946]">{stepNumber}</span>}
+                    </div>
+                    <h3 className="text-md font-medium text-[#164946] mb-2">{displayName}</h3>
+                    <p className="text-sm text-slate-600">{description}</p>
+                  </motion.div>
+                );
+              }) : (
+                <div className="col-span-full text-center text-slate-600">No workflow steps available.</div>
               ))}
             </div>
           </div>
@@ -622,18 +627,16 @@ export default function HomePage() {
           </div>
 
           <div className="flex flex-wrap justify-center items-center gap-4 md:gap-6">
-            {(certifications && certifications.length ? certifications.slice(0, 8) : [
-              { name: "IEC", img: "https://static.wixstatic.com/media/c837a6_35cdbd22b3ff469e9eed72da97f6e6de~mv2.png" },
-              { name: "MSME", img: "https://static.wixstatic.com/media/c837a6_daa0b06aa1cc4d198f51b02bbf8949d8~mv2.png" },
-              { name: "RCMC", img: "https://static.wixstatic.com/media/c837a6_362cc25a788a4802991b3303abf1d5db~mv2.png" },
-              { name: "FSSAI", img: "https://static.wixstatic.com/media/c837a6_39505e4000ad40fe9d19445bd567c90e~mv2.png" },
-              { name: "GST", img: "https://static.wixstatic.com/media/c837a6_63ef44e8234d4e3e9f8d1b845a70d433~mv2.png" }
-            ]).map((c, i) => {
-              const name = typeof c === "string" ? c : (c.name || c.certificationName || c.title);
+            {(certifications === null) ? (
+              // loading placeholders
+              [...Array(5)].map((_, i) => <div key={i} className="animate-pulse bg-white rounded-xl w-[120px] h-[120px] shadow-sm" />)
+            ) : (certifications.length ? certifications.slice(0, 8).map((c, i) => {
+              const name = typeof c === "string" ? c : (c.name || c.certificationName || c.title || "Certification");
               const icon = (c && (c.img || c.icon || c.image)) || SVG_FALLBACK;
-
               return <CertBadge key={i} name={name} icon={icon} />;
-            })}
+            }) : (
+              <div className="text-center text-slate-600">No certifications available.</div>
+            ))}
           </div>
         </div>
       </section>
