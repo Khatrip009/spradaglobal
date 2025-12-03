@@ -14,6 +14,15 @@ import HERO_ILLU from "../../assets/HERO_ILLU.jpg";
 import HERO_BG from "../../assets/HERO_BG.jpg";
 import ABOUT_IMG from "../../assets/ABOUT_IMG.jpg";
 
+
+const DEFAULT_WORKFLOW = [
+  { id: "w1", stepNumber: 1, stepName: "Sourcing", stepDescription: "Direct sourcing from verified Manufacturing Units" },
+  { id: "w2", stepNumber: 2, stepName: "Sorting & Cleaning", stepDescription: "Rigorous quality control and cleaning" },
+  { id: "w3", stepNumber: 3, stepName: "Packaging", stepDescription: "Professional packaging for export" },
+  { id: "w4", stepNumber: 4, stepName: "Quality Testing", stepDescription: "Comprehensive quality assurance" },
+  { id: "w5", stepNumber: 5, stepName: "Logistics", stepDescription: "Reliable global shipping" }
+];
+
 /* -------------------------
    small presentational components (same as you had)
    ------------------------- */
@@ -105,7 +114,7 @@ function slugifyName(name = "") {
     .replace(/&/g, " and ")
     .replace(/[^\w\- ]+/g, "")
     .replace(/\s+/g, "-")
-    .replace(/\-+/g, "-")
+    .replace(/-+/g, "-")
     .replace(/(^-|-$)/g, "");
 }
 function isUuid(s) {
@@ -132,7 +141,6 @@ export default function HomePage() {
   const [testimonials, setTestimonials] = useState(null);
   const [blogs, setBlogs] = useState(null);
   const [featured, setFeatured] = useState(null);
-  const [visitorsCount, setVisitorsCount] = useState(null);
   const [loading, setLoading] = useState(true);
   const [loadingReviews, setLoadingReviews] = useState(true);
 
@@ -567,6 +575,7 @@ export default function HomePage() {
       </section>
 
       {/* Workflow */}
+                  
       <section className="py-10 md:py-16 bg-slate-50">
         <div className="max-w-[1100px] mx-auto px-4 sm:px-6">
           <div className="text-center mb-6">
@@ -577,49 +586,68 @@ export default function HomePage() {
           <div className="relative">
             <div className="hidden lg:block absolute top-1/2 left-4 right-4 h-px bg-[#D7B15B] opacity-40 z-0" />
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 relative z-10">
-              {(workflowSteps === null) ? (
-                // skeletons while loading
-                [...Array(5)].map((_, i) => (
-                  <div key={i} className="text-center animate-pulse">
-                    <div className="bg-white rounded-full w-16 h-16 mx-auto mb-3 flex items-center justify-center shadow-md border-4 border-[#D7B15B]" />
-                    <h3 className="text-md font-medium text-[#164946] mb-2 h-4 bg-slate-200 rounded mx-auto w-28" />
-                    <p className="text-sm text-slate-600 h-3 bg-slate-200 rounded mx-auto w-40" />
-                  </div>
-                ))
-              ) : (workflowSteps.length ? workflowSteps.map((s, i) => {
-                const rawName = s.stepName || s.name || `Step ${i+1}`;
-                const rawDesc = s.stepDescription || s.description || "";
+              {(
+                workflowSteps && workflowSteps.length
+                  ? workflowSteps
+                  : DEFAULT_WORKFLOW
+              ).map((s, i) => {
+                // Normalizations / fixes shown in screenshot:
+                const rawName = s.stepName || s.name || '';
+                const rawDesc = s.stepDescription || s.description || '';
 
+                // 1) If the step is "Sourcing" make sure 'farmers' -> 'manufacturing units'
                 let description = rawDesc;
                 if (/sourcing/i.test(rawName)) {
+                  // replace the word 'farmers' with 'manufacturing units' if present
                   description = description.replace(/\bfarmers\b/ig, 'manufacturing units');
+
+                  // if description didn't contain 'farmers' but you want the exact suggested text:
                   if (!/manufacturing units/i.test(description) && !/farmers/i.test(rawDesc)) {
+                    // provide a fallback description close to screenshot
                     description = description || 'Direct sourcing from verified manufacturing units';
                   }
                 }
+
+                // 2) If the step name contains 'Export Logistics' or 'Export' remove 'Export' so it reads 'Logistics'
                 let displayName = rawName.replace(/\bExport\s*/i, '').trim() || rawName || `Step ${i + 1}`;
+
+                // Keep step number fallback if none provided
                 const stepNumber = s.stepNumber || (i + 1);
+
+                // Pick an image (if provided) or show the number
                 const stepImage = s.stepImage || null;
 
                 return (
-                  <motion.div key={s.id || i} initial="hidden" whileInView="visible" variants={fadeUp} viewport={{ once: true }} className="text-center">
+                  <motion.div
+                    key={s.id || i}
+                    initial="hidden"
+                    whileInView="visible"
+                    variants={fadeUp}
+                    viewport={{ once: true }}
+                    className="text-center"
+                  >
                     <div className="bg-white rounded-full w-16 h-16 mx-auto mb-3 flex items-center justify-center shadow-md border-4 border-[#D7B15B]">
-                      {stepImage ? <Image src={stepImage} alt={displayName} width={48} className="w-10 h-10 object-contain" /> : <span className="text-lg font-bold text-[#164946]">{stepNumber}</span>}
+                      {stepImage
+                        ? <Image src={stepImage} alt={displayName} width={48} className="w-10 h-10 object-contain" />
+                        : <span className="text-lg font-bold text-[#164946]">{stepNumber}</span>
+                      }
                     </div>
+
+                    {/* Title with same style as before */}
                     <h3 className="text-md font-medium text-[#164946] mb-2">{displayName}</h3>
+
+                    {/* Description (normalized) */}
                     <p className="text-sm text-slate-600">{description}</p>
                   </motion.div>
                 );
-              }) : (
-                <div className="col-span-full text-center text-slate-600">No workflow steps available.</div>
-              ))}
+              })}
             </div>
           </div>
         </div>
       </section>
 
       {/* Certifications */}
-      <section className="py-10 md:py-16 bg-white">
+       <section className="py-10 md:py-16 bg-white">
         <div className="max-w-[1100px] mx-auto px-4 sm:px-6">
           <div className="text-center mb-6">
             <h2 className="text-2xl md:text-3xl font-heading font-semibold text-[#1f5a53]">Our Certifications</h2>
@@ -627,16 +655,18 @@ export default function HomePage() {
           </div>
 
           <div className="flex flex-wrap justify-center items-center gap-4 md:gap-6">
-            {(certifications === null) ? (
-              // loading placeholders
-              [...Array(5)].map((_, i) => <div key={i} className="animate-pulse bg-white rounded-xl w-[120px] h-[120px] shadow-sm" />)
-            ) : (certifications.length ? certifications.slice(0, 8).map((c, i) => {
-              const name = typeof c === "string" ? c : (c.name || c.certificationName || c.title || "Certification");
+            {(certifications && certifications.length ? certifications.slice(0, 8) : [
+              { name: "IEC", img: "https://static.wixstatic.com/media/c837a6_35cdbd22b3ff469e9eed72da97f6e6de~mv2.png" },
+              { name: "MSME", img: "https://static.wixstatic.com/media/c837a6_daa0b06aa1cc4d198f51b02bbf8949d8~mv2.png" },
+              { name: "RCMC", img: "https://static.wixstatic.com/media/c837a6_362cc25a788a4802991b3303abf1d5db~mv2.png" },
+              { name: "FSSAI", img: "https://static.wixstatic.com/media/c837a6_39505e4000ad40fe9d19445bd567c90e~mv2.png" },
+              { name: "GST", img: "https://static.wixstatic.com/media/c837a6_63ef44e8234d4e3e9f8d1b845a70d433~mv2.png" }
+            ]).map((c, i) => {
+              const name = typeof c === "string" ? c : (c.name || c.certificationName || c.title);
               const icon = (c && (c.img || c.icon || c.image)) || SVG_FALLBACK;
+
               return <CertBadge key={i} name={name} icon={icon} />;
-            }) : (
-              <div className="text-center text-slate-600">No certifications available.</div>
-            ))}
+            })}
           </div>
         </div>
       </section>
@@ -708,20 +738,20 @@ export default function HomePage() {
       </section>
 
       {/* Final CTA */}
-      <section className="py-8 md:py-12 bg-[#164946] text-white">
-        <div className="max-w-[1100px] mx-auto px-4 sm:px-6 text-center">
-          <h2 className="text-xl md:text-2xl font-heading font-semibold mb-3">Ready to Start Your Export Journey?</h2>
-          <p className="text-sm md:text-base mb-4">Get in touch with us today to discuss your requirements and discover how we can help you access premium Indian agricultural products.</p>
-          <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <Link to="/contact" className="w-full sm:w-auto">
-              <Button className="w-full sm:w-auto bg-white text-[#164946] font-semibold py-3 sm:py-2 px-4 rounded">Request a Quote</Button>
-            </Link>
-            <Link to="/products" className="w-full sm:w-auto">
-              <Button variant="outline" className="w-full sm:w-auto border-white text-white hover:bg-white hover:text-[#164946] py-3 sm:py-2 px-4 rounded">Contact Us</Button>
-            </Link>
+        <section className="py-8 md:py-12 bg-[#164946] text-white">
+          <div className="max-w-[1100px] mx-auto px-4 sm:px-6 text-center">
+            <h2 className="text-xl md:text-2xl font-heading font-semibold mb-3">Ready to Start Your Export Journey?</h2>
+            <p className="text-sm md:text-base mb-4">Get in touch with us today to discuss your requirements and discover how we can help you access premium Indian agricultural products.</p>
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <Link to="/contact" className="w-full sm:w-auto">
+                <Button className="w-full sm:w-auto bg-white text-[#164946] font-semibold py-3 sm:py-2 px-4 rounded">Request a Quote</Button>
+              </Link>
+              <Link to="/products" className="w-full sm:w-auto">
+                <Button variant="outline" className="w-full sm:w-auto border-white text-white hover:bg-white hover:text-[#164946] py-3 sm:py-2 px-4 rounded">Contact Us</Button>
+              </Link>
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
     </div>
   );
 }
