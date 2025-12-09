@@ -27,7 +27,7 @@ import CategoryPage from "./components/pages/CategoryPage";
 import { ToastProvider } from "./components/ui/ToastProvider";
 
 /* ScrollToTop component (external) */
-import { ScrollToTop } from "./components/ScrollToTop";
+import { ScrollToTop } from "./lib/scroll-to-top";
 
 import { AnimatePresence, motion } from "framer-motion";
 

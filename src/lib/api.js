@@ -331,16 +331,80 @@ export async function postVisitorEvent(visitorId, eventType, eventProps = {}) {
 /* -----------------------------------------------------
    REVIEWS
 ----------------------------------------------------- */
+// Robust getReviews: accepts either a number (limit) or an options object { limit, page }
 export async function getReviews(opts = {}) {
+  // allow calling getReviews(10) or getReviews({ limit: 10, page: 1 })
+  let options = {};
+  if (typeof opts === "number") {
+    options.limit = opts;
+  } else if (opts && typeof opts === "object") {
+    options = { ...opts };
+  }
+
   const qs = {};
-  if (opts.limit) qs.limit = opts.limit;
-  if (opts.page) qs.page = opts.page;
-  const r = await apiGet('/api/reviews', qs);
+  if (options.limit != null) qs.limit = options.limit;
+  if (options.page != null) qs.page = options.page;
+
+  const r = await apiGet("/api/reviews", qs);
+
   if (!r) return [];
-  if (Array.isArray(r)) return r;
-  if (Array.isArray(r.reviews)) return r.reviews;
-  return r.data?.reviews || [];
+
+  // If backend returned an array directly
+  if (Array.isArray(r)) {
+    return r.map(normalizeReview);
+  }
+
+  // If backend returned { reviews: [...] } or { data: { reviews: [...] } }
+  if (Array.isArray(r.reviews)) return r.reviews.map(normalizeReview);
+  if (Array.isArray(r.data?.reviews)) return r.data.reviews.map(normalizeReview);
+
+  // Some APIs return { items: [...] } or { data: [...] }
+  if (Array.isArray(r.items)) return r.items.map(normalizeReview);
+  if (Array.isArray(r.data)) return r.data.map(normalizeReview);
+
+  // fallback: maybe the API returned { results: [...] } or a single object
+  if (Array.isArray(r.results)) return r.results.map(normalizeReview);
+
+  // Not an array — try to extract single review object
+  if (r && typeof r === "object") {
+    // If object looks like a single review, normalize and return as single-element array
+    const maybeReview = r.review || r.item || r.data || null;
+    if (maybeReview && typeof maybeReview === "object" && !Array.isArray(maybeReview)) {
+      return [normalizeReview(maybeReview)];
+    }
+  }
+
+  // give up and return empty array
+  return [];
 }
+
+/**
+ * normalizeReview(raw)
+ * - returns a consistent review object:
+ *   { id, author, author_title, rating, body, avatar, created_at, raw }
+ */
+function normalizeReview(raw) {
+  if (!raw || typeof raw !== "object") return null;
+  const id = raw.id || raw._id || raw.review_id || null;
+  const author = raw.author || raw.author_name || raw.name || raw.reviewer || raw.user || "Anonymous";
+  const author_title = raw.company || raw.title || raw.author_title || null;
+  const rating = raw.rating != null ? Number(raw.rating) : (raw.stars != null ? Number(raw.stars) : null);
+  const body = raw.body || raw.text || raw.testimonial || raw.content || raw.comment || "";
+  const avatar = raw.avatar || raw.author_avatar || raw.photo || raw.customer_photo || null;
+  const created_at = raw.created_at || raw.createdAt || raw.timestamp || null;
+
+  return {
+    id,
+    author,
+    author_title,
+    rating,
+    body,
+    avatar,
+    created_at,
+    raw: raw
+  };
+}
+
 
 export async function getReviewStats() {
   return await apiGet('/api/reviews/stats');
