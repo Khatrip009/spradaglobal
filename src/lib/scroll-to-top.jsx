@@ -1,33 +1,51 @@
+// src/components/ScrollToTop.jsx
 import { useEffect, useRef } from "react";
 import { useLocation } from "react-router-dom";
 
-// Component to handle automatic scroll management
 export function ScrollToTop() {
-  const location = useLocation();
-  const prevLocationRef = useRef(null);
+  const { pathname, hash, key } = useLocation();
+  const prevKeyRef = useRef(null);
+
+  // Ensure browser does not auto-restore scroll (we control it)
+  useEffect(() => {
+    if (typeof window !== "undefined" && "scrollRestoration" in window.history) {
+      try {
+        window.history.scrollRestoration = "manual";
+      } catch (e) {
+        // ignore
+      }
+    }
+  }, []);
 
   useEffect(() => {
-    const isSamePage = prevLocationRef.current === location.pathname;
+    const isSameNav = prevKeyRef.current === key;
+    prevKeyRef.current = key;
 
-    if (location.hash) {
-      // If URL has a #hash → scroll to element
-      setTimeout(() => {
-        const element = document.getElementById(location.hash.slice(1));
-        if (element) {
-          element.scrollIntoView({ behavior: "smooth" });
+    // Short delay gives framer-motion/React time to mount the page content
+    const delay = hash ? 40 : 30;
+
+    const id = hash ? hash.replace("#", "") : null;
+
+    const doScroll = () => {
+      if (id) {
+        const el = document.getElementById(id);
+        if (el) {
+          el.scrollIntoView({ behavior: "smooth", block: "start" });
+          return;
         }
-      }, 100);
-    } else {
-      // No hash → normal scroll to top
+      }
+
+      // normal navigation -> jump to top; if same nav use smooth for perceived continuity
       window.scrollTo({
         top: 0,
         left: 0,
-        behavior: isSamePage ? "smooth" : "auto",
+        behavior: isSameNav ? "smooth" : "auto",
       });
-    }
+    };
 
-    prevLocationRef.current = location.pathname;
-  }, [location]);
+    const t = setTimeout(doScroll, delay);
+    return () => clearTimeout(t);
+  }, [pathname, hash, key]);
 
   return null;
 }

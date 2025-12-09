@@ -2,11 +2,27 @@
 // API helpers for the frontend (uses credentials: include)
 // Default backend: http://localhost:4200
 
-const DEFAULT_BACKEND = 'https://apisprada.exotech.co.in';
-const RAW_BASE = (import.meta.env.VITE_API_URL && String(import.meta.env.VITE_API_URL)) || DEFAULT_BACKEND;
-export const BASE = RAW_BASE.replace(/\/+$/, ''); // remove trailing slash
+// API helpers for the frontend (uses credentials: include)
+// Backend is ALWAYS controlled by .env → VITE_API_URL
+
+const FALLBACK_BACKEND = "https://apisprada.exotech.co.in";
+
+// If Vite env is defined, use it. If not, fallback.
+const RAW_BASE =
+  (import.meta.env.VITE_API_URL && String(import.meta.env.VITE_API_URL).trim()) ||
+  (import.meta.env.VITE_API_BASE_URL && String(import.meta.env.VITE_API_BASE_URL).trim()) ||
+  FALLBACK_BACKEND;
+
+export const BASE = RAW_BASE.replace(/\/+$/, "");
+
+// Uploads URL is also controlled by .env, fallback to BASE:/uploads
+export const UPLOADS_BASE = (
+  import.meta.env.VITE_UPLOADS_BASE_URL ||
+  `${BASE}/uploads`
+).replace(/\/+$/, "");
+
 // Optional uploads base for rewritten uploads paths. Allow env override.
-export const UPLOADS_BASE = ((import.meta.env.VITE_UPLOADS_BASE_URL || '') || (BASE + '/uploads')).replace(/\/+$/, '');
+
 const DEFAULT_TIMEOUT = 15000; // ms
 
 // ---------- Image URL normalizer (client) ----------

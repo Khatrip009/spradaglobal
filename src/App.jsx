@@ -26,30 +26,13 @@ import CategoryPage from "./components/pages/CategoryPage";
 
 import { ToastProvider } from "./components/ui/ToastProvider";
 
+/* ScrollToTop component (external) */
+import { ScrollToTop } from "./components/ScrollToTop";
+
 import { AnimatePresence, motion } from "framer-motion";
 
 import "./index.css";
 import "./App.css";
-
-/* Scroll to top on route change */
-function ScrollToTop() {
-  const { pathname, hash } = useLocation();
-
-  React.useEffect(() => {
-    if (hash) {
-      const id = hash.replace("#", "");
-      const el = document.getElementById(id);
-      if (el) {
-        el.scrollIntoView({ behavior: "smooth", block: "start" });
-        return;
-      }
-    }
-
-    window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
-  }, [pathname, hash]);
-
-  return null;
-}
 
 /* Smooth animated wrapper for page transitions */
 function AnimatedPage({ children }) {
@@ -73,7 +56,8 @@ function RouteWrapper() {
   return (
     <main className="flex-1">
       <AnimatePresence mode="wait">
-        <Routes location={location} key={location.pathname}>
+        {/* use location.key instead of pathname so transitions occur reliably */}
+        <Routes location={location} key={location.key}>
           <Route
             path="/"
             element={

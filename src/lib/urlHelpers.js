@@ -1,36 +1,103 @@
 // src/lib/urlHelpers.js
-// Utility to make image URLs absolute using VITE_API_URL or default backend.
+// Utilities to build absolute URLs for API and assets
+// Production-ready: prefers VITE_API_URL / VITE_API_BASE_URL and VITE_UPLOADS_BASE_URL.
 
+const FALLBACK_API = "https://apisprada.exotech.co.in";
+
+/**
+ * Get normalized API base (no trailing slash).
+ * Preference order:
+ *  1) VITE_API_URL
+ *  2) VITE_API_BASE_URL
+ *  3) FALLBACK_API
+ */
 export function getApiBase() {
-  // prefer explicit env, fallback same default used by api.js
-  return (import.meta.env.VITE_API_URL || 'http://localhost:4200').replace(/\/+$/, '');
+  const raw =
+    (import.meta.env.VITE_API_URL && String(import.meta.env.VITE_API_URL).trim()) ||
+    (import.meta.env.VITE_API_BASE_URL && String(import.meta.env.VITE_API_BASE_URL).trim()) ||
+    FALLBACK_API;
+
+  return String(raw).replace(/\/+$/, "");
 }
 
 /**
- * Convert a URL that might be relative (/uploads/...) or bare filename
- * into an absolute URL using the API base. If the url is already absolute,
- * return it unchanged.
+ * Get normalized uploads base (no trailing slash).
+ * Preference:
+ *  1) VITE_UPLOADS_BASE_URL (if set)
+ *  2) <API_BASE>/uploads
+ */
+export function getUploadsBase() {
+  const uploadsRaw = import.meta.env.VITE_UPLOADS_BASE_URL && String(import.meta.env.VITE_UPLOADS_BASE_URL).trim();
+  if (uploadsRaw) return uploadsRaw.replace(/\/+$/, "");
+  return `${getApiBase()}/uploads`;
+}
+
+/**
+ * Convert a possibly-relative URL or bare filename into an absolute URL.
+ *
+ * - Returns null for falsy input.
+ * - Leaves absolute http(s) URLs unchanged.
+ * - Handles protocol-relative URLs (//cdn...) by prefixing the current protocol (or https: in SSR).
+ * - Converts paths starting with /uploads or uploads/ to UPLOADS_BASE + path.
+ * - Converts bare filenames (e.g. "img.jpg") or local FS paths that end with an image extension to UPLOADS_BASE/<filename>.
+ * - Otherwise prefixes with API base.
  *
  * Examples:
- *   /uploads/img.jpg -> http://localhost:4200/uploads/img.jpg
- *   uploads/img.jpg  -> http://localhost:4200/uploads/img.jpg
- *   https://cdn/x.png -> https://cdn/x.png
+ *   makeAbsoluteUrl('/uploads/x.jpg') -> https://apisprada.exotech.co.in/uploads/x.jpg
+ *   makeAbsoluteUrl('uploads/x.jpg')  -> https://apisprada.exotech.co.in/uploads/x.jpg
+ *   makeAbsoluteUrl('x.jpg')         -> https://apisprada.exotech.co.in/uploads/x.jpg
+ *   makeAbsoluteUrl('https://cdn/x') -> https://cdn/x
  */
 export function makeAbsoluteUrl(url) {
   if (!url) return null;
-  if (typeof url !== 'string') return String(url);
+  if (typeof url !== "string") url = String(url);
 
   const trimmed = url.trim();
   if (!trimmed) return null;
 
-  // already absolute
+  // Already absolute (http / https)
   if (/^https?:\/\//i.test(trimmed)) return trimmed;
 
-  const base = getApiBase();
+  // Protocol-relative URLs (//cdn.example.com/...)
+  if (/^\/\//.test(trimmed)) {
+    const proto = typeof window !== "undefined" && window.location && window.location.protocol
+      ? window.location.protocol
+      : "https:";
+    return `${proto}${trimmed}`;
+  }
 
-  // leading slash -> base + path
-  if (trimmed.startsWith('/')) return `${base}${trimmed}`;
+  const apiBase = getApiBase();
+  const uploadsBase = getUploadsBase();
 
-  // otherwise just join with slash
-  return `${base}/${trimmed}`;
+  // If it's a server-root uploads path: /uploads/...
+  if (/^\/(?:src\/)?uploads\//i.test(trimmed)) {
+    return `${uploadsBase}${trimmed.replace(/^\/+/, "/")}`;
+  }
+
+  // Relative uploads path: uploads/...
+  if (/^(?:src\/)?uploads\//i.test(trimmed)) {
+    return `${uploadsBase}/${trimmed.replace(/^\/+/, "")}`;
+  }
+
+  // Local filesystem stray path or bare filename with image extension -> map to uploads base
+  // Matches ".../filename.ext" or "filename.ext"
+  const fileMatch = trimmed.match(/([^\\/]+)\.(jpe?g|png|gif|webp|svg|bmp|avif)$/i);
+  if (fileMatch) {
+    const filename = fileMatch[0];
+    return `${uploadsBase}/${encodeURIComponent(filename)}`;
+  }
+
+  // If it starts with a slash (non-uploads), prefix with API base
+  if (trimmed.startsWith("/")) {
+    return `${apiBase}${trimmed}`;
+  }
+
+  // Default: join with API base
+  return `${apiBase}/${trimmed}`;
 }
+
+export default {
+  getApiBase,
+  getUploadsBase,
+  makeAbsoluteUrl,
+};
