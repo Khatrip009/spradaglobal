@@ -25,6 +25,75 @@ export const UPLOADS_BASE = (
 
 const DEFAULT_TIMEOUT = 15000; // ms
 
+/* -----------------------------------------------------
+   FEATURED & CERTIFICATIONS
+   Small helpers that many pages expect.
+----------------------------------------------------- */
+
+/**
+ * getFeatured()
+ * Returns an array of featured items (if available).
+ * Tries several common API shapes for robustness.
+ */
+export async function getFeatured(opts = {}) {
+  // allow getFeatured() or getFeatured({ limit: 6 })
+  const qs = {};
+  if (opts && typeof opts === "object") {
+    if (opts.limit != null) qs.limit = opts.limit;
+    if (opts.page != null) qs.page = opts.page;
+  }
+
+  const r = await apiGet("/api/featured", qs).catch(async (err) => {
+    // some backends expose /api/home.featured inside /api/home - try fallback
+    try {
+      const home = await apiGet("/api/home");
+      if (home && Array.isArray(home.featured)) return home.featured;
+      if (home && Array.isArray(home.featuredItems)) return home.featuredItems;
+    } catch (e) {}
+    throw err;
+  });
+
+  // Normalize common shapes
+  if (!r) return [];
+  if (Array.isArray(r)) return r;
+  if (Array.isArray(r.featured)) return r.featured;
+  if (Array.isArray(r.items)) return r.items;
+  if (Array.isArray(r.data)) return r.data;
+
+  return [];
+}
+
+/**
+ * getCertifications(opts = {})
+ * Fetch list of certifications / trust badges
+ */
+export async function getCertifications(opts = {}) {
+  const qs = {};
+  if (opts && typeof opts === "object") {
+    if (opts.limit != null) qs.limit = opts.limit;
+    if (opts.page != null) qs.page = opts.page;
+  }
+
+  const r = await apiGet("/api/certifications", qs).catch(async (err) => {
+    // fallback: some APIs serve certs at /api/meta/certifications or /api/home
+    try {
+      const home = await apiGet("/api/home");
+      if (home && Array.isArray(home.certifications)) return home.certifications;
+    } catch (e) {}
+    throw err;
+  });
+
+  if (!r) return [];
+  if (Array.isArray(r)) return r;
+  if (Array.isArray(r.certifications)) return r.certifications;
+  if (Array.isArray(r.items)) return r.items;
+  if (Array.isArray(r.data)) return r.data;
+
+  return [];
+}
+
+
+
 // ---------- Image URL normalizer (client) ----------
 /**
  * toAbsoluteImageUrl(url)
