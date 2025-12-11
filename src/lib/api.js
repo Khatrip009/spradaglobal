@@ -5,7 +5,7 @@
 // API helpers for the frontend (uses credentials: include)
 // Backend is ALWAYS controlled by .env → VITE_API_URL
 
-const FALLBACK_BACKEND = "https://apisprada.exotech.co.in";
+const FALLBACK_BACKEND = "http://localhost:4200";
 
 // If Vite env is defined, use it. If not, fallback.
 const RAW_BASE =
@@ -24,6 +24,24 @@ export const UPLOADS_BASE = (
 // Optional uploads base for rewritten uploads paths. Allow env override.
 
 const DEFAULT_TIMEOUT = 15000; // ms
+
+
+// get reviews for about entity
+export async function getReviewsFor(about_type, about_id, opts = {}) {
+  if (!about_type || !about_id) throw new Error('missing about_type or about_id');
+  const qs = { about_type, about_id };
+  if (opts.page) qs.page = opts.page;
+  if (opts.limit) qs.limit = opts.limit;
+  if (opts.only_published !== undefined) qs.only_published = opts.only_published;
+  const r = await apiGet('/api/reviews', qs);
+  return r; // { ok, reviews, page, limit, total, total_pages }
+}
+
+// helpful
+export async function postReviewHelpful(reviewId, { voter_key = null } = {}) {
+  if (!reviewId) throw new Error('missing_review_id');
+  return await apiPost(`/api/reviews/${encodeURIComponent(reviewId)}/helpful`, { voter_key });
+}
 
 /* -----------------------------------------------------
    FEATURED & CERTIFICATIONS

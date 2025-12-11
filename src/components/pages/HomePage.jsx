@@ -1,4 +1,4 @@
-// src/components/pages/HomePage.jsx
+// src/pages/HomePage.jsx
 import React, { useEffect, useState, useCallback, useRef } from "react";
 import { motion } from "framer-motion";
 import { Image } from "../ui/image";
@@ -8,18 +8,38 @@ import { ChevronLeft, ChevronRight, Star, CheckCircle, Award } from "lucide-reac
 import { Link } from "react-router-dom";
 import * as api from "../../lib/api";
 
-// Local assets (ensure these exist at src/assets/)
 import HERO_PRODUCTS from "../../assets/hero-products.jpg";
-import HERO_ILLU from "../../assets/HERO_ILLU.jpg";
-import HERO_BG from "../../assets/HERO_BG.jpg";
 import ABOUT_IMG from "../../assets/ABOUT_IMG.jpg";
 
+/* ----------------------------
+   FALLBACK CONSTANTS & SMALL COMPONENTS
+---------------------------- */
+const SVG_FALLBACK = "https://via.placeholder.com/120x60?text=Logo";
+const HERO_BG = HERO_PRODUCTS;
+
+
+
+function CertBadge({ name, icon }) {
+  return (
+    <div className="flex items-center gap-3 bg-white p-3 rounded shadow-sm">
+      <div className="w-12 h-12 flex items-center justify-center rounded bg-slate-50 overflow-hidden">
+        <img src={icon} alt={name} className="max-w-full max-h-full object-contain" />
+      </div>
+      <div className="text-sm font-medium text-slate-700">{name}</div>
+    </div>
+  );
+}
+
+/* ----------------------------
+   DEFAULT VALUES
+---------------------------- */
 const DEFAULT_COMPANY_VALUES = [
-  { id: "v1", title: "Premium Quality", description: "Sourced from the finest farms with rigorous quality control at every step." },
-  { id: "v2", title: "Trusted Sourcing", description: "Direct partnerships with verified farmers ensuring authentic and fresh produce." },
-  { id: "v3", title: "Certifications", description: "Fully certified with international standards for food safety and quality." },
-  { id: "v4", title: "Global Reach", description: "Serving customers across continents with reliable logistics and timely delivery." }
+  { id: "v1", title: "Premium Quality", description: "Sourced from top manufacturing units with strict QC standards." },
+  { id: "v2", title: "Trusted Sourcing", description: "Verified suppliers ensuring fresh and authentic export goods." },
+  { id: "v3", title: "Certifications", description: "Internationally certified for food safety and export reliability." },
+  { id: "v4", title: "Global Reach", description: "Efficient worldwide distribution with reliable logistics." }
 ];
+
 const DEFAULT_WORKFLOW = [
   { id: "w1", stepNumber: 1, stepName: "Sourcing", stepDescription: "Direct sourcing from verified Manufacturing Units" },
   { id: "w2", stepNumber: 2, stepName: "Sorting & Cleaning", stepDescription: "Rigorous quality control and cleaning" },
@@ -28,75 +48,9 @@ const DEFAULT_WORKFLOW = [
   { id: "w5", stepNumber: 5, stepName: "Logistics", stepDescription: "Reliable global shipping" }
 ];
 
-/* -------------------------
-   small presentational components (same as you had)
-   ------------------------- */
-function CategoryCard({ name, description, count, thumb, to, onClick }) {
-  return (
-    <Link to={to} onClick={onClick} title={name} className="block">
-      <Card className="overflow-hidden cursor-pointer group hover:shadow-2xl transition-shadow duration-300">
-        <div className="relative h-36 sm:h-44">
-          <Image src={thumb} alt={name} width={700} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/28 to-transparent" />
-          <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between gap-2">
-            <div className="min-w-0">
-              <h3 className="text-lg font-medium text-white truncate">{name}</h3>
-              <p className="text-xs opacity-90 text-white/90 truncate">{description ? description : `${count} product${count !== 1 ? "s" : ""}`}</p>
-            </div>
-            <div className="flex-shrink-0">
-              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-white/90 text-[#164946] shadow">
-                {count}
-              </span>
-            </div>
-          </div>
-        </div>
-      </Card>
-    </Link>
-  );
-}
-
-function CertBadge({ name, icon }) {
-  return (
-    <div className="flex flex-col items-center bg-white p-3 md:p-4 rounded-xl shadow-md hover:shadow-xl transition-all w-[120px] md:w-[140px] h-[120px] md:h-[160px] justify-center">
-      <img
-        src={icon}
-        alt={name}
-        onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120"></svg>'; }}
-        className="w-12 h-12 md:w-16 md:h-16 object-contain mb-2"
-        draggable={false}
-      />
-      <span className="text-sm font-medium text-slate-700 text-center">{name}</span>
-    </div>
-  );
-}
-
-function ValueCard({ title, description }) {
-  return (
-    <Card className="h-full p-4 sm:p-6 hover:shadow-xl transition-shadow duration-300">
-      <CardContent className="p-0">
-        <div className="mb-3">
-          <Award className="w-8 h-8 text-[#D7B15B]" />
-        </div>
-        <h3 className="text-lg font-medium text-[#164946] mb-2">{title}</h3>
-        <p className="text-sm text-slate-600 leading-relaxed">{description}</p>
-      </CardContent>
-    </Card>
-  );
-}
-
-/* -------------------------
-   Constants & placeholders
-   ------------------------- */
-const LOCAL_HERO_PRODUCTS = HERO_PRODUCTS;
-const WIX_CATEGORY_IMG = "https://static.wixstatic.com/media/a92b5b_b378a6a57ed64e5c8aac0b76bbc4abc0~mv2.png?originWidth=576&originHeight=384";
-
-const SVG_FALLBACK = `data:image/svg+xml;utf8,${encodeURIComponent(
-  `<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 24 24' fill='none' stroke='%23164946' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'><rect x='2' y='2' width='20' height='20' rx='3' ry='3' fill='%23e6f6f4'/><path d='M7 12h10M7 8h10M7 16h10' /></svg>`
-)}`;
-
-/* -------------------------
-   small helpers
-   ------------------------- */
+/* ----------------------------
+   UTIL HELPERS
+---------------------------- */
 function readCookie(name) {
   if (typeof document === "undefined") return null;
   const m = document.cookie.match(new RegExp('(?:^|; )' + name + '=([^;]*)'));
@@ -122,309 +76,218 @@ function slugifyName(name = "") {
     .replace(/\-+/g, "-")
     .replace(/(^-|-$)/g, "");
 }
-function isUuid(s) {
-  if (!s || typeof s !== "string") return false;
-  return /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(s.trim());
+
+/* ----------------------------
+   PRESENTATION COMPONENTS
+---------------------------- */
+function CategoryCard({ name, description, count, thumb, to }) {
+  return (
+    <Link to={to} className="block">
+      <Card className="overflow-hidden group hover:shadow-2xl transition">
+        <div className="relative h-40">
+          <Image src={thumb} width={600} className="w-full h-full object-cover group-hover:scale-105 transition" />
+          <div className="absolute bottom-3 left-3 right-3 flex justify-between">
+            <div>
+              <h3 className="text-white text-lg font-medium">{name}</h3>
+              <p className="text-xs text-white/90 truncate">
+                {description || `${count} product${count !== 1 ? "s" : ""}`}
+              </p>
+            </div>
+            <span className="px-2 py-0.5 rounded-full bg-white text-[#164946] text-xs font-semibold shadow">
+              {count}
+            </span>
+          </div>
+        </div>
+      </Card>
+    </Link>
+  );
 }
 
-/* -------------------------
-   HomePage
-   ------------------------- */
+function ValueCard({ title, description }) {
+  return (
+    <Card className="p-5 hover:shadow-xl transition">
+      <CardContent className="p-0">
+        <Award className="w-8 h-8 text-[#D7B15B] mb-3" />
+        <h3 className="text-lg font-medium text-[#164946] mb-2">{title}</h3>
+        <p className="text-sm text-slate-600">{description}</p>
+      </CardContent>
+    </Card>
+  );
+}
+
+/* ----------------------------
+   MAIN COMPONENT START
+---------------------------- */
 export default function HomePage() {
   const [hero, setHero] = useState({
     title: "SPRADA2GLOBAL",
     subtitle: "Rich Quality, Reach to the World",
-    image: LOCAL_HERO_PRODUCTS,
-    illu: null,
+    image: HERO_PRODUCTS,
     description: ""
   });
 
-  const [companyValues, setCompanyValues] = useState(null); // null = loading, [] = loaded-empty
-  const [productCategories, setProductCategories] = useState(null);
-  const [workflowSteps, setWorkflowSteps] = useState(null);
-  const [certifications, setCertifications] = useState(null);
-  const [testimonials, setTestimonials] = useState(null);
-  const [blogs, setBlogs] = useState(null);
-  const [featured, setFeatured] = useState(null);
-  const [visitorsCount, setVisitorsCount] = useState(null);
+  const [companyValues, setCompanyValues] = useState([]);
+  const [workflowSteps, setWorkflowSteps] = useState([]);
+  const [productCategories, setProductCategories] = useState([]);
+  const [blogs, setBlogs] = useState([]);
+  const [featured, setFeatured] = useState([]);
+  const [certifications, setCertifications] = useState([]);
+  const [testimonials, setTestimonials] = useState([]);
+
   const [loading, setLoading] = useState(true);
   const [loadingReviews, setLoadingReviews] = useState(true);
 
   const categoriesRef = useRef(null);
-  const [currentTestimonial, setCurrentTestimonial] = useState(0);
-  const testimonialTimerRef = useRef(null);
   const testimonialsContainerRef = useRef(null);
+  const rotationRef = useRef(null);
 
-  const heroVariants = { hidden: { opacity: 0, y: -10 }, visible: { opacity: 1, y: 0 } };
-  const containerVariants = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { duration: 0.5, delayChildren: 0.18, staggerChildren: 0.06 } } };
-  const fadeUp = { hidden: { opacity: 0, y: 8 }, visible: { opacity: 1, y: 0 } };
+  const [currentTestimonial, setCurrentTestimonial] = useState(0);
 
-  /* -------------------------
-     load testimonials separately
-     ------------------------- */
+  const fadeUp = { hidden: { opacity: 0, y: 10 }, visible: { opacity: 1, y: 0 } };
+
+  /* ----------------------------
+     HOMEPAGE FETCH
+  ---------------------------- */
   useEffect(() => {
     let mounted = true;
-    setLoadingReviews(true);
-    async function loadReviews() {
+
+    async function load() {
       try {
-        const rev = (api.getReviews) ? await api.getReviews(10).catch(() => null) : null;
+        const res = await api.getHome().catch(() => null) || {};
+
         if (!mounted) return;
-        if (Array.isArray(rev) && rev.length) {
-          setTestimonials(rev.map((r, i) => ({
-            id: r.id || r._id || `r-${i}`,
-            customerName: r.author || r.author_name || r.name || "Anonymous",
-            customerTitle: r.company || r.title || r.customerTitle || "",
-            rating: Number(r.rating || r.stars || 5),
-            testimonialContent: r.body || r.text || r.testimonial || r.content || "",
-            customerPhoto: r.customer_photo || r.photo || r.avatar || null,
-            created_at: r.created_at || r.createdAt || null
-          })));
+
+        if (res?.hero) setHero(res.hero);
+        if (Array.isArray(res?.categories)) setProductCategories(res.categories);
+        if (Array.isArray(res?.featured)) setFeatured(res.featured);
+
+        // BLOGS: accept several possible keys
+        if (Array.isArray(res?.blogs)) setBlogs(res.blogs.slice(0, 3));
+        else if (Array.isArray(res?.articles)) setBlogs(res.articles.slice(0, 3));
+
+        if (Array.isArray(res?.workflow)) setWorkflowSteps(res.workflow);
+        if (Array.isArray(res?.values)) setCompanyValues(res.values);
+        if (Array.isArray(res?.certifications)) setCertifications(res.certifications);
+
+        // Testimonials/reviews: accept either res.testimonials or res.reviews
+        if (Array.isArray(res?.testimonials)) {
+          setTestimonials(res.testimonials);
+          setLoadingReviews(false);
+        } else if (Array.isArray(res?.reviews)) {
+          setTestimonials(res.reviews);
+          setLoadingReviews(false);
         } else {
-          setTestimonials([]); // loaded, but empty
+          setTestimonials([]);
+          setLoadingReviews(false);
         }
-      } catch (err) {
-        console.warn("[HomePage] loadReviews error", err);
-        setTestimonials([]); // fail safe
-      } finally {
-        if (mounted) setLoadingReviews(false);
-      }
-    }
-    loadReviews();
-    return () => { mounted = false; };
-  }, []);
-
-  /* -------------------------
-     bootstrap: fetch all home-related data from server
-     ------------------------- */
-  useEffect(() => {
-    let mounted = true;
-    setLoading(true);
-
-    async function bootstrap() {
-      try {
-        // optionally identify visitor (non-blocking)
-        try {
-          let sessionId = readCookie("sprada_session_id");
-          if (!sessionId) {
-            sessionId = genSessionId();
-            setCookie("sprada_session_id", sessionId, 365);
-          }
-          if (api.postVisitorIdentify) {
-            api.postVisitorIdentify(sessionId, null, (typeof navigator !== "undefined" ? navigator.userAgent : null), { path: (typeof window !== "undefined" ? window.location.pathname : null) }).catch(() => null);
-          }
-        } catch (e) { console.warn("[HomePage] visitor cookie error", e); }
-
-        // Parallel fetches — prefer api.getHome but fall back to specific endpoints if absent
-        const promises = [];
-
-        if (api.getHome) promises.push(api.getHome().catch(() => null));
-        else promises.push(Promise.resolve(null));
-
-        if (api.getCategories) promises.push(api.getCategories().catch(() => null));
-        else promises.push(Promise.resolve(null));
-
-        if (api.getFeatured) promises.push(api.getFeatured().catch(() => null));
-        else promises.push(Promise.resolve(null));
-
-        if (api.getBlogs) promises.push(api.getBlogs().catch(() => null));
-        else promises.push(Promise.resolve(null));
-
-        if (api.getCertifications) promises.push(api.getCertifications().catch(() => null));
-        else promises.push(Promise.resolve(null));
-
-        if (api.getMetricsVisitorsSummary) promises.push(api.getMetricsVisitorsSummary().catch(() => null));
-        else promises.push(Promise.resolve(null));
-
-        const [
-          homeRes,
-          categoriesRes,
-          featuredRes,
-          blogsRes,
-          certificationsRes,
-          metricsRes
-        ] = await Promise.all(promises);
-
-        if (!mounted) return;
-
-        // 1) homeRes (single endpoint preferred)
-        if (homeRes) {
-          if (homeRes.hero) {
-            const incomingHero = homeRes.hero || {};
-            const incomingImage = incomingHero.image || "";
-            const safeImage = (typeof incomingImage === "string" && (incomingImage.startsWith("/images/") || incomingImage.startsWith("/img/"))) ? LOCAL_HERO_PRODUCTS : (incomingImage || LOCAL_HERO_PRODUCTS);
-            setHero(prev => ({ ...prev, ...incomingHero, image: safeImage || prev.image }));
-          }
-          if (Array.isArray(homeRes.categories)) setProductCategories(homeRes.categories);
-          else if (Array.isArray(homeRes.categories || homeRes.categoriesList)) setProductCategories(homeRes.categories || homeRes.categoriesList);
-
-          if (Array.isArray(homeRes.featured)) setFeatured(homeRes.featured);
-          if (Array.isArray(homeRes.blogs)) setBlogs(homeRes.blogs.slice(0, 3));
-          if (Array.isArray(homeRes.certifications)) setCertifications(homeRes.certifications);
-          if (Array.isArray(homeRes.values)) setCompanyValues(homeRes.values);
-          if (Array.isArray(homeRes.workflow)) setWorkflowSteps(homeRes.workflow);
-        }
-
-        // 2) categories endpoint fallback (only if productCategories is still null)
-        if ((productCategories === null || productCategories === undefined) && categoriesRes) {
-          if (Array.isArray(categoriesRes)) setProductCategories(categoriesRes);
-          else if (categoriesRes.categories && Array.isArray(categoriesRes.categories)) setProductCategories(categoriesRes.categories);
-        }
-
-        // 3) featured endpoint fallback
-        if ((featured === null || featured === undefined) && featuredRes) {
-          if (Array.isArray(featuredRes)) setFeatured(featuredRes);
-          else if (featuredRes.featured && Array.isArray(featuredRes.featured)) setFeatured(featuredRes.featured);
-        }
-
-        // 4) blogs endpoint fallback
-        if ((blogs === null || blogs === undefined) && blogsRes) {
-          if (Array.isArray(blogsRes)) setBlogs(blogsRes.slice(0, 3));
-          else if (blogsRes.blogs && Array.isArray(blogsRes.blogs)) setBlogs(blogsRes.blogs.slice(0, 3));
-        }
-
-        // 5) certifications endpoint
-        if (certificationsRes && Array.isArray(certificationsRes)) setCertifications(certificationsRes);
-        else if (certificationsRes && certificationsRes.items && Array.isArray(certificationsRes.items)) setCertifications(certificationsRes.items);
-
-        // 6) metrics
-        if (metricsRes) {
-          const total = metricsRes.total_visitors || metricsRes.total || metricsRes.totalVisitors || null;
-          setVisitorsCount(total || null);
-        }
-
-        // If server didn't provide company values/workflow, set to empty arrays (loaded-empty)
-        if (companyValues === null) setCompanyValues([]);
-        if (workflowSteps === null) setWorkflowSteps([]);
-
-        // IMPORTANT: do NOT inject mock product categories / certifications here.
-        // If you want demo mode (local mock), toggle it explicitly (see comments below).
-
-      } catch (err) {
-        console.error("[HomePage] bootstrap error", err);
-        // mark loads as completed but empty (so UI shows placeholders)
-        if (companyValues === null) setCompanyValues([]);
-        if (workflowSteps === null) setWorkflowSteps([]);
-        if (productCategories === null) setProductCategories([]);
-        if (certifications === null) setCertifications([]);
-        if (featured === null) setFeatured([]);
-        if (blogs === null) setBlogs([]);
       } finally {
         if (mounted) setLoading(false);
       }
     }
+    load();
 
-    bootstrap();
     return () => { mounted = false; };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // run once on mount
+  }, []);
 
-  // fallback hero image if something odd — only ensures not-empty image (doesn't seed other data)
+  /* ----------------------------
+     TESTIMONIAL ROTATION
+  ---------------------------- */
   useEffect(() => {
-    if (!hero.image || (typeof hero.image === "string" && hero.image.startsWith("/images/"))) {
-      setHero(prev => ({ ...prev, image: LOCAL_HERO_PRODUCTS }));
+    // start rotation only when testimonials are available
+    if (!testimonials || testimonials.length === 0) {
+      clearInterval(rotationRef.current);
+      rotationRef.current = null;
+      return;
     }
-  }, []); // run once on mount
 
-  // testimonial rotation — unchanged
-  useEffect(() => {
-    const start = () => {
-      if (testimonialTimerRef.current) clearInterval(testimonialTimerRef.current);
-      testimonialTimerRef.current = setInterval(() => {
-        setCurrentTestimonial((p) => (p + 1) % (testimonials?.length || 1));
-      }, 6000);
+    // clear existing
+    clearInterval(rotationRef.current);
+
+    rotationRef.current = setInterval(() => {
+      setCurrentTestimonial((prev) => {
+        const next = (prev + 1) % testimonials.length;
+        return next;
+      });
+    }, 5000);
+
+    return () => {
+      clearInterval(rotationRef.current);
+      rotationRef.current = null;
     };
+  }, [testimonials]);
 
-    if (testimonials && testimonials.length > 1) start();
+  const pauseRotation = useCallback(() => {
+    if (rotationRef.current) {
+      clearInterval(rotationRef.current);
+      rotationRef.current = null;
+    }
+  }, []);
 
-    return () => { if (testimonialTimerRef.current) clearInterval(testimonialTimerRef.current); };
-  }, [testimonials?.length]);
+  const resumeRotation = useCallback(() => {
+    if (rotationRef.current || !testimonials || testimonials.length === 0) return;
+    rotationRef.current = setInterval(() => {
+      setCurrentTestimonial((prev) => (prev + 1) % testimonials.length);
+    }, 5000);
+  }, [testimonials]);
 
-  const nextTestimonial = useCallback(() => setCurrentTestimonial((p) => (p + 1) % (testimonials?.length || 1)), [testimonials?.length]);
-  const prevTestimonial = useCallback(() => setCurrentTestimonial((p) => (p - 1 + (testimonials?.length || 1)) % (testimonials?.length || 1)), [testimonials?.length]);
-  const pauseRotation = () => { if (testimonialTimerRef.current) clearInterval(testimonialTimerRef.current); };
-  const resumeRotation = () => { if (testimonials?.length > 1) testimonialTimerRef.current = setInterval(() => setCurrentTestimonial((p) => (p + 1) % (testimonials?.length || 1)), 6000); };
+  const prevTestimonial = useCallback(() => {
+    if (!testimonials || testimonials.length === 0) return;
+    setCurrentTestimonial((s) => (s - 1 + testimonials.length) % testimonials.length);
+  }, [testimonials]);
 
-  const scrollCategories = (dir = "right") => {
-    const el = categoriesRef.current;
-    if (!el) return;
-    const distance = Math.round(el.clientWidth * 0.8);
-    el.scrollBy({ left: dir === "left" ? -distance : distance, behavior: "smooth" });
-  };
-  const onCategoryKey = (e) => {
-    if (e.key === "ArrowLeft") scrollCategories("left");
-    if (e.key === "ArrowRight") scrollCategories("right");
-  };
+  const nextTestimonial = useCallback(() => {
+    if (!testimonials || testimonials.length === 0) return;
+    setCurrentTestimonial((s) => (s + 1) % testimonials.length);
+  }, [testimonials]);
 
-  if (loading) {
-    return (
-      <div className="min-h-[60vh] flex items-center justify-center">
-        <div className="text-center text-slate-600">Loading homepage…</div>
-      </div>
-    );
-  }
+  if (loading) return <div className="text-center py-20">Loading...</div>;
 
+  /* ----------------------------
+     HERO SECTION
+  ---------------------------- */
   return (
-    <div className="min-h-screen bg-background text-slate-800 antialiased overflow-x-hidden" style={{ paddingTop: "var(--header-height, 96px)" }}>
-      {/* HERO */}
-      <motion.section className="relative overflow-hidden" initial="hidden" animate="visible" variants={containerVariants} aria-label="Hero">
-        <div className="absolute inset-0 z-0 w-full h-full bg-center bg-cover bg-no-repeat" style={{
-          backgroundImage: `url("${hero.image || LOCAL_HERO_PRODUCTS}")`,
-          backgroundPosition: "center center",
-          backgroundSize: "cover",
-          backgroundRepeat: "no-repeat",
-          willChange: "transform",
-        }} aria-hidden="true" />
+    <div className="min-h-screen bg-background text-slate-800">
 
-        <div className="absolute inset-0 z-10" style={{ background: "linear-gradient(rgba(6,12,8,0.56), rgba(6,12,8,0.32))" }} aria-hidden="true" />
+      <section className="relative overflow-hidden">
+        <div
+          className="absolute inset-0 bg-cover bg-center"
+           style={{ backgroundImage: `url("${hero.image || HERO_PRODUCTS}")` }}
+        />
 
-        <div className="absolute inset-0 z-11 pointer-events-none" style={{ background: "linear-gradient(to right, rgba(0,0,0,0.72) 0%, rgba(0,0,0,0.45) 30%, rgba(0,0,0,0.18) 55%, transparent 75%)" }} aria-hidden="true" />
+        <div className="absolute inset-0 bg-black/40" />
 
-        <div className="relative z-20 max-w-[1200px] mx-auto px-4 sm:px-6 py-12 md:py-24">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
-            <div className="text-left">
-              <motion.h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl leading-tight font-heading font-extrabold mb-3 text-white drop-shadow-[0_6px_14px_rgba(0,0,0,0.65)]" variants={heroVariants} aria-label="Company name">
-                {hero.title || "SPRADA2GLOBAL"}
-              </motion.h1>
+          <div className="relative z-20 max-w-[1200px] mx-auto px-6 py-24 text-left">
+          <h1 className="text-5xl md:text-6xl text-white font-bold drop-shadow">
+            {hero.title}
+          </h1>
 
-              <motion.div className="mb-4" variants={heroVariants}>
-                <p className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-semibold italic tracking-wide text-white/95 drop-shadow-[0_4px_10px_rgba(0,0,0,0.55)]">
-                  {hero.subtitle || "Rich Quality, Reach to the World"}
-                </p>
-                <div className="mt-2 w-20 h-1 bg-gradient-to-r from-[#D7B15B] to-[#164946] rounded-full" />
-              </motion.div>
+          <p className="text-xl text-white/90 mt-3 font-bold italic">
+            {hero.subtitle}
+          </p>
 
-              <motion.p className="text-sm md:text-base mb-6 max-w-xl leading-relaxed text-white/90" variants={heroVariants}>
-                {hero.description || "Your trusted partner in premium agricultural exports. We connect the finest Indian produce with global markets, ensuring compliance and quality at every step."}
-              </motion.p>
 
-              <motion.div className="flex flex-col sm:flex-row gap-3 sm:gap-4" variants={heroVariants}>
-                <Link to="/contact" className="w-full sm:w-auto">
-                  <Button className="w-full sm:w-auto bg-white text-[#164946] font-semibold py-3 sm:py-2 px-5 rounded shadow-sm hover:shadow-md transition">Request a Quote</Button>
-                </Link>
-                <Link to="/products" className="w-full sm:w-auto">
-                  <Button variant="outline" className="w-full sm:w-auto border-white text-white hover:bg-white hover:text-[#33504F] py-3 sm:py-2 px-5 rounded transition">View Products</Button>
-                </Link>
-              </motion.div>
-            </div>
+          <div className="mt-2 w-20 h-1 bg-gradient-to-r from-[#D7B15B] to-[#164946]" />
+
+          <p className="text-white/80 max-w-xl mt-4">{hero.description}</p>
+
+          <div className="mt-6 flex gap-4">
+            <Link to="/contact">
+              <Button className="bg-white text-[#164946] px-6">Request a Quote</Button>
+            </Link>
+            <Link to="/products">
+              <Button variant="outline" className="text-white border-white px-6">View Products</Button>
+            </Link>
           </div>
         </div>
-      </motion.section>
+      </section>
 
-      {/* Why Choose */}
-            <section id="why" className="py-10 md:py-16 bg-white">
-        <div className="max-w-[1100px] mx-auto px-4 sm:px-6">
-          <div className="text-center mb-8">
-            <h2 className="text-2xl md:text-3xl font-heading font-semibold text-[#1f5a53]">Why Choose Sprada2Global</h2>
-            <p className="text-sm md:text-base text-slate-600 mt-2">We are committed to delivering excellence in every aspect of our export operations.</p>
-          </div>
-
+      {/* WHY CHOOSE */}
+      <section className="py-16 bg-white">
+        <div className="max-w-[1100px] mx-auto px-4">
+          <h2 className="text-center text-3xl font-heading text-[#1f5a53] mb-6">Why Choose Us</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {companyValues && companyValues.length ? companyValues.map((value, i) => (
-              <motion.div key={value.id || i} initial="hidden" whileInView="visible" variants={fadeUp} viewport={{ once: true }}>
-                <ValueCard title={value.title} description={value.description} />
-              </motion.div>
-            )) : DEFAULT_COMPANY_VALUES.map((v, i) => (
-              <motion.div key={i} initial="hidden" whileInView="visible" variants={fadeUp} viewport={{ once: true }}>
+            {(companyValues.length ? companyValues : DEFAULT_COMPANY_VALUES).map((v, i) => (
+              <motion.div key={i} initial="hidden" whileInView="visible" variants={fadeUp}>
                 <ValueCard title={v.title} description={v.description} />
               </motion.div>
             ))}
@@ -432,317 +295,503 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Product Categories */}
-      {/* Product Categories */}
-      <section className="py-10 md:py-16 bg-slate-50">
-        <div className="max-w-[1100px] mx-auto px-4 sm:px-6">
-          <div className="text-center mb-6">
-            <h2 className="text-2xl md:text-3xl font-heading font-semibold text-[#1f5a53]">Our Product Categories</h2>
-            <p className="text-sm md:text-base text-slate-600 mt-2">Discover our premium range carefully selected and processed Products to meet international standards.</p>
+      {/* PRODUCT CATEGORIES */}
+      <section className="py-16 bg-slate-50">
+        <div className="max-w-[1100px] mx-auto px-4">
+          <div className="text-center mb-8">
+            <h2 className="text-3xl font-heading font-semibold text-[#1f5a53]">
+              Our Product Categories
+            </h2>
+            <p className="text-slate-600 mt-2">
+              Explore our range of high-quality export-ready products.
+            </p>
           </div>
 
-          {/* Small/medium: horizontal scroller */}
+          {/* Mobile Scroller */}
           <div className="block lg:hidden relative">
-            <div className="absolute left-2 top-1/2 -translate-y-1/2 z-20">
-              <button aria-label="Scroll categories left" onClick={() => scrollCategories("left")} className="bg-white rounded-full p-2 shadow">
-                <ChevronLeft className="w-5 h-5 text-[#164946]" />
-              </button>
-            </div>
-            <div className="absolute right-2 top-1/2 -translate-y-1/2 z-20">
-              <button aria-label="Scroll categories right" onClick={() => scrollCategories("right")} className="bg-white rounded-full p-2 shadow">
-                <ChevronRight className="w-5 h-5 text-[#164946]" />
-              </button>
-            </div>
+            <button
+              className="absolute left-2 top-1/2 -translate-y-1/2 bg-white shadow p-2 rounded-full z-20"
+              onClick={() => categoriesRef.current?.scrollBy({ left: -250, behavior: "smooth" })}
+            >
+              <ChevronLeft className="text-[#164946]" />
+            </button>
 
-            <div ref={categoriesRef} tabIndex={0} onKeyDown={onCategoryKey} className="overflow-x-auto no-scrollbar px-2 py-2 -mx-2 scroll-smooth" role="list" aria-label="Product categories">
-              <div className="flex gap-4">
-                {productCategories.map((category, i) => {
-                  const id = category.id || category._id || null;
-                  const name = category.name || category.categoryName || category.title || category.slug || "Category";
-                  const description = category.description || category.shortDescription || "";
-                  const count = Number(category.count || category.product_count || category.productCount || 0);
-                  const thumb = category.thumb || category.categoryImage || category.primary_image || category.og_image || category.image || WIX_CATEGORY_IMG;
-                  const slugCandidate = category.slug || category.slug_name || category.slugName || slugifyName(name);
-                  const categoryPath = `/products?category_slug=${encodeURIComponent(String(slugCandidate).trim())}`;
+            <button
+              className="absolute right-2 top-1/2 -translate-y-1/2 bg-white shadow p-2 rounded-full z-20"
+              onClick={() => categoriesRef.current?.scrollBy({ left: 250, behavior: "smooth" })}
+            >
+              <ChevronRight className="text-[#164946]" />
+            </button>
 
-                  const onClickCategory = async () => {
-                    try {
-                      const visitorId = readCookie("sprada_visitor_id") || null;
-                      const sessionId = readCookie("sprada_session_id") || null;
-                      const props = { category: name, category_id: id || null, category_slug: slugCandidate };
-                      if (visitorId && isUuid(visitorId)) {
-                        if (api.postVisitorEvent) await api.postVisitorEvent(visitorId, "category_click", props).catch(() => null);
-                      } else if (sessionId) {
-                        if (api.request) {
-                          await api.request("/api/visitors/event", { method: "POST", body: JSON.stringify({ session_id: sessionId, event_type: "category_click", event_props: props }) }).catch(() => null);
-                        } else {
-                          try { await fetch("/api/visitors/event", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ session_id: sessionId, event_type: "category_click", event_props: props }), credentials: "include" }); } catch (_) {}
-                        }
-                      }
-                    } catch (_) {}
-                  };
-
-                  return (
-                    <div key={id || slugCandidate || i} className="min-w-[210px] max-w-[220px] shrink-0">
-                      <CategoryCard name={name} description={description} count={count} thumb={thumb} to={categoryPath} onClick={onClickCategory} />
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-
-          {/* Large: grid */}
-          <div className="hidden lg:block">
-            {(!productCategories || productCategories.length === 0) ? (
-              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {[...Array(6)].map((_, i) => (
-                  <div key={i} className="animate-pulse p-4 bg-white rounded-lg shadow-sm">
-                    <div className="bg-slate-200 rounded h-56 mb-4" />
-                    <div className="h-4 bg-slate-200 rounded mb-2 w-3/4" />
-                    <div className="h-3 bg-slate-200 rounded w-1/2" />
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {productCategories.map((category, i) => {
-                  const id = category.id || category._id || null;
-                  const name = category.name || category.categoryName || category.title || category.slug || "Category";
-                  const description = category.description || category.shortDescription || "";
-                  const count = Number(category.count || category.product_count || category.productCount || 0);
-                  const thumb = category.thumb || category.categoryImage || category.primary_image || category.og_image || category.image || WIX_CATEGORY_IMG;
-                  const slugCandidate = category.slug || category.slug_name || category.slugName || slugifyName(name);
-                  const categoryPath = `/products?category_slug=${encodeURIComponent(String(slugCandidate).trim())}`;
-
-                  const onClickCategory = async () => {
-                    try {
-                      const visitorId = readCookie("sprada_visitor_id") || null;
-                      const sessionId = readCookie("sprada_session_id") || null;
-                      const props = { category: name, category_id: id || null, category_slug: slugCandidate };
-                      if (visitorId && isUuid(visitorId)) {
-                        if (api.postVisitorEvent) await api.postVisitorEvent(visitorId, "category_click", props).catch(() => null);
-                      } else if (sessionId) {
-                        if (api.request) {
-                          await api.request("/api/visitors/event", { method: "POST", body: JSON.stringify({ session_id: sessionId, event_type: "category_click", event_props: props }) }).catch(() => null);
-                        } else {
-                          try { await fetch("/api/visitors/event", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ session_id: sessionId, event_type: "category_click", event_props: props }), credentials: "include" }); } catch (_) {}
-                        }
-                      }
-                    } catch (_) {}
-                  };
-
-                  return (
-                    <motion.div key={id || slugCandidate || i} initial="hidden" whileInView="visible" variants={fadeUp} viewport={{ once: true }}>
-                      <CategoryCard name={name} description={description} count={count} thumb={thumb} to={categoryPath} onClick={onClickCategory} />
-                    </motion.div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        </div>
-      </section>
-
-      {/* About */}
-      <section className="py-10 md:py-16 bg-white">
-        <div className="max-w-[1100px] mx-auto px-4 sm:px-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
-            <div className="w-full">
-              <Image src={ABOUT_IMG} alt="About Sprada2Global Exim" width={500} className="w-full h-[140px] sm:h-[180px] md:h-[340px] lg:h-[420px] xl:h-[480px] object-cover rounded-lg shadow-lg" />
-            </div>
-            <div>
-              <h2 className="text-2xl md:text-3xl font-heading font-semibold text-[#1f5a53] mb-3">About Sprada2Global Exim</h2>
-              <p className="text-sm md:text-base text-slate-700 mb-4 leading-relaxed">With years of experience in exports and imports, we have built a reputation for delivering premium quality products to markets worldwide. Our commitment to excellence and sustainable practices sets us apart in the industry.</p>
-              <ul className="space-y-3 mb-4">
-                <li className="flex items-start gap-3"><CheckCircle className="w-5 h-5 text-[#D7B15B] mt-1" /><span className="text-sm text-slate-700">Direct sourcing from verified farmers across India</span></li>
-                <li className="flex items-start gap-3"><CheckCircle className="w-5 h-5 text-[#D7B15B] mt-1" /><span className="text-sm text-slate-700">State-of-the-art processing and packaging facilities</span></li>
-                <li className="flex items-start gap-3"><CheckCircle className="w-5 h-5 text-[#D7B15B] mt-1" /><span className="text-sm text-slate-700">International quality certifications and compliance</span></li>
-              </ul>
-              <Link to="/about"><Button className="bg-[#164946] text-white py-2 px-4 rounded">Read More About Us</Button></Link>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Workflow */}
-                  
-      <section className="py-10 md:py-16 bg-slate-50">
-        <div className="max-w-[1100px] mx-auto px-4 sm:px-6">
-          <div className="text-center mb-6">
-            <h2 className="text-2xl md:text-3xl font-heading font-semibold text-[#1f5a53]">Our Export Process</h2>
-            <p className="text-sm md:text-base text-slate-600 mt-2">From sourcing to delivery, we follow a meticulous process to ensure the highest quality standards at every step.</p>
-          </div>
-
-          <div className="relative">
-            <div className="hidden lg:block absolute top-1/2 left-4 right-4 h-px bg-[#D7B15B] opacity-40 z-0" />
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 relative z-10">
-              {(
-                workflowSteps && workflowSteps.length
-                  ? workflowSteps
-                  : DEFAULT_WORKFLOW
-              ).map((s, i) => {
-                // Normalizations / fixes shown in screenshot:
-                const rawName = s.stepName || s.name || '';
-                const rawDesc = s.stepDescription || s.description || '';
-
-                // 1) If the step is "Sourcing" make sure 'farmers' -> 'manufacturing units'
-                let description = rawDesc;
-                if (/sourcing/i.test(rawName)) {
-                  // replace the word 'farmers' with 'manufacturing units' if present
-                  description = description.replace(/\bfarmers\b/ig, 'manufacturing units');
-
-                  // if description didn't contain 'farmers' but you want the exact suggested text:
-                  if (!/manufacturing units/i.test(description) && !/farmers/i.test(rawDesc)) {
-                    // provide a fallback description close to screenshot
-                    description = description || 'Direct sourcing from verified manufacturing units';
-                  }
-                }
-
-                // 2) If the step name contains 'Export Logistics' or 'Export' remove 'Export' so it reads 'Logistics'
-                let displayName = rawName.replace(/\bExport\s*/i, '').trim() || rawName || `Step ${i + 1}`;
-
-                // Keep step number fallback if none provided
-                const stepNumber = s.stepNumber || (i + 1);
-
-                // Pick an image (if provided) or show the number
-                const stepImage = s.stepImage || null;
+            <div
+              ref={categoriesRef}
+              className="overflow-x-auto no-scrollbar flex gap-4 py-2 px-2"
+            >
+              {productCategories.map((c, i) => {
+                const name = c.name || "Category";
+                const slug = c.slug || slugifyName(name);
+                const count = c.count || 0;
+                const description = c.description || "";
+                const thumb =
+                  c.thumb ||
+                  c.image ||
+                  c.og_image ||
+                  "https://via.placeholder.com/300x200?text=No+Image";
 
                 return (
-                  <motion.div
-                    key={s.id || i}
-                    initial="hidden"
-                    whileInView="visible"
-                    variants={fadeUp}
-                    viewport={{ once: true }}
-                    className="text-center"
-                  >
-                    <div className="bg-white rounded-full w-16 h-16 mx-auto mb-3 flex items-center justify-center shadow-md border-4 border-[#D7B15B]">
-                      {stepImage
-                        ? <Image src={stepImage} alt={displayName} width={48} className="w-10 h-10 object-contain" />
-                        : <span className="text-lg font-bold text-[#164946]">{stepNumber}</span>
-                      }
-                    </div>
-
-                    {/* Title with same style as before */}
-                    <h3 className="text-md font-medium text-[#164946] mb-2">{displayName}</h3>
-
-                    {/* Description (normalized) */}
-                    <p className="text-sm text-slate-600">{description}</p>
-                  </motion.div>
+                  <div key={i} className="min-w-[220px] max-w-[220px]">
+                    <CategoryCard
+                      name={name}
+                      description={description}
+                      count={count}
+                      thumb={thumb}
+                      to={`/products?category_slug=${slug}`}
+                    />
+                  </div>
                 );
               })}
             </div>
           </div>
-        </div>
-      </section>
 
-      {/* Certifications */}
-       <section className="py-10 md:py-16 bg-white">
-        <div className="max-w-[1100px] mx-auto px-4 sm:px-6">
-          <div className="text-center mb-6">
-            <h2 className="text-2xl md:text-3xl font-heading font-semibold text-[#1f5a53]">Our Certifications</h2>
-            <p className="text-sm md:text-base text-slate-600 mt-2">We maintain the highest standards with internationally recognized certifications and compliance.</p>
-          </div>
+          {/* Desktop Grid */}
+          <div className="hidden lg:grid grid-cols-3 gap-6">
+            {productCategories.map((c, i) => {
+              const name = c.name || "Category";
+              const slug = c.slug || slugifyName(name);
+              const count = c.count || 0;
+              const description = c.description || "";
+              const thumb =
+                c.thumb ||
+                c.image ||
+                c.og_image ||
+                "https://via.placeholder.com/300x200?text=No+Image";
 
-          <div className="flex flex-wrap justify-center items-center gap-4 md:gap-6">
-            {(certifications && certifications.length ? certifications.slice(0, 8) : [
-              { name: "IEC", img: "https://static.wixstatic.com/media/c837a6_35cdbd22b3ff469e9eed72da97f6e6de~mv2.png" },
-              { name: "MSME", img: "https://static.wixstatic.com/media/c837a6_daa0b06aa1cc4d198f51b02bbf8949d8~mv2.png" },
-              { name: "RCMC", img: "https://static.wixstatic.com/media/c837a6_362cc25a788a4802991b3303abf1d5db~mv2.png" },
-              { name: "FSSAI", img: "https://static.wixstatic.com/media/c837a6_39505e4000ad40fe9d19445bd567c90e~mv2.png" },
-              { name: "GST", img: "https://static.wixstatic.com/media/c837a6_63ef44e8234d4e3e9f8d1b845a70d433~mv2.png" }
-            ]).map((c, i) => {
-              const name = typeof c === "string" ? c : (c.name || c.certificationName || c.title);
-              const icon = (c && (c.img || c.icon || c.image)) || SVG_FALLBACK;
-
-              return <CertBadge key={i} name={name} icon={icon} />;
+              return (
+                <motion.div key={i} initial="hidden" whileInView="visible" variants={fadeUp}>
+                  <CategoryCard
+                    name={name}
+                    description={description}
+                    count={count}
+                    thumb={thumb}
+                    to={`/products?category_slug=${slug}`}
+                  />
+                </motion.div>
+              );
             })}
           </div>
         </div>
       </section>
 
-      {/* Testimonials */}
-      <section className="py-10 md:py-16 bg-slate-50">
-        <div className="max-w-[900px] mx-auto px-4 sm:px-6">
-          <div className="text-center mb-6">
-            <h2 className="text-2xl md:text-3xl font-heading font-semibold text-[#1f5a53]">What Our Clients Say</h2>
-            <p className="text-sm md:text-base text-slate-600 mt-2">Hear from our satisfied customers around the world.</p>
+{/* ABOUT SECTION */}
+<section className="py-16 bg-white">
+  <div className="max-w-[1100px] mx-auto px-4 grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
+
+    <div>
+      <img
+        src={hero?.about_image || ABOUT_IMG}
+        alt="About Sprada2Global Exim"
+        loading="lazy"
+        decoding="async"
+        width="800"
+        height="420"
+        className="w-full rounded-lg shadow-lg object-cover h-[420px]"
+        onError={(e) => {
+          e.currentTarget.onerror = null;
+          e.currentTarget.src = "/images/image-placeholder.png";
+        }}
+      />
+    </div>
+
+    <div>
+      <h2 className="text-3xl font-heading font-semibold text-[#1f5a53] mb-4">
+        About Sprada2Global Exim
+      </h2>
+
+      <p className="text-slate-700 leading-relaxed mb-6">
+        We export high-quality agricultural and food-grade products to
+        global markets. With verified sourcing, modern packaging, and
+        strict compliance, we ensure every shipment meets international
+        standards.
+      </p>
+
+      <ul className="space-y-3">
+        <li className="flex gap-3">
+          <CheckCircle className="text-[#D7B15B] w-5 h-5" />
+          <span>Direct sourcing from trusted manufacturing units.</span>
+        </li>
+
+        <li className="flex gap-3">
+          <CheckCircle className="text-[#D7B15B] w-5 h-5" />
+          <span>State-of-the-art processing & packaging facilities.</span>
+        </li>
+
+        <li className="flex gap-3">
+          <CheckCircle className="text-[#D7B15B] w-5 h-5" />
+          <span>Certified for international trade & food safety.</span>
+        </li>
+      </ul>
+
+      <Link to="/about">
+        <Button className="mt-6 bg-[#164946] text-white px-6">
+          Read More
+        </Button>
+      </Link>
+    </div>
+
+  </div>
+</section>
+
+
+      {/* ⭐ PREMIUM WORKFLOW V2 */}
+      <section className="py-20 bg-slate-50">
+        <div className="max-w-[1100px] mx-auto px-4">
+
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-heading font-semibold text-[#1f5a53]">
+              Our Export Process
+            </h2>
+            <p className="text-slate-600 mt-2">
+              A complete streamlined workflow — from sourcing to global delivery.
+            </p>
           </div>
 
-          <div ref={testimonialsContainerRef} className="relative" onMouseEnter={pauseRotation} onMouseLeave={resumeRotation} role="region" aria-label="Customer testimonials">
-            {loadingReviews ? (
-              <div className="bg-white rounded-lg shadow-lg p-6 md:p-8 text-center animate-pulse">
-                <div className="h-4 bg-slate-200 rounded w-3/4 mx-auto mb-4" />
-                <div className="h-6 bg-slate-200 rounded w-5/6 mx-auto mb-3" />
-                <div className="h-10 bg-slate-200 rounded w-24 mx-auto" />
+          <div className="relative pt-10">
+
+            {/* FIXED GOLD LINE — DOES NOT TOUCH HERO */}
+            <div className="hidden lg:block absolute top-[110px] left-8 right-8 h-[2px] bg-[#D7B15B]/50"></div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10 relative z-10">
+
+              {(workflowSteps.length ? workflowSteps : DEFAULT_WORKFLOW).map((step, i) => {
+                const title = (step.stepName || "").replace(/Export\s*/i, "").trim();
+                let description = step.stepDescription || "";
+
+                // Normalize sourcing step
+                if (/sourcing/i.test(step.stepName || "")) {
+                  description = description.replace(/farmers/gi, "manufacturing units");
+                }
+
+                return (
+                  <motion.div
+                    key={i}
+                    initial={{ opacity: 0, y: 30, scale: 0.9 }}
+                    whileInView={{ opacity: 1, y: 0, scale: 1 }}
+                    transition={{ duration: 0.45, delay: i * 0.15 }}
+                    viewport={{ once: true }}
+                    className="flex flex-col items-center text-center"
+                  >
+                    {/* Animated number circle */}
+                    <motion.div
+                      initial={{ scale: 0.5, opacity: 0 }}
+                      whileInView={{ scale: 1, opacity: 1 }}
+                      transition={{ duration: 0.4 }}
+                      className="w-16 h-16 flex items-center justify-center rounded-full bg-white 
+                                 border-4 border-[#D7B15B] shadow"
+                    >
+                      <span className="text-lg font-bold text-[#164946]">
+                        {step.stepNumber}
+                      </span>
+                    </motion.div>
+
+                    <div className="mt-4 flex flex-col items-center">
+
+                      <motion.h3
+                        initial={{ opacity: 0, y: 6 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.2 + i * 0.1 }}
+                        className="text-md font-semibold text-[#164946]"
+                      >
+                        {title}
+                      </motion.h3>
+
+                      <motion.div
+                        initial={{ width: 0 }}
+                        whileInView={{ width: "40px" }}
+                        transition={{ delay: 0.25 + i * 0.1 }}
+                        className="h-[2px] bg-[#D7B15B] my-2"
+                      />
+
+                      <motion.p
+                        initial={{ opacity: 0 }}
+                        whileInView={{ opacity: 1 }}
+                        transition={{ delay: 0.3 + i * 0.1 }}
+                        className="text-sm text-slate-600 leading-relaxed"
+                      >
+                        {description}
+                      </motion.p>
+
+                    </div>
+
+                  </motion.div>
+                );
+              })}
+
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* CERTIFICATIONS */}
+      <section className="py-16 bg-white">
+        <div className="max-w-[1100px] mx-auto px-4">
+
+          <div className="text-center mb-10">
+            <h2 className="text-3xl font-heading font-semibold text-[#1f5a53]">
+              Our Certifications
+            </h2>
+            <p className="text-slate-600 mt-2">
+              Internationally recognized approvals ensuring global trade compliance.
+            </p>
+          </div>
+
+          <div className="flex flex-wrap justify-center gap-6">
+
+            {(certifications?.length ? certifications.slice(0, 8) : [
+              { name: "IEC", img: "https://static.wixstatic.com/media/c837a6_35cdbd22b3ff469e9eed72da97f6e6de~mv2.png" },
+              { name: "MSME", img: "https://static.wixstatic.com/media/c837a6_daa0b06aa1cc4d198f51b02bbf8949d8~mv2.png" },
+              { name: "RCMC", img: "https://static.wixstatic.com/media/c837a6_362cc25a788a4802991b3303abf1d5db~mv2.png" },
+              { name: "FSSAI", img: "https://static.wixstatic.com/media/c837a6_39505e4000ad40fe9d19445bd567c90e~mv2.png" },
+              { name: "GST", img: "https://static.wixstatic.com/media/c837a6_63ef44e8234d4e3e9f8d1b845a70d433~mv2.png" },
+            ]).map((c, i) => {
+              const icon = c.img || c.icon || c.image || SVG_FALLBACK;
+              const name = c.name || c.title || "Certification";
+              return <CertBadge key={i} name={name} icon={icon} />;
+            })}
+
+          </div>
+
+        </div>
+      </section>
+
+      {/* BLOGS — PREMIUM V2 */}
+      <section className="py-16 bg-white">
+        <div className="max-w-[1100px] mx-auto px-4">
+
+          {/* Header */}
+          <div className="text-center mb-10">
+            <h2 className="text-3xl font-heading font-semibold text-[#1f5a53]">
+              Latest Blogs & Insights
+            </h2>
+            <p className="text-slate-600 mt-2">
+              Stay updated with market trends, export insights & agricultural knowledge.
+            </p>
+          </div>
+
+          {/* Blog Grid */}
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
+
+            {(blogs?.length ? blogs.slice(0, 3) : []).map((blog, i) => {
+              const blogId = blog.id || blog._id || i;
+              const title = blog.title || "Untitled Article";
+              const slug = blog.slug || "";
+              const excerpt = blog.excerpt || blog.description || "";
+              const image = blog.image || blog.cover || HERO_BG;
+
+              return (
+                <motion.div
+                  key={blogId}
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.45, delay: i * 0.12 }}
+                  viewport={{ once: true }}
+                  className="group bg-white rounded-xl shadow-md hover:shadow-xl transition overflow-hidden cursor-pointer"
+                >
+                  {/* Image */}
+                  <Link to={`/blogs/${slug}`}>
+                    <div className="relative h-52 overflow-hidden">
+                      <Image
+                        src={image}
+                        alt={title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      />
+
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-70"></div>
+                    </div>
+                  </Link>
+
+                  {/* Content */}
+                  <div className="p-5">
+                    <Link to={`/blogs/${slug}`}>
+                      <h3 className="text-lg font-semibold text-[#164946] group-hover:text-[#0f3a35] transition">
+                        {title}
+                      </h3>
+                    </Link>
+
+                    <p className="text-sm text-slate-600 mt-2 line-clamp-3">
+                      {excerpt}
+                    </p>
+
+                    <div className="mt-4">
+                      <Link
+                        to={`/blogs/${slug}`}
+                        className="text-[#164946] font-medium text-sm hover:underline inline-flex items-center gap-1"
+                      >
+                        Read More →
+                      </Link>
+                    </div>
+                  </div>
+                </motion.div>
+              );
+            })}
+
+            {/* If no blogs available */}
+            {(!blogs || blogs.length === 0) && (
+              <div className="col-span-3 text-center text-slate-500 py-10">
+                No blogs found. Add blogs in your admin panel.
               </div>
-            ) : (testimonials && testimonials.length > 0) ? (
+            )}
+
+          </div>
+        </div>
+      </section>
+
+      {/* TESTIMONIALS */}
+      <section className="py-16 bg-slate-50">
+        <div className="max-w-[900px] mx-auto px-4">
+
+          <div className="text-center mb-8">
+            <h2 className="text-3xl font-heading font-semibold text-[#1f5a53]">
+              What Our Clients Say
+            </h2>
+            <p className="text-slate-600 mt-2">
+              Genuine feedback from our satisfied international buyers.
+            </p>
+          </div>
+
+          <div
+            ref={testimonialsContainerRef}
+            className="relative"
+            onMouseEnter={pauseRotation}
+            onMouseLeave={resumeRotation}
+          >
+
+            {/* LOADING STATE */}
+            {loadingReviews ? (
+              <div className="bg-white p-8 rounded-lg shadow-md animate-pulse text-center">
+                <div className="h-4 bg-slate-200 rounded w-3/4 mx-auto mb-4"></div>
+                <div className="h-6 bg-slate-200 rounded w-5/6 mx-auto mb-3"></div>
+                <div className="h-10 bg-slate-200 rounded w-24 mx-auto"></div>
+              </div>
+            ) : testimonials?.length ? (
               <>
-                <div className="bg-white rounded-lg shadow-lg p-6 md:p-8 text-center">
-                  <div className="flex justify-center mb-3" aria-hidden>
+                {/* ACTIVE TESTIMONIAL CARD */}
+                <div className="bg-white p-8 rounded-lg shadow-lg text-center">
+                  {/* Stars */}
+                  <div className="flex justify-center mb-3">
                     {[...Array(5)].map((_, i) => (
-                      <Star key={i} className={`w-5 h-5 ${(i < (testimonials[currentTestimonial]?.rating || 5)) ? "" : "text-gray-300"}`} style={(i < (testimonials[currentTestimonial]?.rating || 5)) ? { color: "#BB7521" } : {}} />
+                      <Star
+                        key={i}
+                        className={`w-5 h-5 ${i < (testimonials[currentTestimonial]?.rating || 5) ? "text-[#BB7521]" : "text-gray-300"}`}
+                      />
                     ))}
                   </div>
 
-                  <blockquote className="text-md md:text-lg text-slate-700 mb-4 italic leading-relaxed">"{testimonials[currentTestimonial]?.testimonialContent || '—'}"</blockquote>
+                  {/* Content */}
+                  <blockquote className="text-lg text-slate-700 italic leading-relaxed mb-4">
+                    "{testimonials[currentTestimonial]?.testimonialContent || testimonials[currentTestimonial]?.content || ""}"
+                  </blockquote>
 
+                  {/* User Info */}
                   <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+
+                    {/* Avatar */}
                     {testimonials[currentTestimonial]?.customerPhoto ? (
-                      <Image src={testimonials[currentTestimonial].customerPhoto} alt={testimonials[currentTestimonial]?.customerName || ''} width={64} className="w-14 h-14 rounded-full object-cover" />
+                      <Image
+                        src={testimonials[currentTestimonial].customerPhoto}
+                        className="w-14 h-14 rounded-full object-cover"
+                      />
                     ) : (
-                      <div className="w-14 h-14 rounded-full bg-[#e6f6f4] flex items-center justify-center text-[#164946] font-semibold">
-                        {((testimonials[currentTestimonial]?.customerName || "JD").split(' ').map(n => n[0]).slice(0,2).join(''))}
+                      <div className="w-14 h-14 rounded-full bg-[#e6f6f4] text-[#164946] flex items-center justify-center font-semibold">
+                        {testimonials[currentTestimonial]?.customerName
+                          ?.split(" ")
+                          .map((n) => n[0])
+                          .join("") || "U"}
                       </div>
                     )}
 
+                    {/* Info Text */}
                     <div className="text-left">
-                      <div className="text-lg font-medium text-[#164946]">{testimonials[currentTestimonial]?.customerName || "Anonymous"}</div>
-                      <div className="text-sm text-slate-600">{testimonials[currentTestimonial]?.customerTitle || ""}</div>
-                      {testimonials[currentTestimonial]?.created_at ? (<div className="text-xs text-slate-400 mt-1">{new Date(testimonials[currentTestimonial].created_at).toLocaleDateString()}</div>) : null}
+                      <div className="text-lg font-medium text-[#164946]">
+                        {testimonials[currentTestimonial]?.customerName || testimonials[currentTestimonial]?.author_name || "Anonymous"}
+                      </div>
+                      <div className="text-sm text-slate-600">
+                        {testimonials[currentTestimonial]?.customerTitle || testimonials[currentTestimonial]?.author_title || ""}
+                      </div>
+                      {testimonials[currentTestimonial]?.created_at && (
+                        <div className="text-xs text-slate-400 mt-1">
+                          {new Date(testimonials[currentTestimonial].created_at).toLocaleDateString()}
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
 
-                <button aria-label="Previous testimonial" onClick={() => { prevTestimonial(); pauseRotation(); }} className="absolute left-2 top-1/2 -translate-y-1/2 bg-white rounded-full p-2 shadow hover:shadow-md">
-                  <ChevronLeft className="w-5 h-5 text-[#164946]" />
-                </button>
-                <button aria-label="Next testimonial" onClick={() => { nextTestimonial(); pauseRotation(); }} className="absolute right-2 top-1/2 -translate-y-1/2 bg-white rounded-full p-2 shadow hover:shadow-md">
-                  <ChevronRight className="w-5 h-5 text-[#164946]" />
+                {/* Navigation Buttons */}
+                <button
+                  aria-label="Previous testimonial"
+                  onClick={() => { prevTestimonial(); pauseRotation(); }}
+                  className="absolute left-2 top-1/2 -translate-y-1/2 bg-white shadow p-2 rounded-full"
+                >
+                  <ChevronLeft className="text-[#164946]" />
                 </button>
 
-                <div className="mt-4 flex justify-center gap-2" aria-hidden>
-                  {testimonials.map((_, idx) => (
-                    <button key={idx} onClick={() => { setCurrentTestimonial(idx); pauseRotation(); }} className={`w-2 h-2 rounded-full ${idx === currentTestimonial ? 'bg-[#164946]' : 'bg-slate-300'}`} aria-label={`Show testimonial ${idx + 1}`} />
+                <button
+                  aria-label="Next testimonial"
+                  onClick={() => { nextTestimonial(); pauseRotation(); }}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 bg-white shadow p-2 rounded-full"
+                >
+                  <ChevronRight className="text-[#164946]" />
+                </button>
+
+                {/* Dots */}
+                <div className="flex justify-center gap-2 mt-4">
+                  {testimonials.map((_, index) => (
+                    <button
+                      key={index}
+                      onClick={() => { setCurrentTestimonial(index); pauseRotation(); }}
+                      className={`w-2 h-2 rounded-full ${index === currentTestimonial ? "bg-[#164946]" : "bg-slate-300"}`}
+                    ></button>
                   ))}
                 </div>
               </>
             ) : (
-              <div className="bg-white rounded-lg shadow-lg p-6 md:p-8 text-center">
-                <div className="text-slate-700 mb-3">No reviews yet.</div>
-                <div className="text-sm text-slate-500">Add reviews in the admin or seed data to show them here.</div>
+              <div className="bg-white p-8 rounded-lg shadow text-center">
+                <p className="text-slate-700">No reviews yet.</p>
+                <p className="text-slate-500 text-sm">Add some from admin panel.</p>
               </div>
             )}
           </div>
         </div>
       </section>
 
-      {/* Final CTA */}
-        <section className="py-8 md:py-12 bg-[#164946] text-white">
-          <div className="max-w-[1100px] mx-auto px-4 sm:px-6 text-center">
-            <h2 className="text-xl md:text-2xl font-heading font-semibold mb-3">Ready to Start Your Export Journey?</h2>
-            <p className="text-sm md:text-base mb-4">Get in touch with us today to discuss your requirements and discover how we can help you access premium Indian agricultural products.</p>
-            <div className="flex flex-col sm:flex-row gap-3 justify-center">
-              <Link to="/contact" className="w-full sm:w-auto">
-                <Button className="w-full sm:w-auto bg-white text-[#164946] font-semibold py-3 sm:py-2 px-4 rounded">Request a Quote</Button>
-              </Link>
-              <Link to="/products" className="w-full sm:w-auto">
-                <Button variant="outline" className="w-full sm:w-auto border-white text-white hover:bg-white hover:text-[#164946] py-3 sm:py-2 px-4 rounded">Contact Us</Button>
-              </Link>
-            </div>
+      {/* FINAL CTA */}
+      <section className="py-16 bg-[#164946] text-white text-center">
+        <div className="max-w-[900px] mx-auto px-4">
+          <h2 className="text-2xl md:text-3xl font-heading font-semibold mb-3">
+            Ready to Start Your Export Journey?
+          </h2>
+
+          <p className="text-white/90 mb-6">
+            Contact us today and discover how Sprada2Global can support your
+            international sourcing needs.
+          </p>
+
+          <div className="flex flex-col sm:flex-row justify-center gap-4">
+            <Link to="/contact">
+              <Button className="bg-white text-[#164946] px-6 py-3 font-semibold">
+                Request a Quote
+              </Button>
+            </Link>
+
+            <Link to="/products">
+              <Button variant="outline" className="border-white text-white hover:bg-white hover:text-[#164946] px-6 py-3">
+                Explore Products
+              </Button>
+            </Link>
           </div>
-        </section>
+        </div>
+      </section>
+
     </div>
   );
 }

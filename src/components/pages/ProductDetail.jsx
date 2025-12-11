@@ -1,5 +1,5 @@
 // src/components/pages/ProductDetail.jsx
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useCallback } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Image } from "../ui/image";
@@ -9,13 +9,28 @@ import { CheckCircle, ArrowLeft, X, ArrowLeft as PrevIcon, ArrowRight as NextIco
 import * as api from "../../lib/api";
 import { makeAbsoluteUrl } from "../../lib/urlHelpers";
 
-/* Utility */
+/* ---------- Helpers ---------- */
 function displayTradeType(product) {
   if (!product) return "both";
   return product.trade_type || product.effective_trade_type || product.category?.trade_type || "both";
 }
 
-/* Lightbox component */
+function uniqPreserveOrder(arr = []) {
+  const seen = new Set();
+  const out = [];
+  for (const a of arr) {
+    if (!a) continue;
+    const s = String(a).trim();
+    if (!s) continue;
+    if (!seen.has(s)) {
+      seen.add(s);
+      out.push(s);
+    }
+  }
+  return out;
+}
+
+/* ---------- Lightbox (improved: looping) ---------- */
 function Lightbox({ images = [], startIndex = 0, open, onClose }) {
   const [index, setIndex] = useState(startIndex || 0);
   const closeRef = useRef(null);
@@ -23,9 +38,7 @@ function Lightbox({ images = [], startIndex = 0, open, onClose }) {
   useEffect(() => {
     if (open) {
       setIndex(startIndex || 0);
-      setTimeout(() => {
-        closeRef.current?.focus?.();
-      }, 30);
+      setTimeout(() => closeRef.current?.focus?.(), 30);
     }
   }, [open, startIndex]);
 
@@ -33,8 +46,8 @@ function Lightbox({ images = [], startIndex = 0, open, onClose }) {
     if (!open) return;
     function onKey(e) {
       if (e.key === "Escape") onClose();
-      if (e.key === "ArrowLeft") setIndex((i) => Math.max(0, i - 1));
-      if (e.key === "ArrowRight") setIndex((i) => Math.min(images.length - 1, i + 1));
+      if (e.key === "ArrowLeft") setIndex((i) => (images.length ? (i - 1 + images.length) % images.length : 0));
+      if (e.key === "ArrowRight") setIndex((i) => (images.length ? (i + 1) % images.length : 0));
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -43,28 +56,22 @@ function Lightbox({ images = [], startIndex = 0, open, onClose }) {
   if (!open) return null;
   if (!Array.isArray(images) || images.length === 0) return null;
 
-  const prev = () => setIndex((i) => Math.max(0, i - 1));
-  const next = () => setIndex((i) => Math.min(images.length - 1, i + 1));
+  const prev = () => setIndex((i) => (images.length ? (i - 1 + images.length) % images.length : 0));
+  const next = () => setIndex((i) => (images.length ? (i + 1) % images.length : 0));
 
   return (
     <div
       role="dialog"
       aria-modal="true"
       aria-label="Image viewer"
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85"
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
-      <div className="relative w-full max-w-[1100px] max-h-[90vh] flex items-center justify-center">
+      <div className="relative w-full max-w-[1200px] max-h-[92vh] flex items-center justify-center">
         <button
           aria-label="Previous image"
           className="absolute left-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-white/10 hover:bg-white/20 focus:outline-none"
-          onClick={(e) => {
-            e.stopPropagation();
-            prev();
-          }}
-          disabled={index === 0}
+          onClick={(e) => { e.stopPropagation(); prev(); }}
         >
           <PrevIcon className="w-6 h-6 text-white" />
         </button>
@@ -72,16 +79,12 @@ function Lightbox({ images = [], startIndex = 0, open, onClose }) {
         <button
           aria-label="Next image"
           className="absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-white/10 hover:bg-white/20 focus:outline-none"
-          onClick={(e) => {
-            e.stopPropagation();
-            next();
-          }}
-          disabled={index === images.length - 1}
+          onClick={(e) => { e.stopPropagation(); next(); }}
         >
           <NextIcon className="w-6 h-6 text-white" />
         </button>
 
-        <div className="w-full h-[80vh] overflow-hidden flex items-center justify-center">
+        <div className="w-full h-[82vh] overflow-hidden flex items-center justify-center">
           <img
             src={images[index]}
             alt={`Image ${index + 1} of ${images.length}`}
@@ -92,10 +95,7 @@ function Lightbox({ images = [], startIndex = 0, open, onClose }) {
         <button
           ref={closeRef}
           aria-label="Close image viewer"
-          onClick={(e) => {
-            e.stopPropagation();
-            onClose();
-          }}
+          onClick={(e) => { e.stopPropagation(); onClose(); }}
           className="absolute top-3 right-3 p-2 rounded-full bg-white/10 hover:bg-white/20 focus:outline-none"
         >
           <X className="w-5 h-5 text-white" />
@@ -109,7 +109,7 @@ function Lightbox({ images = [], startIndex = 0, open, onClose }) {
   );
 }
 
-/* SampleModal (unchanged) */
+/* ---------- SampleModal (unchanged behaviour) ---------- */
 function SampleModal({ open, onClose, productTitle = "", productSlug = "" }) {
   const [form, setForm] = useState({
     name: "",
@@ -253,7 +253,7 @@ function SampleModal({ open, onClose, productTitle = "", productSlug = "" }) {
   );
 }
 
-/* ProductDetail main component */
+/* ---------- ProductDetail main component (improved gallery) ---------- */
 const ProductDetail = () => {
   const { slug } = useParams();
   const navigate = useNavigate();
@@ -262,7 +262,6 @@ const ProductDetail = () => {
   const [error, setError] = useState(null);
   const [product, setProduct] = useState(null);
 
-  // track gallery and current main index
   const [gallery, setGallery] = useState([]);
   const [mainIndex, setMainIndex] = useState(0);
 
@@ -271,6 +270,23 @@ const ProductDetail = () => {
 
   const [sampleOpen, setSampleOpen] = useState(false);
 
+  const thumbsRef = useRef(null);
+
+  // utility: scroll active thumbnail into view
+  const scrollThumbIntoView = useCallback((idx) => {
+    const container = thumbsRef.current;
+    if (!container) return;
+    const child = container.querySelector(`[data-thumb-index="${idx}"]`);
+    if (child) {
+      const childRect = child.getBoundingClientRect();
+      const contRect = container.getBoundingClientRect();
+      // prefer to center the thumbnail when possible
+      const offset = childRect.left - contRect.left - (contRect.width / 2) + (childRect.width / 2);
+      container.scrollBy({ left: offset, behavior: "smooth" });
+    }
+  }, []);
+
+  // fetch product and product_images, build gallery
   useEffect(() => {
     let mounted = true;
     setLoading(true);
@@ -289,16 +305,15 @@ const ProductDetail = () => {
           return;
         }
 
+        // normalize main fields
         const normalized = { ...p };
-
-        // normalize core images via makeAbsoluteUrl
         const prim = makeAbsoluteUrl(p.primary_image || p.og_image || p.image || null);
         const og = makeAbsoluteUrl(p.og_image || null);
         const img = makeAbsoluteUrl(p.image || null);
 
+        // images from metadata (gallery, images)
         const meta = p.metadata || {};
         const metaImages = [];
-
         if (Array.isArray(meta.images)) {
           meta.images.forEach((it) => {
             if (!it) return;
@@ -307,7 +322,6 @@ const ProductDetail = () => {
             else if (it.filename) metaImages.push(makeAbsoluteUrl(`/uploads/products/${it.filename}`));
           });
         }
-
         if (Array.isArray(meta.gallery)) {
           meta.gallery.forEach((it) => {
             if (!it) return;
@@ -317,15 +331,42 @@ const ProductDetail = () => {
           });
         }
 
-        // assemble gallery and ensure uniqueness & truthy
-        const assembled = Array.from(
-          new Set([prim, og, img, ...metaImages].filter(Boolean))
-        );
+        // fetch product_images from backend (if endpoint available)
+        let dbImages = [];
+        try {
+          // use api.apiGet helper (generic) to call product-images endpoint
+          const q = `/api/product-images?product_id=${encodeURIComponent(p.id)}`;
+          const res = await api.apiGet ? await api.apiGet(q) : await api.get(`/product-images?product_id=${encodeURIComponent(p.id)}`);
+          // expecting { ok: true, items: [{url, is_primary, filename, ...}, ...] }
+          const items = (res && res.items) ? res.items : (res && res.ok && res.images ? res.images : []);
+          dbImages = Array.isArray(items) ? items.map((it) => (it && it.url ? it.url : (it && it.filename ? makeAbsoluteUrl(`/uploads/products/${it.filename}`) : null))).filter(Boolean) : [];
+        } catch (e) {
+          // non-fatal: log and continue with available images
+          console.warn("[ProductDetail] product-images fetch failed:", e && e.message ? e.message : e);
+          dbImages = [];
+        }
+
+        // Build gallery order:
+        // 1) product_images (dbImages) but try to put is_primary first (if available via separate call - we used url only above)
+        // 2) primary / og / image
+        // 3) metadata arrays
+        const assembled = uniqPreserveOrder([
+          ...dbImages,
+          prim,
+          og,
+          img,
+          ...metaImages
+        ]);
 
         normalized.primary_image = prim;
         normalized.og_image = og;
         normalized.image = img;
         normalized._metaImages = metaImages;
+
+        if (!assembled.length) {
+          // fallback placeholder
+          assembled.push("/images/placeholder.png");
+        }
 
         setProduct(normalized);
         setGallery(assembled);
@@ -340,12 +381,10 @@ const ProductDetail = () => {
       }
     })();
 
-    return () => {
-      mounted = false;
-    };
+    return () => { mounted = false; };
   }, [slug]);
 
-  // Auto-open sample modal if requested
+  // auto-open sample modal if requested via query or location.state
   useEffect(() => {
     if (!location) return;
     const qs = new URLSearchParams(location.search || "");
@@ -364,6 +403,24 @@ const ProductDetail = () => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location, product]);
+
+  // keyboard navigation for main image when product displayed
+  useEffect(() => {
+    if (!gallery || gallery.length <= 1) return;
+    function onKey(e) {
+      if (e.key === "ArrowLeft") setMainIndex((i) => Math.max(0, i - 1));
+      if (e.key === "ArrowRight") setMainIndex((i) => Math.min(gallery.length - 1, i + 1));
+      if (e.key === "Home") setMainIndex(0);
+      if (e.key === "End") setMainIndex(gallery.length - 1);
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [gallery]);
+
+  // whenever mainIndex changes, ensure active thumb is visible
+  useEffect(() => {
+    scrollThumbIntoView(mainIndex);
+  }, [mainIndex, scrollThumbIntoView]);
 
   if (loading) {
     return (
@@ -389,31 +446,21 @@ const ProductDetail = () => {
 
   if (!product) return null;
 
-  // derived main image
   const mainImage = gallery[mainIndex] || "/images/placeholder.png";
-
-  const onThumbnailClick = (e, img, idx) => {
-    e?.preventDefault?.();
-    e?.stopPropagation?.();
-    if (typeof idx === "number") setMainIndex(idx);
-    else {
-      const pos = gallery.indexOf(img);
-      if (pos >= 0) setMainIndex(pos);
-    }
-  };
 
   const openLightboxAt = (idx = 0) => {
     setLightboxStartIndex(idx);
     setLightboxOpen(true);
   };
 
+  const onThumbClick = (e, idx) => {
+    e?.preventDefault?.();
+    e?.stopPropagation?.();
+    setMainIndex(idx);
+  };
+
   const prevMain = () => setMainIndex((i) => Math.max(0, i - 1));
   const nextMain = () => setMainIndex((i) => Math.min(gallery.length - 1, i + 1));
-
-  const stopClick = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-  };
 
   return (
     <div className="min-h-screen bg-[#F7F7F5]">
@@ -433,13 +480,13 @@ const ProductDetail = () => {
                 tabIndex={0}
                 onKeyDown={(e) => { if (e.key === "Enter") openLightboxAt(mainIndex); }}
               >
-                {/* Previous / Next overlay controls */}
+                {/* Prev / Next overlay */}
                 {gallery.length > 1 && (
                   <>
-                    <button aria-label="Previous" onClick={(e) => { stopClick(e); prevMain(); }} className="absolute left-3 top-1/2 -translate-y-1/2 z-10 p-2 rounded-full bg-white/40 hover:bg-white/60">
+                    <button aria-label="Previous" onClick={(e) => { e.stopPropagation(); prevMain(); }} className="absolute left-3 top-1/2 -translate-y-1/2 z-10 p-2 rounded-full bg-white/40 hover:bg-white/60">
                       <PrevIcon className="w-5 h-5 text-[#33504F]" />
                     </button>
-                    <button aria-label="Next" onClick={(e) => { stopClick(e); nextMain(); }} className="absolute right-3 top-1/2 -translate-y-1/2 z-10 p-2 rounded-full bg-white/40 hover:bg-white/60">
+                    <button aria-label="Next" onClick={(e) => { e.stopPropagation(); nextMain(); }} className="absolute right-3 top-1/2 -translate-y-1/2 z-10 p-2 rounded-full bg-white/40 hover:bg-white/60">
                       <NextIcon className="w-5 h-5 text-[#33504F]" />
                     </button>
                   </>
@@ -452,26 +499,44 @@ const ProductDetail = () => {
                     className="w-full h-full product-main-image"
                     width={1600}
                     objectFit="contain"
-                    onClick={(e) => { stopClick(e); openLightboxAt(mainIndex); }}
+                    onClick={(e) => { e.stopPropagation(); openLightboxAt(mainIndex); }}
                   />
                 </div>
               </div>
 
+              {/* Thumbnail strip */}
               {gallery.length > 1 && (
                 <div className="p-4">
-                  <div className="grid grid-cols-4 gap-3">
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="text-sm text-[#666]">Preview</div>
+                    <div className="ml-auto flex gap-2">
+                      <button onClick={() => { if (thumbsRef.current) thumbsRef.current.scrollBy({ left: -160, behavior: "smooth" }); }} className="p-1 rounded bg-white border">
+                        <PrevIcon className="w-4 h-4 text-[#333]" />
+                      </button>
+                      <button onClick={() => { if (thumbsRef.current) thumbsRef.current.scrollBy({ left: 160, behavior: "smooth" }); }} className="p-1 rounded bg-white border">
+                        <NextIcon className="w-4 h-4 text-[#333]" />
+                      </button>
+                    </div>
+                  </div>
+
+                  <div ref={thumbsRef} className="flex gap-3 overflow-x-auto no-scrollbar py-1" style={{ scrollSnapType: "x mandatory" }}>
                     {gallery.map((g, i) => (
-                      <motion.div key={i} whileHover={{ scale: 1.02 }} className="h-20 overflow-hidden rounded-md">
+                      <div
+                        key={i}
+                        data-thumb-index={i}
+                        className={`flex-shrink-0 w-28 h-20 rounded-md overflow-hidden border ${i === mainIndex ? "ring-2 ring-[#D7B15B]" : "border-transparent"} relative`}
+                        style={{ scrollSnapAlign: "center" }}
+                      >
                         <button
                           type="button"
-                          onClick={(e) => onThumbnailClick(e, g, i)}
+                          onClick={(e) => onThumbClick(e, i)}
                           onDoubleClick={() => openLightboxAt(i)}
-                          className={`w-full h-full p-0 bg-transparent border-0 cursor-pointer ${i === mainIndex ? "ring-2 ring-[#D7B15B]" : ""}`}
                           aria-label={`View image ${i + 1}`}
+                          className="w-full h-full p-0 bg-transparent border-0 cursor-pointer"
                         >
                           <Image src={g} alt={`${product.title} ${i}`} className="w-full h-full object-cover" width={400} />
                         </button>
-                      </motion.div>
+                      </div>
                     ))}
                   </div>
                 </div>
@@ -481,7 +546,6 @@ const ProductDetail = () => {
             <div className="space-y-4">
               <h1 className="text-2xl font-heading font-semibold text-[#33504F]">{product.title}</h1>
               <div className="text-sm text-[#666]">{product.short_description || product.description || "—"}</div>
-
               <div className="text-xs text-[#666] mt-2"><strong>Trade Type:</strong> {displayTradeType(product)}</div>
 
               {product.metadata && product.metadata.specifications && (

@@ -5,13 +5,8 @@ import Image from "../ui/image";
 import { Card, CardContent } from "../ui/card";
 import { Button } from "../ui/button";
 import {
-  Package,
-  Shield,
-  Award,
-  CheckCircle,
   ArrowRight,
-  FileText,
-  Truck,
+  CheckCircle,
   Search,
   Box,
   Container as ContainerIcon
@@ -34,7 +29,7 @@ const TRADE_OPTIONS = [
 ];
 
 function initialsFromName(name = "") {
-  return String(name)
+  return String(name || "")
     .split(/\s+/)
     .map((s) => s[0])
     .filter(Boolean)
@@ -102,11 +97,14 @@ const ProductsPage = () => {
       if (pageArg) opts.page = pageArg;
       if (limit) opts.limit = limit;
       if (categorySlug) opts.category_slug = categorySlug;
-      if (tradeType) opts.trade_type = tradeType;
+      if (tradeType !== undefined && tradeType !== null && String(tradeType).trim() !== "") opts.trade_type = tradeType;
 
+      // backend returns { ok, products, page, limit,... } — api.getProducts normalizes shape
       const res = await api.getProducts(opts);
       const list = Array.isArray(res?.products) ? res.products : (Array.isArray(res) ? res : []);
+
       if (!Array.isArray(list) || list.length === 0) {
+        // fallback static
         setProducts(fallbackProducts);
         setFeatured(fallbackProducts[0]);
         if (!categories || categories.length === 0) {
@@ -203,9 +201,7 @@ const ProductsPage = () => {
       setProducts(fallbackProducts);
       setFeatured(fallbackProducts[0]);
       if (!categories || categories.length === 0) {
-        setCategories([
-          { id: "fallback", slug: "general", name: "General", count: fallbackProducts.length, thumb: fallbackProducts[0].image, trade_type: "both" },
-        ]);
+        setCategories([ { id: "fallback", slug: "general", name: "General", count: fallbackProducts.length, thumb: fallbackProducts[0].image, trade_type: "both" } ]);
       }
     } finally {
       setLoading(false);
@@ -302,18 +298,31 @@ const ProductsPage = () => {
               <p className="text-sm sm:text-base text-[#666666] mt-2">Explore our range of export-ready commodities.</p>
             </div>
 
-            <div className="flex items-center gap-2">
-              <div className="text-sm text-[#666] mr-2">Filter by trade type:</div>
-              <div className="inline-flex gap-2">
-                {TRADE_OPTIONS.map((opt) => (
-                  <button
-                    key={opt.key === "" ? "all" : opt.key}
-                    onClick={() => handleTradeTypeChange(opt.key)}
-                    className={`text-sm px-3 py-2 rounded ${selectedTradeType === opt.key ? "bg-[#33504F] text-white" : "bg-white border"}`}
-                  >
-                    {opt.label}
-                  </button>
-                ))}
+            <div className="flex items-center gap-3">
+              <div className="hidden sm:flex items-center gap-2">
+                <div className="text-sm text-[#666] mr-2">Filter by trade type:</div>
+                <div className="inline-flex gap-2">
+                  {TRADE_OPTIONS.map((opt) => (
+                    <button
+                      key={opt.key === "" ? "all" : opt.key}
+                      onClick={() => handleTradeTypeChange(opt.key)}
+                      className={`text-sm px-3 py-2 rounded ${selectedTradeType === opt.key ? "bg-[#33504F] text-white" : "bg-white border"}`}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* mobile-friendly select */}
+              <div className="sm:hidden">
+                <select
+                  value={selectedTradeType}
+                  onChange={(e) => handleTradeTypeChange(e.target.value)}
+                  className="border rounded px-3 py-2 text-sm"
+                >
+                  {TRADE_OPTIONS.map((o) => <option key={o.key === "" ? "all" : o.key} value={o.key}>{o.label}</option>)}
+                </select>
               </div>
             </div>
           </div>
@@ -322,9 +331,15 @@ const ProductsPage = () => {
             {(!categories || categories.length === 0) && <div className="text-sm text-[#666]">No categories available.</div>}
             {categories.map((cat, idx) => {
               const hasThumb = !!cat.thumb;
+              // Optionally show categories that match selectedTradeType or show all when '' selected.
+              const showCategory = !selectedTradeType || selectedTradeType === "" || (cat.trade_type === selectedTradeType) || (cat.trade_type === "both") || (selectedTradeType === "both");
+              if (!showCategory) {
+                // show but visually de-emphasize — change this behavior if you prefer to hide incompatible categories entirely
+                // return null; // uncomment to hide incompatible categories
+              }
               return (
                 <motion.div key={cat.id || cat.slug || idx} initial={{ opacity: 0, y: 8 }} whileInView={{ opacity: 1, y: 0 }} transition={{ duration: 0.45, delay: idx * 0.03 }}>
-                  <Card className="cursor-pointer overflow-hidden hover:shadow-xl transition-shadow" onClick={() => handleCategoryClick(cat)}>
+                  <Card className={`cursor-pointer overflow-hidden hover:shadow-xl transition-shadow ${!showCategory ? "opacity-60" : ""}`} onClick={() => handleCategoryClick(cat)}>
                     <div className="relative h-36 overflow-hidden flex items-stretch">
                       {hasThumb ? (
                         <Image src={cat.thumb} alt={cat.name} width={800} className="w-full h-full object-cover" />

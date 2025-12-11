@@ -85,7 +85,13 @@ const Footer = () => {
         const rec = await getReviews(5).catch(() => []);
         if (!mounted) return;
         setReviewStats(stats || null);
-        setRecentReviews(Array.isArray(rec) ? rec.slice(0, 5) : (rec.reviews || []));
+        if (Array.isArray(rec)) {
+        setRecentReviews(rec.slice(0, 5));
+      } else if (Array.isArray(rec.reviews)) {
+        setRecentReviews(rec.reviews.slice(0, 5));
+      } else {
+        setRecentReviews([]);
+      }
       } catch (e) {
         console.warn("Failed to load reviews/stats", e);
       }
