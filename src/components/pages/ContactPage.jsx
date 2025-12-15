@@ -19,6 +19,11 @@ import {
 
 // API helper
 import { apiPost } from "../../lib/api";
+import ContactHeroSection from '../ContactHeroSection';
+import GetinTouchSection from '../GetinTouchSection';
+import WorkingHours from './WorkingHoursSection';
+import CertificateSection from '../CertificateSection';
+import CTASection from '../CTASection';
 
 // Local asset uploaded by user (currently unused, keep if you plan to show a static map image somewhere)
 const LOCAL_MAP_IMAGE = '/mnt/data/a4001c1a-02ad-43ab-bf8f-cc61f3961c58.png';
@@ -130,7 +135,7 @@ const ContactPage = () => {
 
   const businessHours = [
     { day: 'Monday - Friday', hours: '9:00 AM - 6:00 PM' },
-    { day: 'Saturday', hours: '9:00 AM - 2:00 PM' },
+    { day: 'Saturday', hours: '9:00 AM - 1:00 PM' },
     { day: 'Sunday', hours: 'Closed' },
     { day: 'Emergency Support', hours: '24/7 Available' }
   ];
@@ -146,64 +151,16 @@ const ContactPage = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-[#E8E9E2]">
+   <div className="bg-[#E8E9E2]">
+
+
+
       {/* Page Header with World Map Background */}
-      <section
-        className="relative py-28 md:py-32 lg:py-40 bg-cover bg-center"
-        style={{
-          backgroundImage: `linear-gradient(rgba(232,233,226,0.7), rgba(232,233,226,0.7)), url(${heroimage})`
-        }}
-      >
-        <div className="max-w-[100rem] mx-auto px-6 lg:px-12">
-          <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7 }} className="text-center">
-            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-heading font-bold text-[#33504F] mb-3">Contact Us</h1>
-            <p className="text-sm sm:text-base md:text-lg text-[#2E2C2CFF] max-w-3xl mx-auto leading-relaxed">
-              Ready to partner with India's leading peanut exporter? Get in touch with our team for premium quality products, competitive pricing, and reliable international shipping.
-            </p>  
-          </motion.div>
-        </div>
-      </section>
-
+      <ContactHeroSection/>
+      
       {/* Contact Info Cards */}
-      <section className="py-10 lg:py-16 bg-white">
-        <div className="max-w-[100rem] mx-auto px-6 lg:px-12">
-          <div className="text-center mb-8 lg:mb-12">
-            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-heading font-semibold text-[#33504F]">Get In Touch</h2>
-            <p className="text-sm sm:text-base text-[#666666] max-w-2xl mx-auto mt-2">Multiple ways to connect with our export specialists</p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {contactInfo.map((info, idx) => (
-              <motion.div
-                key={idx}
-                initial={{ opacity: 0, y: 8 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: idx * 0.05 }}
-                viewport={{ once: true }}
-              >
-                <Card className="h-full bg-[#CFD0C8] hover:shadow-xl transition-all duration-300 border-0 rounded-2xl">
-                  <CardContent className="p-6 text-center">
-                    <div className="w-14 h-14 bg-[#D7B15B] rounded-full flex items-center justify-center mx-auto mb-4">
-                      <info.icon className="w-6 h-6 text-[#33504F]" aria-hidden />
-                    </div>
-
-                    <h3 className="text-lg font-heading font-semibold text-[#33504F] mb-1">{info.title}</h3>
-                    <p className="text-sm text-[#33504F] font-medium">{info.primary}</p>
-                    <p className="text-sm text-[#666666] mb-4">{info.secondary}</p>
-
-                    <a href={info.actionHref} target="_blank" rel="noreferrer" className="inline-block">
-                      <Button className="bg-[#33504F] text-white hover:bg-[#33504F]/90 font-semibold rounded-lg px-4 py-2 flex items-center gap-2">
-                        {info.action}
-                        <info.actionIcon className="w-4 h-4" aria-hidden />
-                      </Button>
-                    </a>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
+      <GetinTouchSection/>
+      
 
       {/* Contact Form + Embedded Map */}
       <section className="py-10 lg:py-16 bg-[#E8E9E2]">
@@ -413,85 +370,15 @@ const ContactPage = () => {
       </section>
 
       {/* Hours */}
-      <section className="py-8 lg:py-12 bg-white">
-        <div className="max-w-[100rem] mx-auto px-6 lg:px-12">
-          <div className="text-center mb-6">
-            <h2 className="text-xl sm:text-2xl font-heading font-semibold text-[#33504F]">Business Hours</h2>
-            <div className="w-16 h-1 bg-[#D7B15B] mx-auto my-4" />
-          </div>
-
-          <div className="max-w-2xl mx-auto">
-            <Card className="bg-[#CFD0C8] rounded-2xl">
-              <CardContent className="p-4 sm:p-6">
-                {businessHours.map((s, i) => (
-                  <div
-                    key={i}
-                    className={`flex items-center justify-between py-3 ${
-                      i !== businessHours.length - 1 ? 'border-b border-white/30' : ''
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <Clock className="w-5 h-5 text-[#D7B15B]" />
-                      <span className="text-sm lg:text-base font-medium text-[#33504F]">{s.day}</span>
-                    </div>
-                    <span className="text-sm lg:text-base text-[#666666]">{s.hours}</span>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      </section>
-
+      <WorkingHours/>
+      
       {/* Certifications (unchanged placeholder) */}
-      <section className="py-8 lg:py-12 bg-[#E8E9E2]">
-        <div className="max-w-[100rem] mx-auto px-6 lg:px-12">
-          <div className="text-center mb-6">
-            <h3 className="text-lg sm:text-2xl font-heading font-semibold text-[#33504F]">
-              Our Certifications & Compliance
-            </h3>
-          </div>
-
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-            {[].map((c, i) => (
-              <div
-                key={i}
-                className="bg-white rounded-lg p-3 flex flex-col items-center text-center hover:shadow transition-shadow"
-              >
-                <div className="w-14 h-14 bg-slate-100 rounded mb-2" />
-                <div className="text-sm font-semibold text-[#33504F]">Certification</div>
-                <div className="text-xs text-[#666666]">Details</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+      <CertificateSection/>
+      
 
       {/* CTA */}
-      <section className="py-10 lg:py-14 bg-[#33504F] text-white">
-        <div className="max-w-[100rem] mx-auto px-6 lg:px-12 text-center">
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            viewport={{ once: true }}
-          >
-            <h2 className="text-xl sm:text-3xl lg:text-4xl font-heading font-semibold mb-3">
-              Ready to Start Your Export Journey?
-            </h2>
-            <p className="text-sm sm:text-base lg:text-lg max-w-3xl mx-auto mb-6 text-white/90">
-              Join satisfied customers worldwide who trust SPRADA2GLOBAL EXIM for premium peanuts and service.
-            </p>
-
-            <div className="flex flex-col sm:flex-row gap-3 sm:gap-6 justify-center">
-              <Button className="bg-[#D7B15B] text-[#33504F] px-6 py-2 rounded font-semibold">Request Quote</Button>
-              <Button variant="outline" className="border-2 border-white text-white px-6 py-2 rounded font-semibold">
-                Download Catalog
-              </Button>
-            </div>
-          </motion.div>
-        </div>
-      </section>
+      <CTASection/>
+      
     </div>
   );
 };

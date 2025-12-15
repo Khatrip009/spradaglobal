@@ -2,11 +2,12 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X, Search } from "lucide-react";
+import { Menu, X, Search, } from "lucide-react";
 
 const NAV = [
   { to: "/", label: "Home" },
-  { to: "/products", label: "Products" },
+  { to: "/about", label: "About Us"},
+  { to: "/products", label: "Products"},
   { to: "/services", label: "Services" },
   { to: "/blog", label: "Blog" },
   { to: "/contact", label: "Contact" },
@@ -68,7 +69,7 @@ export default function Header() {
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.28 }}
       >
-        <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="w-full mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16 md:h-20">
             {/* left: logo + mobile menu */}
             <div className="flex items-center gap-4">
@@ -254,3 +255,4 @@ export default function Header() {
     </header>
   );
 }
+

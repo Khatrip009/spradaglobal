@@ -1,0 +1,237 @@
+import React, { useState, useRef, useEffect } from "react";
+import {
+  motion,
+  AnimatePresence,
+  useMotionValue,
+  useSpring,
+  useTransform,
+} from "framer-motion";
+import { useNavigate } from "react-router-dom";
+import { getBlogs } from "../lib/api";
+
+/* =====================================================
+   3D TILT CARD (GPU SAFE)
+===================================================== */
+
+const TiltCard = ({ children, onClick, onHover }) => {
+  const ref = useRef(null);
+  const mx = useMotionValue(0);
+  const my = useMotionValue(0);
+
+  const sx = useSpring(mx, { stiffness: 260, damping: 26 });
+  const sy = useSpring(my, { stiffness: 260, damping: 26 });
+
+  const rx = useTransform(sy, [-120, 120], [6, -6]);
+  const ry = useTransform(sx, [-120, 120], [-6, 6]);
+
+  const move = (e) => {
+    const r = ref.current.getBoundingClientRect();
+    mx.set(e.clientX - r.left - r.width / 2);
+    my.set(e.clientY - r.top - r.height / 2);
+  };
+
+  return (
+    <motion.div
+      ref={ref}
+      onClick={onClick}
+      onMouseEnter={onHover}
+      onMouseMove={move}
+      onMouseLeave={() => {
+        mx.set(0);
+        my.set(0);
+        onHover?.(null);
+      }}
+      style={{ rotateX: rx, rotateY: ry, transformStyle: "preserve-3d" }}
+      whileHover={{ y: -8, scale: 1.02 }}
+      transition={{ type: "spring", stiffness: 200, damping: 18 }}
+      className="relative cursor-pointer will-change-transform"
+    >
+      {children}
+    </motion.div>
+  );
+};
+
+/* =====================================================
+   HOVER PREVIEW
+===================================================== */
+
+const HoverPreview = ({ post }) => (
+  <motion.div
+    initial={{ opacity: 0, y: 10, scale: 0.98 }}
+    animate={{ opacity: 1, y: 0, scale: 1 }}
+    exit={{ opacity: 0, y: 10, scale: 0.98 }}
+    transition={{ duration: 0.25 }}
+    className="absolute z-40 top-6 left-6 w-[320px] bg-white rounded-xl shadow-2xl border p-4 pointer-events-none"
+  >
+    <img
+      src={post.image}
+      alt={post.title}
+      className="w-full h-36 object-cover rounded-lg mb-3"
+    />
+    <h4 className="font-bold text-sm mb-1 line-clamp-2">{post.title}</h4>
+    <p className="text-xs text-slate-600 line-clamp-3">
+      {post.summary || post.meta_description || ""}
+    </p>
+  </motion.div>
+);
+
+/* =====================================================
+   MAIN BLOG SECTION
+===================================================== */
+
+export default function BlogsSection() {
+  const navigate = useNavigate();
+
+  const [posts, setPosts] = useState([]);
+  const [hovered, setHovered] = useState(null);
+
+  const [loading, setLoading] = useState(true);
+
+  /* Search & Pagination */
+  const [query, setQuery] = useState("");
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+
+  const LIMIT = 9;
+  const debounceRef = useRef(null);
+
+  /* -------------------------------------------------- */
+  /* Fetch blogs */
+  /* -------------------------------------------------- */
+
+  const fetchBlogs = async ({ q = query, p = page } = {}) => {
+    setLoading(true);
+    try {
+      const res = await getBlogs({
+        q: q || undefined,
+        page: p,
+        limit: LIMIT,
+      });
+
+      setPosts(res.blogs || []);
+      setTotalPages(res.total_pages || 1);
+    } catch {
+      setPosts([]);
+      setTotalPages(1);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  /* Initial load */
+  useEffect(() => {
+    fetchBlogs({ p: 1 });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  /* Debounced search */
+  useEffect(() => {
+    clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      setPage(1);
+      fetchBlogs({ q: query, p: 1 });
+    }, 400);
+
+    return () => clearTimeout(debounceRef.current);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [query]);
+
+  /* Page change */
+  useEffect(() => {
+    fetchBlogs({ p: page });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page]);
+
+  /* -------------------------------------------------- */
+  /* RENDER */
+  /* -------------------------------------------------- */
+
+  return (
+    <section className="py-32 bg-gradient-to-b from-white via-slate-50 to-white">
+      <div className="max-w-7xl mx-auto px-6">
+
+        {/* Header */}
+        <div className="text-center mb-16">
+          <h2 className="text-5xl font-extrabold mb-6">
+            Our Latest Industry Blogs
+          </h2>
+
+          {/* Search */}
+          <div className="max-w-xl mx-auto">
+            <input
+              type="search"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search articles..."
+              className="w-full px-5 py-3 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-[#D7B15B]"
+            />
+          </div>
+        </div>
+
+        {/* Grid */}
+        {loading && <p className="text-center">Loading…</p>}
+
+        {!loading && posts.length === 0 && (
+          <p className="text-center text-slate-500">No articles found.</p>
+        )}
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+          {posts.map((p, i) => (
+            <TiltCard
+              key={p.id}
+              onClick={() => navigate(`/blog/${encodeURIComponent(p.slug)}`)}
+              onHover={(v) => setHovered(v ? p : null)}
+            >
+              <motion.div
+                initial={{ opacity: 0, y: 40 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.08 }}
+                viewport={{ once: true }}
+                className="bg-white rounded-xl shadow-xl overflow-hidden flex flex-col"
+              >
+                <img
+                  src={p.image}
+                  alt={p.title}
+                  className="aspect-[3/2] object-cover w-full"
+                />
+                <div className="p-6 flex flex-col flex-1">
+                  <h3 className="font-bold text-xl mb-3">{p.title}</h3>
+                  <p className="text-sm text-slate-600 flex-1">{p.summary}</p>
+                </div>
+              </motion.div>
+
+              <AnimatePresence>
+                {hovered?.id === p.id && <HoverPreview post={p} />}
+              </AnimatePresence>
+            </TiltCard>
+          ))}
+        </div>
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="flex justify-center gap-3 mt-16">
+            <button
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={page === 1}
+              className="px-4 py-2 border rounded-lg disabled:opacity-40"
+            >
+              Prev
+            </button>
+
+            <span className="px-4 py-2 text-sm">
+              Page {page} of {totalPages}
+            </span>
+
+            <button
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              disabled={page === totalPages}
+              className="px-4 py-2 border rounded-lg disabled:opacity-40"
+            >
+              Next
+            </button>
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}

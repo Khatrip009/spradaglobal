@@ -762,6 +762,27 @@ export async function getUsers(opts = {}) {
 }
 
 /* -----------------------------------------------------
+   PRODUCT IMAGES
+   Backend endpoint:
+     - GET /api/product-images?product_id=UUID
+----------------------------------------------------- */
+export async function getProductImages(productId) {
+  if (!productId) throw new Error("missing_product_id");
+
+  const r = await apiGet("/api/product-images", {
+    product_id: productId
+  });
+
+  // Normalize common shapes
+  if (Array.isArray(r)) return r;
+  if (Array.isArray(r.images)) return r.images;
+  if (Array.isArray(r.items)) return r.items;
+
+  return [];
+}
+
+
+/* -----------------------------------------------------
    DEFAULT EXPORT (backwards compatible)
 ----------------------------------------------------- */
 export default {

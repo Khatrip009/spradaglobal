@@ -42,7 +42,7 @@ function AnimatedPage({ children }) {
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
       transition={{ duration: 0.35, ease: "easeOut" }}
-      className="min-h-screen"
+      className="flex-1"
     >
       {children}
     </motion.div>

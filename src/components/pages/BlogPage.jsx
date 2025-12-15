@@ -12,15 +12,10 @@ import { useNavigate } from "react-router-dom";
 import { useToast } from "../ui/ToastProvider";
 import bloghero from '../../assets/blog-hero.jpg';
 import { toAbsoluteImageUrl } from "../../lib/api";
+import BlogsContainerSection from "../BlogsSection";
+import BlogHeroSection from '../BlogHeroSection';
 
-/* Filter buttons (UI) */
-const filterCategories = [
-  { id: "All", label: "All Posts", icon: BookOpen },
-  { id: "Quality", label: "Quality", icon: Award },
-  { id: "Trade Tips", label: "Trade Tips", icon: Lightbulb },
-  { id: "Market Insights", label: "Market Insights", icon: TrendingUp },
-  { id: "Products", label: "Products", icon: Package }
-];
+
 
 /* Convert various forms of image paths into an absolute URL */
 /**
@@ -198,131 +193,11 @@ export default function BlogPage() {
   return (
         <div className="min-h-screen bg-[#E8E9E2]">
       {/* Header hero */}
-      <section className="relative py-12 sm:py-20 md:py-28 bg-cover bg-center" style={{ backgroundImage: `linear-gradient(rgba(51,80,79,0.85), rgba(51,80,79,0.85)), url(${bloghero})` }}>
-        <div className="max-w-[100rem] mx-auto px-6 sm:px-12 text-center text-white">
-          <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
-            <div className="mb-4 flex items-center justify-center gap-3">
-              <BookOpen className="w-10 h-10 text-[#D7B15B]" />
-              <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-heading font-bold">Industry Insights & Export Expertise</h1>
-            </div>
-            <p className="text-base sm:text-lg md:text-xl max-w-3xl mx-auto leading-relaxed">Stay informed with the latest trends, quality standards, trade tips, and market insights.</p>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* Search + Filters */}
-      <section className="py-8 sm:py-12 bg-white">
-        <div className="max-w-[100rem] mx-auto px-6 sm:px-12">
-          <div className="flex flex-col lg:flex-row gap-6 items-center justify-between">
-            <div className="relative flex-1 max-w-md w-full">
-              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-[#666666] w-5 h-5" aria-hidden />
-              <Input
-                type="text"
-                placeholder="Search articles..."
-                value={query}
-                onChange={(e) => { setQuery(e.target.value); setPage(1); }}
-                className="pl-12 pr-4 py-2 border-2 border-[#CFD0C8] rounded-lg"
-                aria-label="Search articles"
-              />
-            </div>
-
-            <div className="flex flex-wrap gap-2">
-              {filterCategories.map((category) => (
-                <Button
-                  key={category.id}
-                  onClick={() => { setActiveFilter(category.id); setPage(1); }}
-                  className={`flex items-center gap-2 px-3 py-2 rounded-lg font-semibold ${activeFilter === category.id ? 'bg-[#33504F] text-white' : 'border-2 border-[#CFD0C8] text-[#666666]'}`}
-                  aria-pressed={activeFilter === category.id}
-                >
-                  <category.icon className="w-4 h-4" aria-hidden />{category.label}
-                </Button>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
+      <BlogHeroSection/>
+      
       {/* Blog Grid */}
-      <section className="py-10 sm:py-16 bg-[#E8E9E2]">
-        <div className="max-w-[100rem] mx-auto px-6 sm:px-12">
-          {loading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {Array.from({ length: 6 }).map((_, i) => (
-                <Card key={i} className="p-4">
-                  <CardContent className="p-0"><CardSkeleton /></CardContent>
-                </Card>
-              ))}
-            </div>
-          ) : error ? (
-            <div className="text-center py-12 text-sm text-red-600">{error}</div>
-          ) : blogs.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {blogs.map((post, index) => {
-                const slugExists = typeof post.slug === 'string' && post.slug.trim() !== '';
-                const targetSlug = slugExists ? post.slug : null;
-                const likesCount = displayedLikes(post);
-                const liked = userLiked(post);
-
-                const dateStr = new Date(post.published_at || post.created_at || Date.now()).toLocaleDateString();
-                const thumb = toAbsoluteImageUrl(post.image || post.og_image || post.image || null, "/images/placeholder.png");
-
-                return (
-                  <motion.div key={post.id || post.slug || index} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: index * 0.04 }}>
-                    <Card className="h-full bg-white hover:shadow-xl transition-all duration-300 rounded-2xl overflow-hidden group">
-                      <div className="relative overflow-hidden">
-                        <Image src={thumb} alt={post.title || 'Article image'} width={800} height={480} className="w-full h-48 sm:h-56 object-cover group-hover:scale-105 transition-transform duration-500" />
-                        <div className="absolute top-3 right-3"><Badge className="font-semibold px-2 py-1 bg-[#33504F] text-white">{(post.category && (post.category.name || post.category)) || 'Article'}</Badge></div>
-                      </div>
-
-                      <CardContent className="p-4">
-                        <div className="text-sm text-[#666666] mb-3 flex items-center gap-2"><Calendar className="w-4 h-4" aria-hidden />{dateStr}</div>
-                        <h3 className="text-lg font-heading font-semibold text-[#33504F] mb-2 line-clamp-2 group-hover:text-[#D7B15B]">{post.title}</h3>
-                        <p className="text-sm text-[#666666] leading-relaxed mb-4 line-clamp-3">{post.excerpt || post.meta_description || ''}</p>
-
-                        <div className="flex gap-2">
-                          <Button
-                            onClick={() => handleReadMore(targetSlug)}
-                            className="flex-1 bg-[#33504F] text-white py-2 rounded-lg"
-                            disabled={!targetSlug}
-                            aria-disabled={!targetSlug}
-                          >
-                            Read More <ArrowRight className="w-4 h-4 ml-2" />
-                          </Button>
-
-                          <Button
-                            onClick={() => handleLikeCard(post.id)}
-                            className={`px-4 py-2 rounded-lg border ${liked ? 'bg-[#D7B15B] text-[#33504F]' : ''}`}
-                            aria-pressed={liked}
-                          >
-                            {liked ? '💚' : '👍'} {likesCount}
-                          </Button>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </motion.div>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="text-center py-12">
-              <BookOpen className="w-12 h-12 text-[#CFD0C8] mx-auto mb-4" />
-              <h3 className="text-xl font-heading text-[#33504F]">No articles found</h3>
-              <p className="text-sm text-[#666] mt-2">Try changing your search or filters.</p>
-            </div>
-          )}
-        </div>
-      </section>
-
-      {/* Pagination */}
-      <section className="py-8 bg-[#E8E9E2]">
-        <div className="max-w-[100rem] mx-auto px-6 sm:px-12">
-          <div className="flex flex-wrap items-center justify-center gap-2">
-            <Button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1 || loading} className="border-2 border-[#CFD0C8] text-[#666666]">Previous</Button>
-            <div className="px-4 py-2 text-sm text-[#666]">Page {page}{total != null ? ` of ${totalPages}` : ''}</div>
-            <Button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages || loading} className="border-2 border-[#CFD0C8] text-[#666666]">Next</Button>
-          </div>
-        </div>
-      </section>
+      <BlogsContainerSection/>
+      
     </div>
   );
 }

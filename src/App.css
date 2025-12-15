@@ -1,7 +1,18 @@
+  
+  /* ===== FULL VIEWPORT FIX (MANDATORY) ===== */
+html,
+body,
+#root {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+}
+
   #root {
-    max-width: 1280px;
+    max-width: 100% ;
+    min-height: 100vh;
     margin: 0 auto;
-    padding: 2rem;
+    padding: 0rem;
     text-align: center;
   }
 
@@ -40,3 +51,41 @@
   .read-the-docs {
     color: #888;
   }
+
+/* Fluid base font-size for better responsiveness across devices */
+html {
+  /* fallback, then fluid scale */
+  font-size: clamp(14px, 0.9vw + 12px, 18px);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Body defaults */
+body {
+  margin: 0;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI",
+    Roboto, "Helvetica Neue", Arial;
+  line-height: 1.45;
+  color: #111827; /* neutral-900 */
+  background-color: #fff;
+  -webkit-text-size-adjust: 100%;
+    overflow-x: hidden;
+}
+
+/* Tailwind's container is fine but add a small helper for consistent padding */
+.container-fluid {
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: var(--container-padding);
+  padding-right: var(--container-padding);
+  max-width: var(--max-width);
+}
+
+/* Constrain content blocks and center them */
+.center-block {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+

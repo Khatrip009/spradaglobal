@@ -1,4 +1,3 @@
-// src/components/pages/BlogDetailsPage.jsx
 import React, { useEffect, useState, useCallback, useMemo } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -10,12 +9,12 @@ import * as api from "../../lib/api";
 import { useToast } from "../ui/ToastProvider";
 
 /* -------------------------------------------------------------------------- */
-/* Helpers */
+/* Helpers - Logic Preserved */
 /* -------------------------------------------------------------------------- */
 /**
  * Normalize image URL to a usable absolute URL.
  * - If url is absolute (http/https) return it unchanged, except:
- *     * if it points to the current origin and looks like an uploads path, rewrite to api.UPLOADS_BASE if provided
+ *     * if it points to the current origin and looks like an uploads path, rewrite to api.UPLOADS_BASE if provided
  * - If url is root-relative (/uploads/...), prefix with api.UPLOADS_BASE if available, otherwise leave as-is
  * - If url is relative, prefix with api.UPLOADS_BASE if available
  */
@@ -102,12 +101,12 @@ function extractImageFromContent(blog) {
 /* Component */
 /* -------------------------------------------------------------------------- */
 export default function BlogDetailsPage() {
+  // Hooks and State (Logic Preserved)
   const { slug } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
   const toast = useToast();
 
-  /* ------------------------------ State ------------------------------ */
   const decodedSlug = useMemo(
     () => (typeof slug === "string" ? decodeURIComponent(slug) : slug),
     [slug]
@@ -130,7 +129,7 @@ export default function BlogDetailsPage() {
   const [topRelated, setTopRelated] = useState([]);
 
   /* -------------------------------------------------------------------------- */
-  /* Fetch Blog */
+  /* Fetch Blog (Logic Preserved) */
   /* -------------------------------------------------------------------------- */
   const fetchBlog = useCallback(async () => {
     setLoading(true);
@@ -158,7 +157,7 @@ export default function BlogDetailsPage() {
   }, [decodedSlug]);
 
   /* -------------------------------------------------------------------------- */
-  /* Fetch Likes */
+  /* Fetch Likes (Logic Preserved) */
   /* -------------------------------------------------------------------------- */
   const fetchLikes = useCallback(async (id) => {
     if (!id) return;
@@ -172,7 +171,7 @@ export default function BlogDetailsPage() {
   }, []);
 
   /* -------------------------------------------------------------------------- */
-  /* Fetch Comments */
+  /* Fetch Comments (Logic Preserved) */
   /* -------------------------------------------------------------------------- */
   const fetchComments = useCallback(async (id) => {
     if (!id) return;
@@ -186,7 +185,7 @@ export default function BlogDetailsPage() {
   }, []);
 
   /* -------------------------------------------------------------------------- */
-  /* Fetch Related Posts */
+  /* Fetch Related Posts (Logic Preserved) */
   /* -------------------------------------------------------------------------- */
   const loadTopRelated = useCallback(async (currentId) => {
     try {
@@ -209,7 +208,7 @@ export default function BlogDetailsPage() {
   }, []);
 
   /* -------------------------------------------------------------------------- */
-  /* Effects */
+  /* Effects (Logic Preserved) */
   /* -------------------------------------------------------------------------- */
   useEffect(() => {
     fetchBlog();
@@ -223,7 +222,7 @@ export default function BlogDetailsPage() {
   }, [blog, fetchLikes, fetchComments, loadTopRelated]);
 
   /* -------------------------------------------------------------------------- */
-  /* Events */
+  /* Events (Logic Preserved) */
   /* -------------------------------------------------------------------------- */
   const handleLike = async () => {
     if (!blog?.id || loadingLike) return;
@@ -305,7 +304,7 @@ export default function BlogDetailsPage() {
   };
 
   /* -------------------------------------------------------------------------- */
-  /* Derived Content (AFTER hooks — safe) */
+  /* Derived Content (Logic Preserved) */
   /* -------------------------------------------------------------------------- */
   let html = "";
   if (blog?.content) {
@@ -330,23 +329,32 @@ export default function BlogDetailsPage() {
   );
 
   /* -------------------------------------------------------------------------- */
-  /* SAFE conditional rendering (AFTER all hooks) */
+  /* SAFE conditional rendering (Enhanced Design) */
   /* -------------------------------------------------------------------------- */
   if (loading)
     return (
-      <div className="min-h-screen flex items-center justify-center text-sm text-[#666]">
-        Loading article...
+      <div className="min-h-screen flex items-center justify-center bg-[#F7F7F5]">
+        <div className="flex flex-col items-center p-8 rounded-xl shadow-xl bg-white">
+          <svg className="animate-spin h-8 w-8 text-[#D7B15B]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          <p className="mt-4 text-lg font-medium text-[#33504F]">Loading article...</p>
+        </div>
       </div>
     );
 
   if (error)
     return (
-      <div className="min-h-screen p-8">
-        <div className="max-w-3xl mx-auto text-center">
-          <h2 className="text-2xl font-semibold text-[#33504F] mb-4">Error</h2>
-          <p className="text-sm text-[#666] mb-6">{error}</p>
-          <Button variant="outline" onClick={goBackToList}>
-            Back to articles
+      <div className="min-h-screen p-8 flex items-center justify-center bg-[#F7F7F5]">
+        <div className="max-w-xl mx-auto text-center p-10 bg-white rounded-2xl shadow-xl">
+          <h2 className="text-3xl font-bold text-red-600 mb-4">Oops!</h2>
+          <p className="text-lg text-[#33504F] mb-8">{error}</p>
+          <Button
+            className="px-6 py-3 bg-[#33504F] text-white hover:bg-[#14301F] transition-colors duration-300 rounded-xl font-semibold"
+            onClick={goBackToList}
+          >
+            ← Back to Articles
           </Button>
         </div>
       </div>
@@ -355,124 +363,154 @@ export default function BlogDetailsPage() {
   if (!blog) return null;
 
   /* -------------------------------------------------------------------------- */
-  /* MAIN RENDER */
+  /* MAIN RENDER (Enhanced Design) */
   /* -------------------------------------------------------------------------- */
   return (
-    <div className="min-h-screen bg-[#F7F7F5]">
-      {/* HERO */}
-      <section className="relative py-12 sm:py-20 md:py-24">
-        <div className="max-w-[1100px] mx-auto px-6 sm:px-12">
-
+    <div className="min-h-screen bg-[#F7F7F5] font-sans">
+      {/* HERO SECTION - Dark background with animations */}
+      <section className="relative pt-16 pb-24 lg:pt-24 lg:pb-32 bg-[#14301F] overflow-hidden">
+        {/* Background Gradient Effect */}
+        <div className="absolute inset-0 opacity-10 bg-gradient-to-br from-gray-900 to-gray-800 pointer-events-none"></div>
+        
+        <div className="max-w-[1100px] mx-auto px-6 sm:px-12 relative z-10">
           <motion.div
-            initial={{ opacity: 0, y: -16 }}
+            initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
+            transition={{ duration: 0.8, delay: 0.1 }}
           >
-            <div className="max-w-3xl text-[#EAEAEA]">
-              <div className="mb-3 flex items-center gap-3 text-sm opacity-90">
-                <User className="w-4 h-4" />
-                <span className="font-medium">{authorName}</span>
-                <span className="mx-2">•</span>
-                <Calendar className="w-4 h-4" />
-                <span>{publishedAt.toLocaleDateString()}</span>
+            <div className="max-w-4xl text-white">
+              {/* Metadata */}
+              <div className="mb-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-base text-gray-300 font-medium">
+                <span className="flex items-center gap-2">
+                  <User className="w-4 h-4 text-[#D7B15B]" />
+                  {authorName}
+                </span>
+                <span className="opacity-50">•</span>
+                <span className="flex items-center gap-2">
+                  <Calendar className="w-4 h-4 text-[#D7B15B]" />
+                  <span>{publishedAt.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
+                </span>
               </div>
 
-              <h1 className="text-3xl md:text-4xl lg:text-5xl font-heading font-bold text-white leading-tight">
+              {/* Title */}
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold font-heading text-[#F7F7F5] leading-tight drop-shadow-md">
                 {blog.title}
               </h1>
 
-              <div className="mt-6">
+              {/* Action Button */}
+              <div className="mt-8">
                 <Button
-                  className="px-4 py-2 bg-[#D7B15B] text-[#14301F]"
+                  className="px-8 py-3 bg-[#D7B15B] text-[#14301F] hover:bg-opacity-90 transition-all duration-300 transform hover:scale-[1.02] font-semibold text-lg rounded-xl shadow-xl"
                   onClick={() =>
-                    window.scrollTo({ top: window.scrollY + 300, behavior: "smooth" })
+                    window.scrollTo({ top: window.scrollY + 500, behavior: "smooth" })
                   }
                 >
-                  Read Article
+                  Start Reading
                 </Button>
               </div>
             </div>
           </motion.div>
         </div>
 
-        <div className="max-w-[1100px] mx-auto px-6 sm:px-12 mt-6">
-          <div className="rounded-2xl overflow-hidden shadow-lg border bg-gray-100">
+        {/* Image Container - Animated */}
+        <div className="max-w-[1100px] mx-auto px-6 sm:px-12 mt-12 relative z-10">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.3 }}
+            className="rounded-3xl overflow-hidden shadow-2xl border-4 border-white/20 bg-gray-100"
+          >
             <img
               src={heroUrl}
               alt={blog.title}
-              className="w-full object-cover max-h-[520px]"
+              className="w-full object-cover max-h-[580px] h-full"
               onError={(e) => (e.currentTarget.src = "/images/blog-hero.jpg")}
             />
-          </div>
+          </motion.div>
         </div>
       </section>
 
       {/* CONTENT + SIDEBAR */}
-      <section className="py-12">
+      <section className="py-16 bg-[#F7F7F5]">
         <div className="max-w-[1100px] mx-auto px-6 sm:px-12">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
+            
+            {/* MAIN CONTENT COLUMN */}
             <main className="lg:col-span-2">
-              <article className="bg-white rounded-2xl shadow-md p-6 lg:p-10">
+              <article className="bg-white rounded-3xl shadow-xl p-6 lg:p-10 border border-gray-100">
 
-                {/* AUTHOR + LIKE */}
-                <div className="mb-6 flex items-center justify-between gap-4">
+                {/* AUTHOR + LIKE BAR */}
+                <div className="mb-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b pb-6">
                   <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-full bg-[#E8E9E2] flex items-center justify-center">
-                      <User className="w-6 h-6 text-[#33504F]" />
+                    <div className="w-14 h-14 rounded-full bg-[#E8E9E2] flex items-center justify-center border-2 border-[#D7B15B]">
+                      <User className="w-7 h-7 text-[#33504F]" />
                     </div>
                     <div>
-                      <div className="text-sm font-semibold text-[#14301F]">
+                      <div className="text-base font-bold text-[#14301F] tracking-wide">
                         {authorName}
                       </div>
-                      <div className="text-xs text-[#666]">
-                        {publishedAt.toLocaleDateString()}
+                      <div className="text-sm text-[#666] italic">
+                        Published on {publishedAt.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
                       </div>
                     </div>
                   </div>
 
+                  {/* Like Button - Interactive */}
                   <div className="flex items-center gap-3">
                     <Button
-                      className={`px-4 py-2 border rounded-lg ${
-                        likes.user_liked ? "bg-[#D7B15B] text-[#14301F]" : ""
-                      }`}
+                      className={`px-6 py-3 transition-all duration-200 shadow-md ${
+                        likes.user_liked
+                          ? "bg-[#D7B15B] text-[#14301F] hover:bg-yellow-600 transform scale-105"
+                          : "bg-gray-100 text-[#33504F] hover:bg-gray-200 border border-gray-300"
+                      } rounded-full font-bold`}
                       onClick={handleLike}
                       disabled={loadingLike}
                     >
-                      <Heart className="w-4 h-4 inline-block mr-2" />
-                      {likes.count} {likes.user_liked ? "Liked" : "Like"}
+                      <Heart
+                        className={`w-5 h-5 inline-block mr-2 transition-colors ${
+                          likes.user_liked ? "fill-[#14301F]" : "text-[#33504F]"
+                        }`}
+                      />
+                      <span className="text-base">{likes.count} {likes.user_liked ? "Liked!" : "Like"}</span>
                     </Button>
                   </div>
                 </div>
 
-                {/* ARTICLE HTML */}
+                {/* ARTICLE HTML - Enhanced Prose Styling */}
                 <div
-                  className="prose prose-sm sm:prose lg:prose-lg max-w-none text-[#333]"
+                  className="prose prose-lg max-w-none text-[#333] leading-relaxed
+                             prose-h2:text-2xl prose-h2:font-extrabold prose-h2:text-[#33504F] prose-h2:border-l-4 prose-h2:pl-4 prose-h2:border-[#D7B15B] prose-h2:py-1
+                             prose-h3:text-xl prose-h3:font-bold prose-h3:text-[#33504F]
+                             prose-p:text-gray-700 prose-a:text-[#D7B15B] prose-a:font-medium hover:prose-a:underline
+                             prose-li:text-gray-700 prose-ul:list-disc prose-ul:list-inside
+                             "
                   dangerouslySetInnerHTML={{ __html: html }}
                 />
 
-                {/* COMMENTS */}
-                <section className="mt-10">
-                  <h3 className="text-lg font-semibold text-[#33504F] mb-4">
-                    Comments
+                {/* COMMENTS SECTION */}
+                <section className="mt-12 pt-6 border-t border-gray-200">
+                  <h3 className="text-2xl font-bold text-[#33504F] mb-6">
+                    Leave a Comment ({comments.length})
                   </h3>
 
                   {/* Form */}
-                  <form onSubmit={handleSubmitComment} className="space-y-3 mb-6">
+                  <form onSubmit={handleSubmitComment} className="space-y-4 mb-8 p-6 bg-gray-50 rounded-xl border border-gray-200 shadow-inner">
                     <textarea
                       value={commentBody}
                       onChange={(e) => setCommentBody(e.target.value)}
-                      placeholder="Write your comment..."
-                      rows={4}
-                      className="w-full p-3 border rounded-md"
+                      placeholder="Share your thoughts and insights here..."
+                      rows={5}
+                      className="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#D7B15B] focus:border-[#D7B15B] transition-colors resize-none"
+                      required
                     />
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <input
                         type="text"
                         value={commentName}
                         onChange={(e) => setCommentName(e.target.value)}
-                        placeholder="Your name (optional)"
-                        className="p-2 border rounded"
+                        placeholder="Your Name (optional)"
+                        className="p-3 border border-gray-300 rounded-lg focus:ring-1 focus:ring-[#D7B15B]"
                       />
 
                       <input
@@ -480,76 +518,82 @@ export default function BlogDetailsPage() {
                         value={commentEmail}
                         onChange={(e) => setCommentEmail(e.target.value)}
                         placeholder="Email (optional)"
-                        className="p-2 border rounded"
+                        className="p-3 border border-gray-300 rounded-lg focus:ring-1 focus:ring-[#D7B15B]"
                       />
 
                       <select
                         value={commentRating}
                         onChange={(e) => setCommentRating(e.target.value)}
-                        className="p-2 border rounded"
+                        className="p-3 border border-gray-300 rounded-lg appearance-none bg-white focus:ring-1 focus:ring-[#D7B15B]"
                       >
-                        <option value="">Rate (optional)</option>
-                        <option value="5">5 — Excellent</option>
-                        <option value="4">4 — Very good</option>
-                        <option value="3">3 — Good</option>
-                        <option value="2">2 — Fair</option>
-                        <option value="1">1 — Poor</option>
+                        <option value="">Rate Article (optional)</option>
+                        <option value="5">★★★★★ — Excellent</option>
+                        <option value="4">★★★★☆ — Very good</option>
+                        <option value="3">★★★☆☆ — Good</option>
+                        <option value="2">★★☆☆☆ — Fair</option>
+                        <option value="1">★☆☆☆☆ — Poor</option>
                       </select>
                     </div>
 
-                    <div className="flex items-center gap-3 justify-end">
+                    <div className="flex items-center gap-3 justify-end pt-2">
                       <Button
                         variant="outline"
+                        type="button" 
                         onClick={() => {
                           setCommentBody("");
                           setCommentName("");
                           setCommentEmail("");
                           setCommentRating("");
                         }}
+                        className="text-gray-600 border-gray-300 hover:bg-gray-100 transition-colors"
                       >
                         Clear
                       </Button>
 
                       <Button
                         type="submit"
-                        className="bg-[#D7B15B] text-[#14301F]"
-                        disabled={submittingComment}
+                        className="bg-[#33504F] text-white hover:bg-[#14301F] transition-colors duration-300 shadow-lg disabled:opacity-50"
+                        disabled={submittingComment || !commentBody.trim()}
                       >
-                        {submittingComment ? "Submitting..." : "Submit Comment"}
+                        {submittingComment ? "Posting..." : "Submit Comment"}
                       </Button>
                     </div>
                   </form>
 
                   {/* Comments List */}
-                  <div className="space-y-4">
+                  <div className="space-y-5">
                     {comments.length === 0 ? (
-                      <div className="text-sm text-[#666]">No comments yet.</div>
+                      <div className="text-center py-6 text-base text-gray-500 bg-gray-100 rounded-xl">Be the first to comment!</div>
                     ) : (
                       comments.map((c) => (
                         <div
                           key={c.id}
-                          className={`p-4 rounded-lg ${
+                          className={`p-5 rounded-xl transition-shadow duration-300 ${
                             c._optimistic
-                              ? "border border-dashed opacity-80"
-                              : "bg-white shadow-sm"
+                              ? "bg-yellow-50 border border-yellow-300 opacity-80 animate-pulse"
+                              : "bg-white shadow-lg border border-gray-100 hover:shadow-xl"
                           }`}
                         >
-                          <div className="flex items-center justify-between mb-2">
-                            <div className="text-sm font-semibold">
-                              {c.name || "Guest"}
+                          <div className="flex items-center justify-between mb-3 border-b pb-2">
+                            <div className="flex items-center gap-2">
+                              <User className="w-4 h-4 text-[#D7B15B]" />
+                              <span className="text-sm font-bold text-[#14301F]">
+                                {c.name || "Anonymous User"}
+                              </span>
                             </div>
-                            <div className="text-xs text-[#999]">
+                            <div className="text-xs text-gray-400">
                               {new Date(c.created_at).toLocaleString()}
                             </div>
                           </div>
 
-                          <div className="text-sm text-[#444] mb-2">{c.body}</div>
+                          <p className="text-base text-[#444] mb-3">{c.body}</p>
 
                           {c.rating && (
-                            <div className="text-xs text-[#666]">
-                              Rating: {c.rating} / 5
+                            <div className="text-sm font-medium text-yellow-600">
+                              Rating: {"★".repeat(c.rating)}
                             </div>
                           )}
+                          {c._optimistic && <div className="text-xs text-yellow-700 mt-2 italic">Awaiting moderation... (Optimistic Post)</div>}
                         </div>
                       ))
                     )}
@@ -558,21 +602,22 @@ export default function BlogDetailsPage() {
               </article>
             </main>
 
-            {/* SIDEBAR */}
-            <aside className="space-y-6">
-              <Card className="p-4">
+            {/* SIDEBAR COLUMN */}
+            <aside className="space-y-8">
+              {/* Contact Card */}
+              <Card className="p-6 rounded-2xl shadow-xl border-t-4 border-[#D7B15B] bg-white">
                 <CardContent className="p-0">
-                  <h4 className="text-lg font-semibold text-[#33504F] mb-3">
-                    Contact
+                  <h4 className="text-xl font-bold text-[#33504F] mb-4 border-b pb-3">
+                    Get in Touch
                   </h4>
-                  <div className="text-sm text-[#666]">
-                    <div className="flex items-center gap-2">
-                      <MailIcon className="w-4 h-4 text-[#D7B15B]" />
-                      <span>info@sprada2global.com</span>
+                  <div className="text-sm text-gray-600 space-y-3">
+                    <div className="flex items-center gap-3">
+                      <MailIcon className="w-5 h-5 text-[#D7B15B]" />
+                      <a href="mailto:info@sprada2global.com" className="hover:text-[#33504F] transition-colors">info@sprada2global.com</a>
                     </div>
-                    <div className="mt-4">
+                    <div className="pt-3">
                       <Button
-                        className="w-full bg-[#D7B15B] text-[#14301F]"
+                        className="w-full bg-[#D7B15B] text-[#14301F] hover:bg-opacity-90 transition-all font-semibold rounded-xl shadow-lg"
                         onClick={() => navigate("/contact")}
                       >
                         Contact Our Experts
@@ -582,50 +627,52 @@ export default function BlogDetailsPage() {
                 </CardContent>
               </Card>
 
-              {/* Related Posts */}
-              <Card className="p-4">
+              {/* Related Posts Card */}
+              <Card className="p-6 rounded-2xl shadow-xl bg-white">
                 <CardContent className="p-0">
-                  <h4 className="text-lg font-semibold text-[#33504F] mb-3">
-                    Related Posts
+                  <h4 className="text-xl font-bold text-[#33504F] mb-5 border-b pb-3">
+                    More to Explore
                   </h4>
 
                   <div className="space-y-4">
                     {topRelated.length === 0 ? (
-                      <div className="text-sm text-[#666]">No related posts.</div>
+                      <div className="text-sm text-gray-500 p-3 bg-gray-50 rounded-lg">No other related posts found.</div>
                     ) : (
                       topRelated.map((t) => {
                         const thumb =
                           t.og_image || t.image || "/images/placeholder.png";
+                        const postDate = new Date(t.published_at || t.created_at || Date.now()).toLocaleDateString();
 
                         return (
-                          <div key={t.id} className="flex items-start gap-3">
+                          <div 
+                            key={t.id} 
+                            className="flex items-start gap-4 p-3 rounded-xl hover:bg-gray-50 transition-colors duration-200 cursor-pointer group"
+                            onClick={() =>
+                              navigate(`/blog/${encodeURIComponent(t.slug)}`)
+                            }
+                          >
+                            {/* Image component - must use Image import */}
                             <Image
                               src={makeAbsoluteImageUrl(thumb)}
                               alt={t.title}
                               width={140}
                               height={88}
-                              className="w-20 h-14 object-cover rounded"
+                              className="w-24 h-16 object-cover rounded-lg flex-shrink-0 shadow-md transition-transform group-hover:scale-[1.05]"
                             />
 
                             <div className="flex-1">
-                              <div className="text-sm font-semibold text-[#23523e]">
+                              <div className="text-base font-semibold text-[#23523e] group-hover:text-[#D7B15B] transition-colors leading-snug">
                                 {t.title}
                               </div>
 
-                              <div className="text-xs text-[#666] mt-1">
-                                {t.avg_rating ? `${t.avg_rating} ★ • ` : ""}
-                                {t.likes_count || 0} likes
+                              <div className="text-xs text-gray-500 mt-1 flex items-center gap-2">
+                                <Calendar className="w-3 h-3 text-[#D7B15B]" />
+                                <span>{postDate}</span>
                               </div>
 
-                              <div className="mt-2">
-                                <Button
-                                  className="text-xs px-3 py-1 border rounded"
-                                  onClick={() =>
-                                    navigate(`/blog/${encodeURIComponent(t.slug)}`)
-                                  }
-                                >
-                                  Read
-                                </Button>
+                              <div className="text-xs text-gray-500 mt-1 flex items-center gap-2">
+                                <Heart className="w-3 h-3 text-red-400" />
+                                <span>{t.likes_count || 0} likes</span>
                               </div>
                             </div>
                           </div>

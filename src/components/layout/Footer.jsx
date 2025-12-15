@@ -145,8 +145,10 @@ const Footer = () => {
       </a>
 
       {/* Main Footer */}
-      <footer className="bg-[#33504F] text-[#CFD0C8] mt-auto relative z-10">
-        <div className="max-w-[1100px] mx-auto px-6 sm:px-8 lg:px-12">
+      <footer className="w-full bg-[#33504F] text-[#CFD0C8] relative z-10">
+  {/* Inner constrained container */}
+  <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8">
+
           {/* Main grid */}
           <div className="py-10 md:py-14 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 md:gap-12">
             {/* Company Info */}
