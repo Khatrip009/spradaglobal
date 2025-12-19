@@ -158,7 +158,7 @@ const Footer = () => {
               </div>
 
               <p className="text-sm md:text-base mb-4 leading-relaxed">
-                Your trusted partner in premium agricultural exports.
+                A strategic partner for high-value global import and export operations.
               </p>
 
               <div className="flex items-center space-x-3 mb-4">
