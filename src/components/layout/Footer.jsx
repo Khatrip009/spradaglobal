@@ -145,7 +145,7 @@ const Footer = () => {
       </a>
 
       {/* Main Footer */}
-      <footer className="w-full bg-[#33504F] text-[#CFD0C8] relative z-10">
+      <footer className="w-full bg-[#33504F] text-[#CFD0C8] relative z-10 text-left">
   {/* Inner constrained container */}
   <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8">
 
@@ -275,7 +275,11 @@ const Footer = () => {
               <div className="space-y-4 text-sm text-[#CFD0C8]">
                 <div className="flex items-start gap-3">
                   <MapPin className="w-5 h-5 text-[#D7B15B] mt-1" />
-                  <p>{OFFICE_ADDRESS_LINE1}<br/>{OFFICE_ADDRESS_LINE2}</p>
+                  <p className="text-sm leading-relaxed text-left">
+  {OFFICE_ADDRESS_LINE1}<br />
+  {OFFICE_ADDRESS_LINE2}
+</p>
+
                 </div>
 
                 <div className="flex items-center gap-3">
@@ -294,7 +298,7 @@ const Footer = () => {
           {/* Bottom bar */}
           <div className="border-t border-white/10 py-5 md:py-6">
             <div className="flex flex-col md:flex-row items-center justify-between gap-3 text-sm">
-              <p className="text-[#CFD0C8] text-center">
+              <p className="text-sm leading-relaxed text-center">
                 © {currentYear} Sprada2Global Exim. All rights reserved.
                 <span className="block md:inline text-[#D7B15B] md:ml-2">Design & Managed by EXOTECH DEVELOPERS</span>
               </p>
