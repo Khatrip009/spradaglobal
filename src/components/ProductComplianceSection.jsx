@@ -1,4 +1,4 @@
-import { CheckCircle, Globe, FileText, Shield } from "lucide-react";
+import { CheckCircle, FileText, Shield, AlignLeft } from "lucide-react";
 
 export default function ProductComplianceSection({ product }) {
   return (
@@ -7,6 +7,26 @@ export default function ProductComplianceSection({ product }) {
         Export Compliance & Specifications
       </h2>
 
+      {/* FULL PRODUCT DESCRIPTION (MOVED ABOVE) */}
+      {product.description && (
+        <div className="rounded-2xl p-8 bg-white shadow-xl mb-16">
+          <h3 className="font-bold text-xl mb-6 flex items-center gap-2">
+            <AlignLeft className="text-[#d7b15b]" />
+            Product Description
+          </h3>
+
+          <div className="text-gray-700 leading-relaxed space-y-4 text-sm md:text-base text-justify">
+            {product.description
+              .split("\n")
+              .filter(Boolean)
+              .map((line, i) => (
+                <p key={i}>{line}</p>
+              ))}
+          </div>
+        </div>
+      )}
+
+      {/* GRID: Specs + Compliance */}
       <div className="grid md:grid-cols-2 gap-10">
         {/* Specifications */}
         <div className="rounded-2xl p-8 bg-white shadow-xl">
@@ -40,11 +60,15 @@ export default function ProductComplianceSection({ product }) {
   );
 }
 
+/* ---------------------------------------------------
+   Helpers
+--------------------------------------------------- */
+
 function Spec({ label, value }) {
   return (
     <div className="flex justify-between border-b py-3 text-sm">
       <span className="text-gray-500">{label}</span>
-      <span className="font-semibold">{value}</span>
+      <span className="font-semibold text-right">{value}</span>
     </div>
   );
 }
@@ -52,7 +76,7 @@ function Spec({ label, value }) {
 function Compliance({ text }) {
   return (
     <div className="flex items-start gap-3 mb-4">
-      <CheckCircle className="text-green-600 mt-0.5" />
+      <CheckCircle className="text-green-600 mt-0.5 w-5 h-5" />
       <span className="text-gray-700">{text}</span>
     </div>
   );

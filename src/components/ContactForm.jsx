@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   X,
@@ -9,12 +9,13 @@ import {
   Phone,
   Globe2,
   MessageSquare,
-  Sparkles
+  Sparkles,
+  Layers
 } from "lucide-react";
-import { apiPost } from "@/lib/api";
+import { apiPost, getCategories } from "@/lib/api";
 
 /* =====================================================
-   PREMIUM + FUN CONTACT FORM MODAL
+   PREMIUM CONTACT FORM MODAL (FINAL)
 ===================================================== */
 
 export default function ContactForm({
@@ -24,19 +25,57 @@ export default function ContactForm({
   product = null
 }) {
   const [loading, setLoading] = useState(false);
+  const [categories, setCategories] = useState([]);
+  const [catLoading, setCatLoading] = useState(false);
+
   const [form, setForm] = useState({
     name: "",
     company: "",
     email: "",
     phone: "",
     country: "",
-    message: ""
+    message: "",
+    category_id: "",
+    category_name: ""
   });
+
+  /* --------------------------------------------------
+     LOAD CATEGORIES
+  -------------------------------------------------- */
+  useEffect(() => {
+    if (!open) return;
+
+    let mounted = true;
+    setCatLoading(true);
+
+    getCategories({ limit: 100 })
+      .then(r => {
+        if (mounted) setCategories(r.categories || []);
+      })
+      .catch(() => {
+        console.warn("Failed to load categories");
+      })
+      .finally(() => mounted && setCatLoading(false));
+
+    return () => (mounted = false);
+  }, [open]);
 
   if (!open) return null;
 
   function update(e) {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setForm(prev => ({ ...prev, [name]: value }));
+  }
+
+  function onCategoryChange(e) {
+    const id = e.target.value;
+    const cat = categories.find(c => String(c.id) === id);
+
+    setForm(prev => ({
+      ...prev,
+      category_id: id || "",
+      category_name: cat?.name || ""
+    }));
   }
 
   async function submit(e) {
@@ -45,7 +84,16 @@ export default function ContactForm({
 
     try {
       await apiPost("/api/leads", {
-        ...form,
+        name: form.name,
+        email: form.email,
+        phone: form.phone || null,
+        company: form.company || null,
+        country: form.country || null,
+        message: form.message || null,
+
+        category_id: form.category_id || null,
+        category_name: form.category_name || null,
+
         context,
         product_id: product?.id || null,
         product_name: product?.title || null
@@ -152,6 +200,37 @@ export default function ContactForm({
               <Input icon={Phone} name="phone" label="Phone / WhatsApp" onChange={update} />
               <Input icon={Globe2} name="country" label="Country" onChange={update} />
 
+              {/* CATEGORY */}
+              <div>
+                <label className="block text-sm font-semibold mb-1">
+                  Interested Category
+                </label>
+                <div className="relative">
+                  <Layers className="absolute left-3 top-3 text-gray-400 w-4 h-4" />
+                  <select
+                    name="category_id"
+                    value={form.category_id}
+                    onChange={onCategoryChange}
+                    className="
+                      w-full rounded-xl border
+                      pl-10 pr-4 py-2
+                      focus:ring-2 focus:ring-[#d7b15b]
+                      transition
+                    "
+                  >
+                    <option value="">
+                      {catLoading ? "Loading categories..." : "-- Select Category --"}
+                    </option>
+                    {categories.map(c => (
+                      <option key={c.id} value={c.id}>
+                        {c.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* MESSAGE */}
               <div>
                 <label className="block text-sm font-semibold mb-1">
                   Message / Requirement
@@ -168,7 +247,7 @@ export default function ContactForm({
                       focus:ring-2 focus:ring-[#d7b15b]
                       transition
                     "
-                    placeholder="Quantity, destination country, packaging, certifications..."
+                    placeholder="Quantity, destination, packaging, certifications..."
                   />
                 </div>
               </div>
@@ -199,9 +278,8 @@ export default function ContactForm({
 }
 
 /* -----------------------------------------------------
-   INPUT WITH ICON + FUN FOCUS
+   INPUT COMPONENT
 ----------------------------------------------------- */
-
 function Input({ label, name, type = "text", onChange, required, icon: Icon }) {
   return (
     <div>

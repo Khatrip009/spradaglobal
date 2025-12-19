@@ -13,7 +13,10 @@ import { toAbsoluteImageUrl } from "@/lib/api";
    MAIN HERO
 ===================================================== */
 
-export default function ProductDetailHero({ product }) {
+export default function ProductDetailHero({
+  product,
+  onRequestQuote
+}) {
   const images = useMemo(() => {
     const arr = [];
 
@@ -32,7 +35,7 @@ export default function ProductDetailHero({ product }) {
 
   const [active, setActive] = useState(0);
 
-  /* Auto-advance (cinematic pace) */
+  /* Auto-advance */
   useEffect(() => {
     const t = setInterval(() => {
       setActive(i => (i + 1) % images.length);
@@ -50,9 +53,7 @@ export default function ProductDetailHero({ product }) {
 
   return (
     <section className="relative min-h-[100vh] overflow-hidden bg-black">
-      {/* ================================================
-         BACKGROUND GALLERY
-      ================================================ */}
+      {/* BACKGROUND GALLERY */}
       <div className="absolute inset-0">
         <AnimatePresence>
           {images.map((src, i) =>
@@ -78,13 +79,10 @@ export default function ProductDetailHero({ product }) {
           )}
         </AnimatePresence>
 
-        {/* Cinematic overlay */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/55 to-black/10" />
       </div>
 
-      {/* ================================================
-         CONTENT
-      ================================================ */}
+      {/* CONTENT */}
       <div className="relative z-10 max-w-7xl mx-auto px-6 pt-32 pb-20 grid lg:grid-cols-2 gap-14">
         {/* LEFT — Product Info */}
         <motion.div
@@ -113,13 +111,19 @@ export default function ProductDetailHero({ product }) {
             <MetaPill icon={Globe} label="Worldwide Shipping" />
           </div>
 
-          {/* CTA */}
-          <div className="flex flex-wrap gap-4">
-            <button className="px-8 py-4 rounded-xl bg-[#d7b15b] text-black font-extrabold shadow-[0_25px_70px_rgba(215,177,91,0.4)] hover:shadow-[0_40px_120px_rgba(215,177,91,0.6)] transition">
-              Request Specification
-            </button>
-
-            <button className="px-8 py-4 rounded-xl border border-white/30 text-white font-semibold hover:bg-white/10 transition">
+          {/* CTA — ONLY ONE BUTTON */}
+          <div className="flex">
+            <button
+              onClick={onRequestQuote}
+              className="
+                px-8 py-4 rounded-xl
+                bg-[#d7b15b] text-black
+                font-extrabold
+                shadow-[0_25px_70px_rgba(215,177,91,0.4)]
+                hover:shadow-[0_40px_120px_rgba(215,177,91,0.6)]
+                transition
+              "
+            >
               Enquire Now
             </button>
           </div>

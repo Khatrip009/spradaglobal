@@ -1,5 +1,5 @@
 // src/App.jsx
-import React from "react";
+import React, { useState } from "react";
 import {
   HashRouter as Router,
   Routes,
@@ -24,17 +24,22 @@ import ServicesPage from "./components/pages/ServicePage";
 import ProductDetail from "./components/pages/ProductDetail";
 import CategoryPage from "./components/pages/CategoryPage";
 
+/* Global Modal */
+import ContactForm from "@/components/ContactForm";
+
+/* Providers */
 import { ToastProvider } from "./components/ui/ToastProvider";
 
-/* ScrollToTop component (external) */
+/* Utilities */
 import { ScrollToTop } from "./lib/scroll-to-top";
-
 import { AnimatePresence, motion } from "framer-motion";
 
 import "./index.css";
 import "./App.css";
 
-/* Smooth animated wrapper for page transitions */
+/* -----------------------------------------------------
+   Animated Page Wrapper
+----------------------------------------------------- */
 function AnimatedPage({ children }) {
   return (
     <motion.div
@@ -49,14 +54,15 @@ function AnimatedPage({ children }) {
   );
 }
 
-/* Routing wrapper with page transitions */
-function RouteWrapper() {
+/* -----------------------------------------------------
+   Routes Wrapper (with transitions)
+----------------------------------------------------- */
+function RouteWrapper({ onRequestQuote }) {
   const location = useLocation();
 
   return (
     <main className="flex-1">
       <AnimatePresence mode="wait">
-        {/* use location.key instead of pathname so transitions occur reliably */}
         <Routes location={location} key={location.key}>
           <Route
             path="/"
@@ -82,7 +88,7 @@ function RouteWrapper() {
             path="/contact"
             element={
               <AnimatedPage>
-                <ContactPage />
+                <ContactPage onRequestQuote={onRequestQuote} />
               </AnimatedPage>
             }
           />
@@ -157,15 +163,42 @@ function RouteWrapper() {
   );
 }
 
+/* -----------------------------------------------------
+   App Root
+----------------------------------------------------- */
 function App() {
+  const [contactOpen, setContactOpen] = useState(false);
+  const [contactContext, setContactContext] = useState("general");
+  const [contactProduct, setContactProduct] = useState(null);
+
+  const handleRequestQuote = () => {
+    setContactContext("quote");
+    setContactProduct(null);
+    setContactOpen(true);
+  };
+
   return (
     <ToastProvider>
       <Router basename={import.meta.env.BASE_URL || "/"}>
         <div className="app-root min-h-screen flex flex-col">
-          <Header />
+          {/* HEADER */}
+          <Header onRequestQuote={handleRequestQuote} />
+
           <ScrollToTop />
-          <RouteWrapper />
+
+          {/* ROUTES */}
+          <RouteWrapper onRequestQuote={handleRequestQuote} />
+
+          {/* FOOTER */}
           <Footer />
+
+          {/* GLOBAL CONTACT MODAL */}
+          <ContactForm
+            open={contactOpen}
+            onClose={() => setContactOpen(false)}
+            context={contactContext}
+            product={contactProduct}
+          />
         </div>
       </Router>
     </ToastProvider>

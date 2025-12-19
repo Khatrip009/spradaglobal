@@ -71,18 +71,19 @@ const contactInfo = [
   },
 ];
 
-/* ================= CINEMATIC 3D TILT ================= */
+/* ================= 3D TILT CARD ================= */
 
 const TiltCard = ({ children }) => {
   const ref = useRef(null);
   const mx = useMotionValue(0);
   const my = useMotionValue(0);
 
-  const sx = useSpring(mx, { stiffness: 240, damping: 24 });
-  const sy = useSpring(my, { stiffness: 240, damping: 24 });
+  const sx = useSpring(mx, { stiffness: 220, damping: 28 });
+  const sy = useSpring(my, { stiffness: 220, damping: 28 });
 
-  const rx = useTransform(sy, [-120, 120], [14, -14]);
-  const ry = useTransform(sx, [-120, 120], [-14, 14]);
+  // ⬇️ Reduce horizontal rotation (major fix)
+  const rx = useTransform(sy, [-120, 120], [12, -12]);
+  const ry = useTransform(sx, [-120, 120], [-8, 8]);
 
   const move = (e) => {
     const r = ref.current.getBoundingClientRect();
@@ -94,16 +95,22 @@ const TiltCard = ({ children }) => {
     <motion.div
       ref={ref}
       onMouseMove={move}
-      onMouseLeave={() => { mx.set(0); my.set(0); }}
+      onMouseLeave={() => {
+        mx.set(0);
+        my.set(0);
+      }}
       style={{
         rotateX: rx,
         rotateY: ry,
         transformStyle: "preserve-3d",
       }}
-      // FIX 1: Added zIndex: 10 on hover to ensure the card visually floats above neighbors
-      whileHover={{ y: -16, zIndex: 10 }} 
+      whileHover={{ y: -16 }}
       transition={{ type: "spring", stiffness: 180 }}
-      className="relative"
+      className="
+        relative
+        isolation-isolate
+        will-change-transform
+      "
     >
       {children}
     </motion.div>
@@ -113,10 +120,8 @@ const TiltCard = ({ children }) => {
 /* ================= MAIN ================= */
 
 const ContactUsSection = () => (
-  // FIX 2: Increased vertical padding (py-28 -> py-36) to prevent edge clipping during hover lift
-  <section className="relative py-36 bg-gradient-to-b from-white via-slate-50 to-white overflow-hidden">
-
-    {/* Cinematic background energy */}
+  <section className="relative py-36 bg-gradient-to-b from-white via-slate-50 to-white overflow-visible">
+    {/* Background energy */}
     <motion.div
       aria-hidden
       className="absolute -top-40 -right-40 w-[45rem] h-[45rem] bg-gradient-to-br from-indigo-300/30 to-cyan-300/30 rounded-full blur-3xl"
@@ -125,12 +130,11 @@ const ContactUsSection = () => (
     />
 
     <div className="relative max-w-7xl mx-auto px-6">
-
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: 60 }}
         whileInView={{ opacity: 1, y: 0 }}
-        transition={{ duration: 1, ease: "easeOut" }}
+        transition={{ duration: 1 }}
         viewport={{ once: true }}
         className="text-center mb-24"
       >
@@ -142,58 +146,65 @@ const ContactUsSection = () => (
         </h2>
       </motion.div>
 
-      {/* Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-14">
+      {/* Cards Grid — KEY FIX */}
+      <div
+        className="
+          grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3
+          gap-16
+          perspective-[1400px]
+          overflow-visible
+        "
+      >
         {contactInfo.map((item, i) => {
           const Icon = item.icon;
           const ActionIcon = item.actionIcon;
 
           return (
             <TiltCard key={i}>
-              <motion.div
-                initial={{ opacity: 0, y: 60, scale: 0.9 }}
-                whileInView={{ opacity: 1, y: 0, scale: 1 }}
-                transition={{ duration: 0.7, delay: i * 0.15 }}
-                viewport={{ once: true }}
-                className="relative bg-white/85 backdrop-blur-xl rounded-3xl border border-slate-200 shadow-2xl p-8 overflow-hidden"
-              >
-                {/* Icon block – heavy 3D */}
+                <div
+                  className="
+                    relative
+                    max-w-[22rem]
+                    mx-auto
+                    bg-white/85 backdrop-blur-xl
+                    rounded-3xl
+                    border border-slate-200
+                    shadow-2xl
+                    p-8
+                    overflow-visible
+                  "
+                >
+              {/* Icon */}
                 <motion.div
-                  style={{ transformStyle: "preserve-3d" }}
-                  whileHover={{ scale: 1.2, rotateZ: 8 }}
+                  whileHover={{ scale: 1.15, rotateZ: 6 }}
                   className={`w-16 h-16 mb-6 rounded-2xl bg-gradient-to-br ${item.gradient} flex items-center justify-center shadow-2xl`}
                 >
-                  <motion.div style={{ translateZ: 30 }}>
-                    <Icon className="w-8 h-8 text-white drop-shadow-lg" />
-                  </motion.div>
+                  <Icon className="w-8 h-8 text-white drop-shadow-lg" />
                 </motion.div>
 
                 <h4 className="font-extrabold text-slate-900 text-lg">
                   {item.title}
                 </h4>
-                <p className="font-semibold text-slate-800">
+                <p className="font-semibold text-slate-800 break-all">
                   {item.primary}
                 </p>
                 <p className="text-sm text-slate-500 mb-6">
                   {item.secondary}
                 </p>
 
-                {/* Action – stays clickable */}
-                <motion.a
+                <a
                   href={item.href}
                   target="_blank"
                   rel="noopener noreferrer"
-                  aria-label={item.action}
-                  whileHover={{ x: 4 }}
-                  className="inline-flex items-center gap-2 font-bold text-sm text-transparent bg-clip-text bg-gradient-to-r from-slate-900 to-slate-600 hover:opacity-80 transition"
+                  className="inline-flex items-center gap-2 font-bold text-sm text-slate-800 hover:opacity-80 transition"
                 >
                   {item.action}
                   <ActionIcon className="w-4 h-4" />
-                </motion.a>
+                </a>
 
                 {/* Edge glow */}
                 <div className="pointer-events-none absolute inset-0 rounded-3xl ring-1 ring-inset ring-white/40" />
-              </motion.div>
+              </div>
             </TiltCard>
           );
         })}

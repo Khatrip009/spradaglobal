@@ -24,10 +24,10 @@ const Button = ({ children, className, as = "button", href, ...props }) => {
 };
 
 /* =========================================================================
-   MAIN COMPONENT
+   CTA SECTION
    ========================================================================= */
 
-const App = () => {
+const CTASection = ({ onRequestQuote }) => {
   const styles = `
     .cta-wrapper {
       --bg-page:#f7f7f7;
@@ -117,10 +117,10 @@ const App = () => {
         </p>
 
         <div className="cta-buttons-container">
-          {/* REQUEST QUOTE */}
+          {/* REQUEST QUOTE → GLOBAL MODAL */}
           <Button
-            as="a"
-            href="/contact"
+            as="button"
+            onClick={onRequestQuote}
             className="cta-button-primary"
             aria-label="Request a quote"
           >
@@ -143,4 +143,4 @@ const App = () => {
   );
 };
 
-export default App;
+export default CTASection;

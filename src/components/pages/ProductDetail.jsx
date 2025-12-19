@@ -6,15 +6,14 @@ import {
 } from "@/lib/api";
 
 import ProductDetailHero from "../ProductDetailHero";
-import Product3DGallery from "../Product3DGallery";
+import ProductImageGallery from "../Product3DGallery";
 import ProductComplianceSection from "../ProductComplianceSection";
 import ContactForm from "../ContactForm";
 
 import FloatingEnquiryBar from "../FloatingEnquiryBar";
-import WhatsAppCTA from "../WhatsAppCTA";
 
 /* =====================================================
-   PRODUCT DETAIL PAGE
+   PRODUCT DETAIL PAGE (FINAL)
 ===================================================== */
 
 export default function ProductDetailPage() {
@@ -26,7 +25,7 @@ export default function ProductDetailPage() {
 
   /* Contact Form */
   const [formOpen, setFormOpen] = useState(false);
-  const [formContext, setFormContext] = useState("general");
+  const [formContext, setFormContext] = useState("product_enquiry");
 
   /* --------------------------------------------------
      DATA FETCH
@@ -98,6 +97,15 @@ export default function ProductDetailPage() {
   }
 
   /* --------------------------------------------------
+     HANDLERS
+  -------------------------------------------------- */
+  function openEnquiry(source = "hero") {
+    trackConversion(source);
+    setFormContext("product_enquiry");
+    setFormOpen(true);
+  }
+
+  /* --------------------------------------------------
      RENDER
   -------------------------------------------------- */
   return (
@@ -105,37 +113,24 @@ export default function ProductDetailPage() {
       {/* HERO */}
       <ProductDetailHero
         product={product}
-        images={images}
-        onRequestSpec={() => {
-          trackConversion("request_spec");
-          setFormContext("specification");
-          setFormOpen(true);
-        }}
-        onEnquire={() => {
-          trackConversion("enquiry");
-          setFormContext("enquiry");
-          setFormOpen(true);
-        }}
+        onRequestQuote={() => openEnquiry("hero_enquiry")}
       />
 
-      {/* 3D GALLERY */}
+      {/* IMAGE GALLERY */}
       <section className="max-w-7xl mx-auto px-6 py-24">
-        <Product3DGallery images={images} />
+        <ProductImageGallery
+          images={images}
+          onRequestQuote={() => openEnquiry("gallery_enquiry")}
+        />
       </section>
 
-      {/* COMPLIANCE */}
+      {/* COMPLIANCE + DESCRIPTION */}
       <ProductComplianceSection product={product} />
 
       {/* FLOATING ENQUIRY BAR */}
       <FloatingEnquiryBar
-        onEnquire={() => {
-          trackConversion("floating_enquiry");
-          setFormContext("enquiry");
-          setFormOpen(true);
-        }}
+        onEnquire={() => openEnquiry("floating_enquiry")}
       />
-
-      
 
       {/* CONTACT FORM */}
       <ContactForm

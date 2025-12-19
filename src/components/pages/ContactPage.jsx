@@ -39,7 +39,7 @@ const OFFICE_MAP_EMBED = `https://www.google.com/maps?q=${encodeURIComponent(
   `${OFFICE_ADDRESS_LINE1} ${OFFICE_ADDRESS_LINE2}`
 )}&output=embed`;
 
-const ContactPage = () => {
+const ContactPage = ({ onRequestQuote }) => {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -163,211 +163,191 @@ const ContactPage = () => {
       
 
       {/* Contact Form + Embedded Map */}
-      <section className="py-10 lg:py-16 bg-[#E8E9E2]">
-        <div className="max-w-[100rem] mx-auto px-6 lg:px-12">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16 items-start">
-            {/* Form */}
-            <motion.div
-              initial={{ opacity: 0, x: -8 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.6 }}
-              viewport={{ once: true }}
-              className="bg-white rounded-2xl p-6 sm:p-8 shadow"
-            >
-              <h3 className="text-xl sm:text-2xl font-heading font-semibold text-[#33504F] mb-3">Send Us a Message</h3>
-              <p className="text-sm text-[#666666] mb-4">Fill out the form and our export team will reply within 24 hours.</p>
+<section className="py-10 lg:py-16 bg-[#E8E9E2]">
+  <div className="max-w-7xl mx-auto px-6 lg:px-12">
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16 items-start">
+      
+      {/* ================= FORM ================= */}
+      <motion.div
+        initial={{ opacity: 0, x: -8 }}
+        whileInView={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.6 }}
+        viewport={{ once: true }}
+        className="bg-white rounded-2xl p-6 sm:p-8 shadow text-left w-full max-w-xl"
+      >
+        <h3 className="text-xl sm:text-2xl font-heading font-semibold text-[#33504F] mb-3">
+          Send Us a Message
+        </h3>
+        <p className="text-sm text-[#666666] mb-4">
+          Fill out the form and our export team will reply within 24 hours.
+        </p>
 
-              {submitError && (
-                <div className="mb-4 rounded-md bg-red-50 border border-red-200 px-3 py-2 text-xs sm:text-sm text-red-700 text-left">
-                  {submitError}
-                </div>
-              )}
-
-              {isSubmitted ? (
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.98 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ duration: 0.4 }}
-                  className="text-center py-8"
-                >
-                  <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-3" />
-                  <h4 className="text-lg font-heading font-semibold text-[#33504F] mb-1">Message Sent!</h4>
-                  <p className="text-sm text-[#666666]">Thanks — we'll respond within 24 hours.</p>
-                </motion.div>
-              ) : (
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label htmlFor="name" className="text-sm font-medium text-[#33504F] block mb-1">
-                        Full Name *
-                      </label>
-                      <Input
-                        id="name"
-                        name="name"
-                        value={formData.name}
-                        onChange={handleInputChange}
-                        required
-                        placeholder="Your full name"
-                      />
-                    </div>
-
-                    <div>
-                      <label htmlFor="email" className="text-sm font-medium text-[#33504F] block mb-1">
-                        Email Address *
-                      </label>
-                      <Input
-                        id="email"
-                        type="email"
-                        name="email"
-                        value={formData.email}
-                        onChange={handleInputChange}
-                        required
-                        placeholder="your.email@company.com"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label htmlFor="phone" className="text-sm font-medium text-[#33504F] block mb-1">Phone Number</label>
-                      <Input id="phone" name="phone" value={formData.phone} onChange={handleInputChange} placeholder="+91 72010 65465" />
-                    </div>
-
-                    <div>
-                      <label htmlFor="company" className="text-sm font-medium text-[#33504F] block mb-1">
-                        Company Name
-                      </label>
-                      <Input
-                        id="company"
-                        name="company"
-                        value={formData.company}
-                        onChange={handleInputChange}
-                        placeholder="Your company name"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label htmlFor="country" className="text-sm font-medium text-[#33504F] block mb-1">
-                        Country *
-                      </label>
-                      <Input
-                        id="country"
-                        name="country"
-                        value={formData.country}
-                        onChange={handleInputChange}
-                        required
-                        placeholder="Your country"
-                      />
-                    </div>
-
-                    <div>
-                      <label htmlFor="productInterest" className="text-sm font-medium text-[#33504F] block mb-1">
-                        Product Interest
-                      </label>
-                      <select
-                        id="productInterest"
-                        name="productInterest"
-                        value={formData.productInterest}
-                        onChange={handleInputChange}
-                        className="w-full px-3 py-2 border-2 border-[#CFD0C8] rounded"
-                      >
-                        <option value="">Select a product</option>
-                        {productOptions.map((p, i) => (
-                          <option key={i} value={p}>
-                            {p}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  </div>
-
-                  <div>
-                    <label htmlFor="message" className="text-sm font-medium text-[#33504F] block mb-1">
-                      Message *
-                    </label>
-                    <Textarea
-                      id="message"
-                      name="message"
-                      value={formData.message}
-                      onChange={handleInputChange}
-                      required
-                      rows={5}
-                      placeholder="Tell us about quantity, destination, and any specs..."
-                    />
-                  </div>
-
-                  <div>
-                    <Button
-                      type="submit"
-                      disabled={isSubmitting}
-                      className="w-full bg-[#33504F] text-white hover:bg-[#33504F]/90 font-semibold py-3 rounded-lg flex items-center justify-center gap-3"
-                    >
-                      {isSubmitting ? (
-                        <>
-                          <span className="animate-spin inline-block w-4 h-4 border-2 border-white rounded-full border-t-transparent" />
-                          Sending...
-                        </>
-                      ) : (
-                        <>
-                          Send Message
-                          <Send className="w-4 h-4" />
-                        </>
-                      )}
-                    </Button>
-                  </div>
-                </form>
-              )}
-            </motion.div>
-
-            {/* Embedded responsive map */}
-            <motion.div
-              initial={{ opacity: 0, x: 8 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.6 }}
-              viewport={{ once: true }}
-              className="rounded-2xl overflow-hidden shadow bg-white"
-            >
-              <div className="w-full">
-                {/* Map container: responsive aspect ratio */}
-                <div className="relative aspect-[4/3] sm:aspect-[16/9] w-full">
-                  <iframe
-                    title="Sprada2Global Office Location"
-                    src={OFFICE_MAP_EMBED}
-                    allowFullScreen
-                    loading="lazy"
-                    className="absolute inset-0 w-full h-full border-0"
-                  />
-                </div>
-
-                {/* Small overlay card with location text & button */}
-                <div className="p-5">
-                  <div className="bg-white/95 rounded-xl p-4 max-w-md mx-auto text-center shadow">
-                    <MapPin className="w-10 h-10 text-[#D7B15B] mx-auto mb-3" />
-                    <h4 className="text-lg font-heading font-semibold text-[#33504F] mb-1">Our Location</h4>
-                    <p className="text-sm text-[#666666] mb-4">
-                      {OFFICE_ADDRESS_LINE1}
-                      <br />
-                      {OFFICE_ADDRESS_LINE2}
-                    </p>
-                    <div className="flex gap-3 justify-center">
-                      <a href={OFFICE_GOOGLE_MAPS} target="_blank" rel="noreferrer">
-                        <Button className="bg-[#D7B15B] text-[#33504F]">
-                          Open in Maps <ExternalLink className="w-4 h-4 ml-2" />
-                        </Button>
-                      </a>
-                      <a href={`mailto:${CONTACT_EMAIL}`} className="inline-block">
-                        <Button className="bg-[#33504F] text-white">Email Us</Button>
-                      </a>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </motion.div>
+        {submitError && (
+          <div className="mb-4 rounded-md bg-red-50 border border-red-200 px-3 py-2 text-sm text-red-700">
+            {submitError}
           </div>
+        )}
+
+        {isSubmitted ? (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.98 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.4 }}
+            className="py-8"
+          >
+            <CheckCircle className="w-12 h-12 text-green-500 mb-3" />
+            <h4 className="text-lg font-heading font-semibold text-[#33504F] mb-1">
+              Message Sent!
+            </h4>
+            <p className="text-sm text-[#666666]">
+              Thanks — we'll respond within 24 hours.
+            </p>
+          </motion.div>
+        ) : (
+          <form onSubmit={handleSubmit} className="space-y-4">
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm font-medium text-[#33504F] block mb-1">
+                  Full Name *
+                </label>
+                <Input
+                  name="name"
+                  value={formData.name}
+                  onChange={handleInputChange}
+                  required
+                  placeholder="Your full name"
+                />
+              </div>
+
+              <div>
+                <label className="text-sm font-medium text-[#33504F] block mb-1">
+                  Email Address *
+                </label>
+                <Input
+                  type="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleInputChange}
+                  required
+                  placeholder="your.email@company.com"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm font-medium text-[#33504F] block mb-1">
+                  Phone Number
+                </label>
+                <Input
+                  name="phone"
+                  value={formData.phone}
+                  onChange={handleInputChange}
+                  placeholder="+91 72010 65465"
+                />
+              </div>
+
+              <div>
+                <label className="text-sm font-medium text-[#33504F] block mb-1">
+                  Company Name
+                </label>
+                <Input
+                  name="company"
+                  value={formData.company}
+                  onChange={handleInputChange}
+                  placeholder="Your company name"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm font-medium text-[#33504F] block mb-1">
+                  Country *
+                </label>
+                <Input
+                  name="country"
+                  value={formData.country}
+                  onChange={handleInputChange}
+                  required
+                  placeholder="Your country"
+                />
+              </div>
+
+              <div>
+                <label className="text-sm font-medium text-[#33504F] block mb-1">
+                  Product Interest
+                </label>
+                <select
+                  name="productInterest"
+                  value={formData.productInterest}
+                  onChange={handleInputChange}
+                  className="w-full px-3 py-2 border-2 border-[#CFD0C8] rounded"
+                >
+                  <option value="">Select a product</option>
+                  {productOptions.map((p, i) => (
+                    <option key={i} value={p}>{p}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <label className="text-sm font-medium text-[#33504F] block mb-1">
+                Message *
+              </label>
+              <Textarea
+                name="message"
+                value={formData.message}
+                onChange={handleInputChange}
+                required
+                rows={5}
+                placeholder="Tell us about quantity, destination, and any specs..."
+              />
+            </div>
+
+            <Button
+              type="submit"
+              disabled={isSubmitting}
+              className="w-full bg-[#33504F] text-white py-3 rounded-lg flex items-center justify-center gap-3"
+            >
+              {isSubmitting ? "Sending..." : "Send Message"}
+            </Button>
+          </form>
+        )}
+      </motion.div>
+
+      {/* ================= MAP ================= */}
+      <motion.div
+        initial={{ opacity: 0, x: 8 }}
+        whileInView={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.6 }}
+        viewport={{ once: true }}
+        className="bg-white rounded-2xl overflow-hidden shadow w-full"
+      >
+        <div className="relative aspect-[16/9] w-full">
+          <iframe
+            title="Sprada Office Location"
+            src={OFFICE_MAP_EMBED}
+            allowFullScreen
+            loading="lazy"
+            className="absolute inset-0 w-full h-full border-0"
+          />
         </div>
-      </section>
+
+        <div className="p-6 text-center">
+          <MapPin className="w-8 h-8 text-[#D7B15B] mx-auto mb-2" />
+          <h4 className="font-semibold text-[#33504F]">Our Location</h4>
+          <p className="text-sm text-[#666666] mt-1">
+            {OFFICE_ADDRESS_LINE1}<br />{OFFICE_ADDRESS_LINE2}
+          </p>
+        </div>
+      </motion.div>
+
+    </div>
+  </div>
+</section>
 
       {/* Hours */}
       <WorkingHours/>
@@ -377,7 +357,8 @@ const ContactPage = () => {
       
 
       {/* CTA */}
-      <CTASection/>
+      <CTASection onRequestQuote={onRequestQuote} />
+
       
     </div>
   );

@@ -13,7 +13,7 @@ const NAV = [
   { to: "/contact", label: "Contact" },
 ];
 
-export default function Header() {
+export default function Header({ onRequestQuote }) {
   const { pathname } = useLocation();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -142,9 +142,16 @@ export default function Header() {
               </button>
 
               {/* CTA */}
-              <Link to="/contact" className="hidden sm:inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-md text-sm font-semibold shadow">
-                Request Quote
-              </Link>
+              <button
+  onClick={() => {
+    onRequestQuote?.();
+    setDrawerOpen(false);
+  }}
+  className="text-sm bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1 rounded-md"
+>
+  Quote
+</button>
+
 
               {/* spacer for layout consistency on desktop */}
               <div className="hidden lg:block w-2" />
@@ -203,9 +210,14 @@ export default function Header() {
                 </Link>
 
                 <div className="flex items-center gap-2">
-                  <Link to="/contact" onClick={() => setDrawerOpen(false)} className="text-sm bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1 rounded-md">
-                    Quote
-                  </Link>
+                 <button
+  onClick={onRequestQuote}
+  className="hidden sm:inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-md text-sm font-semibold shadow"
+>
+  Request Quote
+</button>
+
+
                   <button onClick={() => setDrawerOpen(false)} aria-label="Close" className="p-2 rounded-md hover:bg-slate-100">
                     <X className="w-5 h-5 text-slate-700" />
                   </button>
