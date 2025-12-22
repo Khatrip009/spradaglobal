@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect } from "react";
 import {
   motion,
   AnimatePresence,
@@ -10,7 +10,7 @@ import {
 } from "framer-motion";
 import { Link } from "react-router-dom";
 
-import { getCategories, getProductsByCategorySlug } from "@/lib/api";
+import { getProducts } from "@/lib/api";
 import { makeAbsoluteUrl } from "@/lib/urlHelpers";
 
 /* ======================================================
@@ -26,6 +26,7 @@ function resolveProductImage(p) {
     p?.metadata?.og_image ||
     p?.images?.[0]?.url ||
     null;
+
   return raw ? makeAbsoluteUrl(raw) : null;
 }
 
@@ -66,7 +67,7 @@ const MagneticTilt = ({ children, className }) => {
 };
 
 /* ======================================================
-   PRODUCT CARD (ALL EFFECTS)
+   PRODUCT CARD
 ====================================================== */
 const ProductCard = ({ product, onQuickView }) => {
   const image =
@@ -116,10 +117,8 @@ const ProductCard = ({ product, onQuickView }) => {
             className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
           />
 
-          {/* SHADED OVERLAY */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/10 to-transparent opacity-0 group-hover:opacity-100 transition" />
 
-          {/* QUICK VIEW */}
           <button
             onClick={() => onQuickView(product)}
             className="absolute inset-0 flex items-center justify-center"
@@ -150,7 +149,6 @@ const ProductCard = ({ product, onQuickView }) => {
           </Link>
         </div>
 
-        {/* SHADER GLOW STRIP */}
         <div className="absolute bottom-0 left-0 w-full h-1.5 bg-gradient-to-r from-teal-500 via-emerald-400 to-teal-500 scale-x-0 group-hover:scale-x-100 transition-transform origin-left" />
       </motion.div>
     </MagneticTilt>
@@ -220,44 +218,27 @@ const ProductQuickView = ({ product, onClose }) => {
 };
 
 /* ======================================================
-   MAIN DISPLAY (SCROLL PARALLAX + MOTION)
+   MAIN DISPLAY
 ====================================================== */
 const ProductDisplay = () => {
-  const [categories, setCategories] = useState([]);
+  const [tradeType, setTradeType] = useState("export");
   const [products, setProducts] = useState([]);
-  const [active, setActive] = useState(null);
   const [quickView, setQuickView] = useState(null);
 
   const { scrollYProgress } = useScroll();
   const bgY = useTransform(scrollYProgress, [0, 1], ["0%", "20%"]);
 
   useEffect(() => {
-    getCategories({ limit: 8 }).then((res) => {
-      const list = res?.categories || [];
-      setCategories(list);
-      if (list.length) setActive(list[0].slug || list[0].id);
+    getProducts({ limit: 20 }).then((res) => {
+      const list = res?.products || [];
+      setProducts(list.filter((p) => p.trade_type === tradeType));
     });
-  }, []);
-
-  useEffect(() => {
-    if (!active) return;
-    getProductsByCategorySlug(active, { limit: 12 }).then((res) =>
-      setProducts(res?.products || [])
-    );
-  }, [active]);
-
-  const activeName = useMemo(
-    () =>
-      categories.find((c) => c.slug === active || c.id === active)?.name ||
-      "Products",
-    [categories, active]
-  );
+  }, [tradeType]);
 
   return (
     <LayoutGroup>
       <div className="relative py-32 px-4 bg-gradient-to-b from-slate-50 via-white to-slate-100 overflow-hidden">
 
-        {/* PARALLAX BLOBS */}
         <motion.div
           style={{ y: bgY }}
           className="absolute -top-40 -right-40 w-[40rem] h-[40rem] bg-teal-200/30 blur-[140px] rounded-full"
@@ -268,63 +249,52 @@ const ProductDisplay = () => {
         />
 
         <div className="relative max-w-7xl mx-auto">
-          {/* HEADER */}
+
           <motion.h2
             layout
-            className="text-center text-5xl md:text-7xl font-black text-transparent bg-clip-text bg-gradient-to-r from-slate-800 to-slate-600 mb-20"
+            className="text-center text-5xl md:text-7xl font-black text-transparent bg-clip-text bg-gradient-to-r from-slate-800 to-slate-600 mb-10"
           >
-            Our {activeName}
+            What We {tradeType === "export" ? "Export" : "Import"}
           </motion.h2>
-          {/* Description */}
-          <motion.p
-                    className="text-xl md:text-2xl text-black-200 font-light max-w-3xl mx-auto mb-10 "
-                    initial={{ opacity: 0, y: 30 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ type: "spring", stiffness: 120, damping: 10, delay: 0.6 }}
-                  >
-                    Explore a wide range of products across multiple industries, carefully selected and handled to meet global market expectations.
-                      
-        
-         </motion.p>
-          
 
-          {/* CATEGORIES */}
-          <div className="flex flex-wrap justify-center gap-3 mb-20">
-            {categories.map((c) => (
+          <motion.p
+            className="text-xl md:text-2xl text-slate-600 font-light max-w-3xl mx-auto mb-16 text-center"
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+          >
+            Explore a wide range of products across multiple industries, carefully
+            selected and handled to meet global market expectations.
+          </motion.p>
+
+          <div className="flex justify-center gap-4 mb-20">
+            {["export", "import"].map((t) => (
               <motion.button
+                key={t}
                 layout
-                key={c.slug || c.id}
-                onClick={() => setActive(c.slug || c.id)}
-                className={`px-6 py-2 rounded-full font-semibold transition ${
-                  active === (c.slug || c.id)
-                    ? "bg-teal-600 text-white shadow-lg"
-                    : "bg-white/70 backdrop-blur text-slate-600 hover:bg-white"
+                onClick={() => setTradeType(t)}
+                className={`px-8 py-3 rounded-full font-bold text-lg transition ${
+                  tradeType === t
+                    ? "bg-emerald-600 text-white shadow-xl"
+                    : "bg-white/70 text-slate-700 hover:bg-white"
                 }`}
               >
-                {c.name}
+                {t === "export" ? "Export Products" : "Import Products"}
               </motion.button>
             ))}
           </div>
 
-          {/* PRODUCTS */}
-          <AnimatePresence mode="popLayout">
-            <motion.div
-              key={active}
-              layout
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-12"
-            >
-              {products.map((p) => (
-                <ProductCard
-                  key={p.id || p.slug}
-                  product={p}
-                  onQuickView={setQuickView}
-                />
-              ))}
-            </motion.div>
-          </AnimatePresence>
+          <motion.div
+            layout
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-12"
+          >
+            {products.map((p) => (
+              <ProductCard
+                key={p.id || p.slug}
+                product={p}
+                onQuickView={setQuickView}
+              />
+            ))}
+          </motion.div>
         </div>
 
         <ProductQuickView
@@ -337,3 +307,4 @@ const ProductDisplay = () => {
 };
 
 export default ProductDisplay;
+  

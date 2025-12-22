@@ -109,7 +109,7 @@ const CTASection = ({ onRequestQuote }) => {
       <style dangerouslySetInnerHTML={{ __html: styles }} />
 
       <section className="cta-section">
-        <h2 className="cta-title">Ready to Start Your Export Journey?</h2>
+        <h2 className="cta-title">Ready to Start Your Import - Export Journey?</h2>
 
         <p className="cta-description">
           Join satisfied customers worldwide who trust SPRADA2GLOBAL EXIM for

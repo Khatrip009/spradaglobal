@@ -62,9 +62,9 @@ const contactInfo = [
   {
     icon: MessageSquare,
     title: "WhatsApp Business",
-    primary: "+91 98765 43210",
+    primary: "+91 72010 65465",
     secondary: "Available 24/7",
-    href: "https://wa.me/919876543210",
+    href: "https://wa.me/917201065465",
     action: "Chat Now",
     gradient: "from-orange-500 to-red-600",
     actionIcon: MessageSquare,

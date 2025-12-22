@@ -136,10 +136,10 @@ const ReviewSection = () => {
     <div className="relative py-32 bg-slate-50 overflow-hidden">
       {/* HEADER */}
       <div className="text-center mb-24">
-        <h2 className="text-sm uppercase tracking-widest text-emerald-600 mb-4">
+        <h2 className="text-m uppercase text-bold tracking-widest text-emerald-600 mb-4">
           Trusted by Clients
         </h2>
-        <h3 className="text-5xl md:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-slate-800 to-slate-600">
+        <h3 className="text-5xl md:text-5xl font-black text-slate-900 bg-clip-text bg-gradient-to-r from-slate-800 to-slate-600">
           What People Say
         </h3>
       </div>

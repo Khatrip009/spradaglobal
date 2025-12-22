@@ -78,7 +78,7 @@ const ContactHeroSection = () => {
 
         {/* Tagline */}
         <motion.h1
-          className="text-6xl md:text-8xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-white to-sky-300 mb-6 leading-tight drop-shadow-2xl"
+          className="text-6xl md:text-8xl font-extrabold text-white bg-clip-text bg-gradient-to-r from-white to-sky-300 mb-6 leading-tight drop-shadow-2xl"
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ type: "spring", stiffness: 80, damping: 10, delay: 0.4 }}
