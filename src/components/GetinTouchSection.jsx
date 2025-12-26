@@ -1,4 +1,4 @@
-import React, { useRef } from "react";
+import React, { useRef, useEffect, useState } from "react";
 import {
   motion,
   useMotionValue,
@@ -6,7 +6,9 @@ import {
   useTransform,
 } from "framer-motion";
 
-/* ================= ICONS ================= */
+/* ======================================================
+   ICONS (INLINE SVG – NO DEPENDENCIES)
+====================================================== */
 
 const MapPin = (p) => (
   <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
@@ -36,7 +38,9 @@ const ExternalLink = (p) => (
   </svg>
 );
 
-/* ================= DATA ================= */
+/* ======================================================
+   DATA
+====================================================== */
 
 const contactInfo = [
   {
@@ -53,7 +57,7 @@ const contactInfo = [
     icon: Mail,
     title: "Email Us",
     primary: "sprada2globalexim@gmail.com",
-    secondary: "We usually reply within 24 hours",
+    secondary: "We reply within 24 hours",
     href: "mailto:sprada2globalexim@gmail.com",
     action: "Send Email",
     gradient: "from-emerald-500 to-teal-600",
@@ -71,21 +75,23 @@ const contactInfo = [
   },
 ];
 
-/* ================= 3D TILT CARD ================= */
+/* ======================================================
+   RESPONSIVE TILT CARD (DESKTOP ONLY)
+====================================================== */
 
 const TiltCard = ({ children }) => {
   const ref = useRef(null);
   const mx = useMotionValue(0);
   const my = useMotionValue(0);
 
-  const sx = useSpring(mx, { stiffness: 220, damping: 28 });
-  const sy = useSpring(my, { stiffness: 220, damping: 28 });
+  const sx = useSpring(mx, { stiffness: 180, damping: 26 });
+  const sy = useSpring(my, { stiffness: 180, damping: 26 });
 
-  // ⬇️ Reduce horizontal rotation (major fix)
-  const rx = useTransform(sy, [-120, 120], [12, -12]);
-  const ry = useTransform(sx, [-120, 120], [-8, 8]);
+  const rx = useTransform(sy, [-120, 120], [8, -8]);
+  const ry = useTransform(sx, [-120, 120], [-6, 6]);
 
-  const move = (e) => {
+  const handleMove = (e) => {
+    if (window.innerWidth < 1024) return;
     const r = ref.current.getBoundingClientRect();
     mx.set(e.clientX - r.left - r.width / 2);
     my.set(e.clientY - r.top - r.height / 2);
@@ -94,7 +100,7 @@ const TiltCard = ({ children }) => {
   return (
     <motion.div
       ref={ref}
-      onMouseMove={move}
+      onMouseMove={handleMove}
       onMouseLeave={() => {
         mx.set(0);
         my.set(0);
@@ -104,113 +110,132 @@ const TiltCard = ({ children }) => {
         rotateY: ry,
         transformStyle: "preserve-3d",
       }}
-      whileHover={{ y: -16 }}
-      transition={{ type: "spring", stiffness: 180 }}
-      className="
-        relative
-        isolation-isolate
-        will-change-transform
-      "
+      whileHover={window.innerWidth >= 1024 ? { y: -10 } : {}}
+      transition={{ type: "spring", stiffness: 140 }}
+      className="relative will-change-transform"
     >
       {children}
     </motion.div>
   );
 };
 
-/* ================= MAIN ================= */
+/* ======================================================
+   MAIN SECTION
+====================================================== */
 
-const ContactUsSection = () => (
-  <section className="relative py-36 bg-gradient-to-b from-white via-slate-50 to-white overflow-visible">
-    {/* Background energy */}
-    <motion.div
-      aria-hidden
-      className="absolute -top-40 -right-40 w-[45rem] h-[45rem] bg-gradient-to-br from-indigo-300/30 to-cyan-300/30 rounded-full blur-3xl"
-      animate={{ scale: [1, 1.15, 1], rotate: [0, 12, 0] }}
-      transition={{ duration: 22, repeat: Infinity, ease: "easeInOut" }}
-    />
+const ContactUsSection = () => {
+  const [reduceMotion, setReduceMotion] = useState(false);
 
-    <div className="relative max-w-7xl mx-auto px-6">
-      {/* Header */}
-      <motion.div
-        initial={{ opacity: 0, y: 60 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        transition={{ duration: 1 }}
-        viewport={{ once: true }}
-        className="text-center mb-24"
-      >
-        <p className="text-sm font-bold uppercase tracking-widest text-red-600">
-          Get In Touch
-        </p>
-        <h2 className="text-4xl md:text-6xl font-extrabold text-slate-900 mt-2">
-          Let’s Build Your Global Trade Advantage
-        </h2>
-      </motion.div>
+  useEffect(() => {
+    const media = window.matchMedia("(prefers-reduced-motion: reduce)");
+    setReduceMotion(media.matches);
+  }, []);
 
-      {/* Cards Grid — KEY FIX */}
-      <div
-        className="
-          grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3
-          gap-16
-          perspective-[1400px]
-          overflow-visible
-        "
-      >
-        {contactInfo.map((item, i) => {
-          const Icon = item.icon;
-          const ActionIcon = item.actionIcon;
+  return (
+    <section
+      className="
+        relative
+        py-20 sm:py-24 md:py-28 lg:py-36
+        bg-gradient-to-b from-white via-slate-50 to-white
+        overflow-hidden
+      "
+    >
+      {/* Ambient background – desktop only */}
+      {!reduceMotion && (
+        <motion.div
+          aria-hidden
+          className="
+            hidden lg:block
+            absolute -top-40 -right-40
+            w-[45rem] h-[45rem]
+            bg-gradient-to-br from-indigo-300/30 to-cyan-300/30
+            rounded-full blur-3xl
+          "
+          animate={{ scale: [1, 1.12, 1], rotate: [0, 10, 0] }}
+          transition={{ duration: 24, repeat: Infinity, ease: "easeInOut" }}
+        />
+      )}
 
-          return (
-            <TiltCard key={i}>
+      <div className="relative max-w-7xl mx-auto px-6">
+        {/* Header */}
+        <motion.div
+          initial={{ opacity: 0, y: 32 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
+          viewport={{ once: true }}
+          className="text-center mb-16 md:mb-20 lg:mb-24"
+        >
+          <p className="text-sm font-bold uppercase tracking-widest text-red-600">
+            Get In Touch
+          </p>
+          <h2 className="mt-2 font-extrabold text-slate-900 text-3xl sm:text-4xl md:text-5xl lg:text-6xl">
+            Let’s Build Your Global Trade Advantage
+          </h2>
+        </motion.div>
+
+        {/* Cards */}
+        <div
+          className="
+            grid grid-cols-1
+            md:grid-cols-2
+            lg:grid-cols-3
+            gap-10 md:gap-12 lg:gap-16
+          "
+        >
+          {contactInfo.map((item, i) => {
+            const Icon = item.icon;
+            const ActionIcon = item.actionIcon;
+
+            return (
+              <TiltCard key={i}>
                 <div
                   className="
                     relative
-                    max-w-[22rem]
+                    w-full max-w-sm
                     mx-auto
-                    bg-white/85 backdrop-blur-xl
+                    bg-white/90 backdrop-blur-xl
                     rounded-3xl
                     border border-slate-200
-                    shadow-2xl
-                    p-8
-                    overflow-visible
+                    shadow-xl lg:shadow-2xl
+                    p-7 sm:p-8
                   "
                 >
-              {/* Icon */}
-                <motion.div
-                  whileHover={{ scale: 1.15, rotateZ: 6 }}
-                  className={`w-16 h-16 mb-6 rounded-2xl bg-gradient-to-br ${item.gradient} flex items-center justify-center shadow-2xl`}
-                >
-                  <Icon className="w-8 h-8 text-white drop-shadow-lg" />
-                </motion.div>
+                  {/* Icon */}
+                  <div
+                    className={`w-14 h-14 sm:w-16 sm:h-16 mb-6 rounded-2xl bg-gradient-to-br ${item.gradient} flex items-center justify-center shadow-xl`}
+                  >
+                    <Icon className="w-7 h-7 sm:w-8 sm:h-8 text-white" />
+                  </div>
 
-                <h4 className="font-extrabold text-slate-900 text-lg">
-                  {item.title}
-                </h4>
-                <p className="font-semibold text-slate-800 break-all">
-                  {item.primary}
-                </p>
-                <p className="text-sm text-slate-500 mb-6">
-                  {item.secondary}
-                </p>
+                  <h4 className="font-extrabold text-slate-900 text-lg">
+                    {item.title}
+                  </h4>
+                  <p className="font-semibold text-slate-800 break-words">
+                    {item.primary}
+                  </p>
+                  <p className="text-sm text-slate-500 mb-6">
+                    {item.secondary}
+                  </p>
 
-                <a
-                  href={item.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 font-bold text-sm text-slate-800 hover:opacity-80 transition"
-                >
-                  {item.action}
-                  <ActionIcon className="w-4 h-4" />
-                </a>
+                  <a
+                    href={item.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 font-bold text-sm text-slate-800 hover:opacity-80 transition"
+                  >
+                    {item.action}
+                    <ActionIcon className="w-4 h-4" />
+                  </a>
 
-                {/* Edge glow */}
-                <div className="pointer-events-none absolute inset-0 rounded-3xl ring-1 ring-inset ring-white/40" />
-              </div>
-            </TiltCard>
-          );
-        })}
+                  <div className="pointer-events-none absolute inset-0 rounded-3xl ring-1 ring-inset ring-white/40" />
+                </div>
+              </TiltCard>
+            );
+          })}
+        </div>
       </div>
-    </div>
-  </section>
-);
+    </section>
+  );
+};
 
 export default ContactUsSection;

@@ -79,7 +79,7 @@ const STEPS = [
     id: "04",
     title: "4.	Compliance & Clearance",
     short: "Lab Certified",
-    details: "Global compliance & purity checks. Managing regulatory, customs, and certification requirements",
+    details: "Global compliance & purity checks. Managing regulatory, customs and certification requirements.",
     Icon: ShieldCheck,
     gradient: "from-violet-400 via-purple-500 to-fuchsia-500",
     shadow: "shadow-purple-500/30",

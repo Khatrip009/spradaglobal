@@ -98,7 +98,7 @@ const HomeHeroSection = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ type: "spring", stiffness: 120, damping: 10, delay: 0.6 }}
         >
-          Your trusted partner in global import and export solutions. We connect high-quality products across multiple categories with international markets, delivering reliability, consistency, and value worldwide
+          Your trusted partner in global import and export solutions. We connect high-quality products across multiple categories with international markets, delivering reliability, consistency and value worldwide
         </motion.p>
 
         {/* CTA Buttons */}

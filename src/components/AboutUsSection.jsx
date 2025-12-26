@@ -67,7 +67,7 @@ const FEATURES = [
   {
     id: 4,
     title: "Compliance & Trust",
-    desc: "Efficient handling, packaging, and documentation. Documentation, certifications, and regulatory compliance handled seamlessly.",
+    desc: "Efficient handling, packaging, and documentation. Documentation, certifications and regulatory compliance handled seamlessly",
     Icon: ShieldIcon,
     // Strong Teal/Accent for trust
     gradient: "from-teal-600 via-blue-600 to-amber-500",
@@ -152,11 +152,11 @@ const AboutUsSection = () => {
             <div className="relative p-6 bg-white/40 backdrop-blur-xl rounded-2xl border border-white/60 shadow-lg">
                 <p className="text-lg text-slate-700 leading-relaxed font-medium">
                   {/* Text Accent in Brand Teal */}
-                  <span className="text-teal-700 font-bold">Sprada2Global</span> is a professionally managed import–export company delivering reliable, scalable, and fully compliant trade solutions.
+                  <span className="text-teal-700 font-bold">Sprada2Global</span> is a professionally managed import–export company delivering reliable, scalable and fully compliant trade solutions.
                 </p>
                 <div className="h-px w-full bg-gradient-to-r from-slate-300 to-transparent my-4"></div>
                 <p className="text-slate-600 leading-relaxed">
-                  •	With extensive experience in international trade, we specialize in importing and exporting a wide variety of goods across industries. Our focus on quality, transparency, and efficient logistics enables us to build long-term global partnerships.
+                  With extensive experience in international trade, we specialize in importing and exporting a wide variety of goods across industries. Our focus on quality, transparency and efficient logistics enables us to build long-term global partnerships.
                 </p>
             </div>
           </motion.div>

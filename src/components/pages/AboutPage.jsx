@@ -132,11 +132,11 @@ export default function AboutPage() {
             {[
               {
                 title: "The Mission Command",
-                text: "To deliver seamless import and export solutions across diverse industries by ensuring quality, compliance, and efficiency while creating lasting value for our clients and partners.",
+                text: "To deliver seamless import and export solutions across diverse industries by ensuring quality, compliance and efficiency while creating lasting value for our clients and partners.",
               },
               {
                 title: "The Vision Horizon",
-                text: "To become a trusted global import-export company recognized for integrity, operational excellence, and customer-centric trade solutions worldwide.",
+                text: "To become a trusted global import-export company recognized for integrity, operational excellence and customer-centric trade solutions worldwide.",
               },
             ].map((item, i) => (
               <motion.div
@@ -248,7 +248,7 @@ export default function AboutPage() {
               {
                 icon: Rocket,
                 title: "Innovation & Efficiency",
-                text: "Continuously improving systems, logistics, and processes for competitive advantage and speed.",
+                text: "Continuously improving systems, logistics and processes for competitive advantage and speed.",
               },
             ].map((item, i) => {
               const Icon = item.icon;
@@ -306,7 +306,7 @@ export default function AboutPage() {
                     "Comprehensive quality checks and inspections at every stage.",
                     "Responsible sourcing and strict adherence to ethical trade practices.",
                     "Transparent documentation and 100% regulatory compliance.",
-                    "Continuous improvement in logistics, packaging, and supply chain reliability.",
+                    "Continuous improvement in logistics, packaging and supply chain reliability.",
                 ].map((item, i) => (
                     <motion.div
                         key={i}

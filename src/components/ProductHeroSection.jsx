@@ -99,7 +99,7 @@ const ProductHeroSection = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ type: "spring", stiffness: 120, damping: 10, delay: 0.6 }}
         >
-          From certified manufacturing units to strict quality assurance and global logistics, every product is engineered for consistency, compliance, and scale.
+          From certified manufacturing units to strict quality assurance and global logistics, every product is engineered for consistency, compliance and scale.
         </motion.p>
 
         {/* CTA Buttons */}

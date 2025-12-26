@@ -95,7 +95,7 @@ const BlogHeroSection = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ type: "spring", stiffness: 120, damping: 10, delay: 0.6 }}
         >
-         Stay informed with the latest trends, quality standards, trade tips, and market insights.
+         Stay informed with the latest trends, quality standards, trade tips and market insights.
         </motion.p>
 
         

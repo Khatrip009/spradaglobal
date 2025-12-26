@@ -64,7 +64,7 @@ const STEPS = [
     id: "01",
     title: "Consultation",
     short: "Understand requirements",
-    details: "In-depth analysis of your needs, market feasibility, and legal frameworks to define the project scope.",
+    details: "In-depth analysis of your needs, market feasibility and legal frameworks to define the project scope.",
     Icon: MessageCircle,
     gradient: "from-indigo-400 via-blue-500 to-sky-500",
     shadow: "shadow-blue-500/30",
@@ -84,7 +84,7 @@ const STEPS = [
     id: "03",
     title: "Quality Assurance",
     short: "Testing & certification",
-    details: "Comprehensive multi-stage testing, stress assessments, and official third-party compliance certification.",
+    details: "Comprehensive multi-stage testing, stress assessments and official third-party compliance certification.",
     Icon: ShieldCheck,
     gradient: "from-cyan-400 via-blue-500 to-indigo-500",
     shadow: "shadow-cyan-500/30",
@@ -94,7 +94,7 @@ const STEPS = [
     id: "04",
     title: "Processing",
     short: "Packing for export",
-    details: "Customized preservation, smart labeling, optimized loading, and secure, climate-controlled container preparation.",
+    details: "Customized preservation, smart labeling, optimized loading and secure, climate-controlled container preparation.",
     Icon: Package,
     gradient: "from-amber-300 via-orange-400 to-red-400",
     shadow: "shadow-amber-500/30",
@@ -104,7 +104,7 @@ const STEPS = [
     id: "05",
     title: "Documentation",
     short: "Export documents & compliance",
-    details: "Full management of customs forms, regulatory clearances, and all necessary international export permits.",
+    details: "Full management of customs forms, regulatory clearances and all necessary international export permits.",
     Icon: FileText,
     gradient: "from-violet-400 via-purple-500 to-fuchsia-500",
     shadow: "shadow-purple-500/30",
@@ -114,7 +114,7 @@ const STEPS = [
     id: "06",
     title: "Logistics",
     short: "Shipping & delivery",
-    details: "Final mile tracking, rapid customs passage, and guaranteed door-to-door delivery within the stipulated timeline.",
+    details: "Final mile tracking, rapid customs passage and guaranteed door-to-door delivery within the stipulated timeline.",
     Icon: Truck,
     gradient: "from-emerald-400 via-green-500 to-teal-500",
     shadow: "shadow-emerald-500/30",
@@ -196,7 +196,7 @@ const FeatureUnboxing = () => {
             Systematic Approach to Quality
           </h1>
           <p className="text-lg text-slate-500 mt-3">
-            From consultation to final delivery, we ensure excellence, compliance, and timely execution every step of the way.
+            From consultation to final delivery, we ensure excellence, compliance and timely execution every step of the way.
           </p>
         </motion.div>
 

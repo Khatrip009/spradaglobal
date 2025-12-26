@@ -172,7 +172,7 @@ const WhyChooseUsSection = () => {
                     </h2>
                     {/* Updated text color for light background */}
                     <p className="text-lg text-slate-600 mt-4">
-                        Advantages of partnering with us for compliant, reliable, and globally integrated export–import operations.
+                        Advantages of partnering with us for compliant, reliable and globally integrated export–import operations.
                     </p>
                 </motion.div>
 

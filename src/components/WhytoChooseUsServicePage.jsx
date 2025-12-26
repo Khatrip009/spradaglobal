@@ -18,7 +18,7 @@ const features = [
     icon: ShieldCheck,
     title: "Quality & Compliance",
     text:
-      "Products are sourced from audited suppliers with strict checks on quality, packaging, and labeling as per destination-country regulations. Complete and accurate documentation minimizes customs delays and ensures buyer confidence."
+      "Products are sourced from audited suppliers with strict checks on quality, packaging and labeling as per destination-country regulations. Complete and accurate documentation minimizes customs delays and ensures buyer confidence."
   },
   {
     icon: FileCheck,
@@ -36,19 +36,19 @@ const features = [
     icon: Handshake,
     title: "Long-Term Partnership Focus",
     text:
-      "We focus on repeat, stable business by understanding client-specific quality, quantity, and branding needs. Flexible terms and a solution-oriented approach support long-term growth."
+      "We focus on repeat, stable business by understanding client-specific quality, quantity and branding needs. Flexible terms and a solution-oriented approach support long-term growth."
   },
   {
     icon: Globe2,
     title: "Trusted Global Sourcing",
     text:
-      "Strong partnerships with verified manufacturers, suppliers, and distributors worldwide ensure reliability, scalability, and consistent supply across multiple product categories."
+      "Strong partnerships with verified manufacturers, suppliers, and distributors worldwide ensure reliability, scalability and consistent supply across multiple product categories."
   },
   {
     icon: Truck,
     title: "Worldwide Reach",
     text:
-      "Reliable import and export operations serving buyers across global markets with timely delivery, compliant logistics, and professional execution."
+      "Reliable import and export operations serving buyers across global markets with timely delivery, compliant logistics and professional execution."
   }
 ];
 
@@ -107,10 +107,7 @@ export default function WhyChooseSprada() {
           </h2>
 
           <p className="text-lg text-gray-600 leading-relaxed">
-            SPRADA2GLOBAL EXIM is a professionally managed import–export firm
-            connecting reliable producers with quality-conscious buyers across
-            global markets—focused on transparency, compliance, and long-term
-            partnerships.
+            SPRADA2GLOBAL EXIM is a professionally managed import–export firm connecting reliable producers with quality-conscious buyers across global markets—focused on transparency, compliance and long-term partnerships.
           </p>
         </motion.div>
 
