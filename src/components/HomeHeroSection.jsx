@@ -63,7 +63,7 @@ const HomeHeroSection = () => {
 
       {/* Hero Content - Wrapped in a floating motion div */}
       <motion.div
-  className="relative z-20 text-center max-w-5xl mx-auto px-4 mt-8 md:mt-0"
+      className="relative z-20 text-center max-w-3xl mx-auto px-4 mt-8 md:mt-0"
 
 
         initial={{ y: 0 }}
@@ -74,7 +74,7 @@ const HomeHeroSection = () => {
         {/* Company Name */}
         <motion.p
           className="text-white text-lg md:text-xl uppercase tracking-[0.35em] font-extrabold mb-4 border-b-2 border-sky-400/50 pb-2 inline-block"
-          initial={{ opacity: 0, y: -40 }}
+          initial={{ opacity: 0, y: -50 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ type: "spring", stiffness: 120, damping: 10, delay: 0.2 }}
         >
