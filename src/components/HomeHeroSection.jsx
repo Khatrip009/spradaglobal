@@ -63,7 +63,9 @@ const HomeHeroSection = () => {
 
       {/* Hero Content - Wrapped in a floating motion div */}
       <motion.div
-        className="relative z-20 text-center max-w-5xl mx-auto px-4"
+  className="relative z-20 text-center max-w-5xl mx-auto px-4 mt-8 md:mt-0"
+
+
         initial={{ y: 0 }}
         animate={{ y: [0, -5, 0] }} // Subtle vertical float
         transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
