@@ -59,6 +59,15 @@ export default function Header({ onRequestQuote }) {
     }
   }, [drawerOpen]);
 
+  useEffect(() => {
+  document.body.style.overflow = drawerOpen ? "hidden" : "";
+  return () => (document.body.style.overflow = "");
+}, [drawerOpen]);
+
+useEffect(() => {
+  setDrawerOpen(false);
+}, [pathname]);
+
   // Make header solid on all screen sizes; only change shadow on scroll
   const bgClass = scrolled ? "bg-white shadow-md" : "bg-white shadow-sm";
 
@@ -141,16 +150,18 @@ export default function Header({ onRequestQuote }) {
                 <Search className="w-5 h-5 text-slate-700" />
               </button>
 
-              {/* CTA */}
+             {/* CTA */}
               <button
-  onClick={() => {
-    onRequestQuote?.();
-    setDrawerOpen(false);
-  }}
-  className="text-sm bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1 rounded-md"
->
-  Quote
-</button>
+                onClick={() => {
+                  onRequestQuote?.();
+                  setDrawerOpen(false);
+                }}
+                className="hidden lg:inline-flex text-sm bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1 rounded-md"
+              >
+                Quote
+              </button>
+
+
 
 
               {/* spacer for layout consistency on desktop */}
@@ -212,7 +223,7 @@ export default function Header({ onRequestQuote }) {
                 <div className="flex items-center gap-2">
                  <button
   onClick={onRequestQuote}
-  className="hidden sm:inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-md text-sm font-semibold shadow"
+  className="hidden lg:inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-md text-sm font-semibold shadow"
 >
   Request Quote
 </button>
