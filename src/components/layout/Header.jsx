@@ -221,13 +221,7 @@ useEffect(() => {
                 </Link>
 
                 <div className="flex items-center gap-2">
-                 <button
-  onClick={onRequestQuote}
-  className="hidden lg:inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-md text-sm font-semibold shadow"
->
-  Request Quote
-</button>
-
+  
 
                   <button onClick={() => setDrawerOpen(false)} aria-label="Close" className="p-2 rounded-md hover:bg-slate-100">
                     <X className="w-5 h-5 text-slate-700" />
