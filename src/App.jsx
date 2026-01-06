@@ -184,10 +184,10 @@ function App() {
           {/* HEADER */}
           <Header onRequestQuote={handleRequestQuote} />
 
-          <ScrollToTop />
-
-          {/* ROUTES */}
-          <RouteWrapper onRequestQuote={handleRequestQuote} />
+          <main className="flex-1 pt-16 md:pt-20">
+  <ScrollToTop />
+  <RouteWrapper onRequestQuote={handleRequestQuote} />
+</main>
 
           {/* FOOTER */}
           <Footer />
