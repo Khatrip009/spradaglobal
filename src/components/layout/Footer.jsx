@@ -161,13 +161,31 @@ const Footer = () => {
                 A strategic partner for high-value global import and export operations.
               </p>
 
-              <div className="flex items-center space-x-3 mb-4">
-                {[Facebook, Twitter, Linkedin, Instagram].map((Icon, idx) => (
-                  <a key={idx} href="#" aria-label="social" className="w-9 h-9 bg-white/5 rounded-full flex items-center justify-center hover:bg-[#D7B15B] transition-colors">
-                    <Icon className="w-4 h-4 text-[#CFD0C8]" />
-                  </a>
-                ))}
+             <div className="flex items-center space-x-3 mb-4">
+              {/* Facebook */}
+              <a
+                href="https://www.facebook.com/profile.php?id=61584196460889"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Facebook"
+                className="w-9 h-9 bg-white/5 rounded-full flex items-center justify-center hover:bg-[#D7B15B] transition-colors"
+              >
+                <Facebook className="w-4 h-4 text-[#CFD0C8]" />
+              </a>
+
+              {/* Instagram */}
+              <a
+                href="https://www.instagram.com/sprada2global_exim/"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Instagram"
+                className="w-9 h-9 bg-white/5 rounded-full flex items-center justify-center hover:bg-[#D7B15B] transition-colors"
+              >
+                <Instagram className="w-4 h-4 text-[#CFD0C8]" />
+              </a>
+
               </div>
+
 
               {/* Highlighted visitors count */}
               <div className="mt-3">
