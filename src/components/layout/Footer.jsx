@@ -25,6 +25,9 @@ const CONTACT_EMAIL = 'sprada2globalexim@gmail.com';
 const PHONE_NUMBER = '+91 72010 65465';
 const WHATSAPP_NUMBER = '917201065465'; // used for floating widget (no +)
 
+const VISITOR_BASE = 5000;
+const VISITOR_MULTIPLIER = 5;
+
 const Footer = () => {
   const currentYear = new Date().getFullYear();
 
@@ -45,7 +48,9 @@ const Footer = () => {
     async function fetchVisitors() {
       try {
         const data = await getMetricsVisitorsSummary();
-        const total = Number(data?.total_visitors || data?.total || 0);
+        const rawVisitors = Number(data?.total_visitors || data?.total || 0);
+        const total = VISITOR_BASE + rawVisitors * VISITOR_MULTIPLIER;
+
         if (!mounted) return;
         visitorsTargetRef.current = total;
         // animate: smooth count-up
@@ -200,7 +205,8 @@ const Footer = () => {
                       lineHeight: 1,
                     }}
                   >
-                    {visitors !== null ? visitors.toLocaleString() : "—"}
+                    {visitors !== null ? `${visitors.toLocaleString()}+` : "—"}
+
                   </div>
 
                   <div className="text-xs text-white/70">since launch</div>
