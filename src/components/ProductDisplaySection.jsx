@@ -17,18 +17,17 @@ import { makeAbsoluteUrl } from "@/lib/urlHelpers";
    IMAGE NORMALIZER
 ====================================================== */
 function resolveProductImage(p) {
-  const raw =
-    p?.primary_image ||
-    p?.og_image ||
-    p?.image ||
-    p?.thumbnail ||
-    p?.metadata?.image ||
-    p?.metadata?.og_image ||
-    p?.images?.[0]?.url ||
-    null;
+  // primary_image is already absolute (Supabase public URL)
+  if (p?.primary_image) return p.primary_image;
 
-  return raw ? makeAbsoluteUrl(raw) : null;
+  // Optional fallback for OG image if it is absolute
+  if (p?.og_image && /^https?:\/\//i.test(p.og_image)) {
+    return p.og_image;
+  }
+
+  return null;
 }
+
 
 /* ======================================================
    MAGNETIC + TILT CARD

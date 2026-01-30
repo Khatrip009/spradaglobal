@@ -18,46 +18,45 @@ import { useToast } from "../ui/ToastProvider";
  * - If url is root-relative (/uploads/...), prefix with api.UPLOADS_BASE if available, otherwise leave as-is
  * - If url is relative, prefix with api.UPLOADS_BASE if available
  */
-function makeAbsoluteImageUrl(url, fallback = "/images/placeholder.png") {
-  try {
-    if (!url) return fallback;
-    if (typeof url !== "string") return fallback;
-    const trimmed = url.trim();
-    if (trimmed === "") return fallback;
+const SUPABASE_STORAGE_BASE =
+  "https://kwthxsumqqssiywdcexv.supabase.co/storage/v1/object/public";
+const SUPABASE_BUCKET = "sprada_storage";
 
-    // absolute url -> keep, but if it points to current origin's /uploads and UPLOADS_BASE provided, rewrite
-    if (/^https?:\/\//i.test(trimmed)) {
-      try {
-        const u = new URL(trimmed);
-        const currentOrigin = window.location.origin.replace(/\/$/, "");
-        // if image points to same origin and path contains /uploads and UPLOADS_BASE is configured, rewrite
-        if ((u.origin === currentOrigin || u.origin === (window.location.protocol + '//' + window.location.host))
-            && u.pathname.match(/\/uploads(\/|$)/) && api.UPLOADS_BASE) {
-          return `${api.UPLOADS_BASE}${u.pathname}${u.search || ""}`;
-        }
-      } catch (e) {
-        // ignore URL parse errors
-      }
-      return trimmed;
+function makeAbsoluteImageUrl(url, fallback = "/images/blog-hero.jpg") {
+  if (!url || typeof url !== "string") return fallback;
+
+  const trimmed = url.trim();
+  if (!trimmed) return fallback;
+
+  // 1️⃣ Already absolute → keep if Supabase
+  if (/^https?:\/\//i.test(trimmed)) {
+    if (trimmed.includes("supabase.co/storage")) return trimmed;
+
+    // 🔁 Rewrite old API-hosted uploads → Supabase
+    if (trimmed.includes("/uploads/")) {
+      const path = trimmed.split("/uploads/")[1];
+      return `${SUPABASE_STORAGE_BASE}/${SUPABASE_BUCKET}/${path}`;
     }
 
-    // protocol-relative (//example.com/...)
-    if (/^\/\//.test(trimmed)) return `${window.location.protocol}${trimmed}`;
-
-    // root-relative: /uploads/...
-    if (trimmed.startsWith("/")) {
-      if (api.UPLOADS_BASE) return `${api.UPLOADS_BASE.replace(/\/$/, "")}${trimmed}`;
-      return trimmed;
-    }
-
-    // relative path: prefer UPLOADS_BASE
-    if (api.UPLOADS_BASE) return `${api.UPLOADS_BASE.replace(/\/$/, "")}/${trimmed.replace(/^\//, "")}`;
-
-    // fallback: assume same-origin relative
-    return `${window.location.origin.replace(/\/$/, "")}/${trimmed.replace(/^\//, "")}`;
-  } catch (err) {
-    return fallback;
+    return trimmed;
   }
+
+  // 2️⃣ New-style Supabase relative paths
+  if (/^(blogs|products|categories)\//i.test(trimmed)) {
+    return `${SUPABASE_STORAGE_BASE}/${SUPABASE_BUCKET}/${trimmed}`;
+  }
+
+  // 3️⃣ Legacy uploads paths → Supabase
+  if (trimmed.startsWith("uploads/")) {
+    return `${SUPABASE_STORAGE_BASE}/${SUPABASE_BUCKET}/${trimmed.replace(/^uploads\//, "")}`;
+  }
+
+  if (trimmed.startsWith("/uploads/")) {
+    return `${SUPABASE_STORAGE_BASE}/${SUPABASE_BUCKET}/${trimmed.replace(/^\/uploads\//, "")}`;
+  }
+
+  // 4️⃣ Last-resort fallback
+  return fallback;
 }
 
 

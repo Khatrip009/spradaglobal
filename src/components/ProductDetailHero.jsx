@@ -7,7 +7,7 @@ import {
   ArrowLeft,
   ArrowRight
 } from "lucide-react";
-import { toAbsoluteImageUrl } from "@/lib/api";
+import { makeAbsoluteUrl } from "@/lib/urlHelpers";
 
 /* =====================================================
    MAIN HERO
@@ -17,21 +17,34 @@ export default function ProductDetailHero({
   product,
   onRequestQuote
 }) {
-  const images = useMemo(() => {
-    const arr = [];
+const images = useMemo(() => {
+  const arr = [];
 
-    if (product?.primary_image) {
-      arr.push(toAbsoluteImageUrl(product.primary_image));
-    }
+  // Primary image (already absolute Supabase URL)
+  if (product?.primary_image) {
+    arr.push(product.primary_image);
+  }
 
-    if (Array.isArray(product?.images)) {
-      product.images.forEach(i => {
-        if (i?.url) arr.push(toAbsoluteImageUrl(i.url));
-      });
-    }
+  // Gallery images (may be relative OR absolute)
+  if (Array.isArray(product?.images)) {
+    product.images.forEach(i => {
+      if (!i?.url) return;
 
-    return arr.length ? arr : ["/img/product-placeholder.jpg"];
-  }, [product]);
+      // Normalize ONLY if needed
+      const url = /^https?:\/\//i.test(i.url)
+        ? i.url
+        : makeAbsoluteUrl(i.url);
+
+      arr.push(url);
+    });
+  }
+
+  return arr.length
+    ? arr
+    : ["https://placehold.co/1600x900?text=Product"];
+}, [product]);
+
+
 
   const [active, setActive] = useState(0);
 

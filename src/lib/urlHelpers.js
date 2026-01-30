@@ -4,6 +4,11 @@
 
 const FALLBACK_API = "https://apisprada.exotech.co.in";
 
+/* Supabase storage public base */
+const SUPABASE_STORAGE_BASE =
+  "https://kwthxsumqqssiywdcexv.supabase.co/storage/v1/object/public";
+const SUPABASE_BUCKET = "sprada_storage";
+
 /**
  * Get normalized API base (no trailing slash).
  * Preference order:
@@ -17,7 +22,7 @@ export function getApiBase() {
     (import.meta.env.VITE_API_BASE_URL && String(import.meta.env.VITE_API_BASE_URL).trim()) ||
     FALLBACK_API;
 
-  return String(raw).replace(/\/+$/, "");
+  return raw.replace(/\/+$/, "");
 }
 
 /**
@@ -55,45 +60,23 @@ export function makeAbsoluteUrl(url) {
   const trimmed = url.trim();
   if (!trimmed) return null;
 
-  // Already absolute (http / https)
+  // Already absolute
   if (/^https?:\/\//i.test(trimmed)) return trimmed;
 
-  // Protocol-relative URLs (//cdn.example.com/...)
-  if (/^\/\//.test(trimmed)) {
-    const proto = typeof window !== "undefined" && window.location && window.location.protocol
-      ? window.location.protocol
-      : "https:";
-    return `${proto}${trimmed}`;
+  // Supabase relative paths
+  if (/^(blogs|products|categories)\//i.test(trimmed)) {
+    return `${SUPABASE_STORAGE_BASE}/${SUPABASE_BUCKET}/${trimmed}`;
   }
 
   const apiBase = getApiBase();
-  const uploadsBase = getUploadsBase();
 
-  // If it's a server-root uploads path: /uploads/...
-  if (/^\/(?:src\/)?uploads\//i.test(trimmed)) {
-    return `${uploadsBase}${trimmed.replace(/^\/+/, "/")}`;
+  // Legacy uploads (keep for backward compatibility)
+  if (/^\/?uploads\//i.test(trimmed)) {
+    return `${apiBase}/${trimmed.replace(/^\/+/, "")}`;
   }
 
-  // Relative uploads path: uploads/...
-  if (/^(?:src\/)?uploads\//i.test(trimmed)) {
-    return `${uploadsBase}/${trimmed.replace(/^\/+/, "")}`;
-  }
-
-  // Local filesystem stray path or bare filename with image extension -> map to uploads base
-  // Matches ".../filename.ext" or "filename.ext"
-  const fileMatch = trimmed.match(/([^\\/]+)\.(jpe?g|png|gif|webp|svg|bmp|avif)$/i);
-  if (fileMatch) {
-    const filename = fileMatch[0];
-    return `${uploadsBase}/${encodeURIComponent(filename)}`;
-  }
-
-  // If it starts with a slash (non-uploads), prefix with API base
-  if (trimmed.startsWith("/")) {
-    return `${apiBase}${trimmed}`;
-  }
-
-  // Default: join with API base
-  return `${apiBase}/${trimmed}`;
+  // Fallback
+  return `${apiBase}/${trimmed.replace(/^\/+/, "")}`;
 }
 
 export default {

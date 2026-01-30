@@ -12,7 +12,6 @@ import { Link } from "react-router-dom";
 /* =====================================================
    DATA HELPERS
 ===================================================== */
-
 function buildCategoryData(products = []) {
   const map = {};
   const sorted = [...products].sort(
@@ -20,7 +19,7 @@ function buildCategoryData(products = []) {
   );
 
   for (const p of sorted) {
-    const cid = p.category?.id;
+    const cid = p.category_id; // ✅ FIX
     if (!cid) continue;
 
     if (!map[cid]) {
@@ -40,6 +39,7 @@ function buildCategoryData(products = []) {
 
   return map;
 }
+
 
 /* =====================================================
    3D CATEGORY CARD
@@ -168,8 +168,14 @@ export default function CategoryGrid() {
       getCategories({ limit: 100 }),
       getProducts({ limit: 300 })
     ]).then(([c, p]) => {
-      setCategories(c.categories || []);
-      setProducts(p.products || []);
+      setCategories(
+  Array.isArray(c) ? c : c.categories || []
+);
+
+setProducts(
+  Array.isArray(p) ? p : p.products || []
+);
+
       setLoading(false);
     });
   }, []);
