@@ -17,16 +17,25 @@ import { makeAbsoluteUrl } from "@/lib/urlHelpers";
    IMAGE NORMALIZER
 ====================================================== */
 function resolveProductImage(p) {
-  // primary_image is already absolute (Supabase public URL)
-  if (p?.primary_image) return p.primary_image;
+  if (!p) return null;
 
-  // Optional fallback for OG image if it is absolute
-  if (p?.og_image && /^https?:\/\//i.test(p.og_image)) {
-    return p.og_image;
+  // ✅ 1. Primary image from API (MOST IMPORTANT)
+  if (p.primary_image) {
+    return p.primary_image;
+  }
+
+  // ✅ 2. If images array exists (used in single-product pages)
+  if (Array.isArray(p.images) && p.images.length > 0) {
+    const primary =
+      p.images.find(i => i.is_primary) || p.images[0];
+    return primary?.url || null;
   }
 
   return null;
 }
+
+
+
 
 
 /* ======================================================

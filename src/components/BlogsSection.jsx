@@ -8,9 +8,10 @@ import {
 } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { getBlogs } from "../lib/api";
+import { resolveSupabaseImage } from "../lib/supabaseImages";
 
 /* =====================================================
-   3D TILT CARD (GPU SAFE)
+   3D TILT CARD
 ===================================================== */
 
 const TiltCard = ({ children, onClick, onHover }) => {
@@ -64,11 +65,14 @@ const HoverPreview = ({ post }) => (
     className="absolute z-40 top-6 left-6 w-[320px] bg-white rounded-xl shadow-2xl border p-4 pointer-events-none"
   >
     <img
-      src={post.image}
+      src={resolveSupabaseImage(post.image)}
+      onError={(e) => (e.currentTarget.src = "/img/blog-placeholder.jpg")}
       alt={post.title}
       className="w-full h-36 object-cover rounded-lg mb-3"
     />
-    <h4 className="font-bold text-sm mb-1 line-clamp-2">{post.title}</h4>
+    <h4 className="font-bold text-sm mb-1 line-clamp-2">
+      {post.title}
+    </h4>
     <p className="text-xs text-slate-600 line-clamp-3">
       {post.summary || post.meta_description || ""}
     </p>
@@ -81,99 +85,41 @@ const HoverPreview = ({ post }) => (
 
 export default function BlogsSection() {
   const navigate = useNavigate();
-
   const [posts, setPosts] = useState([]);
   const [hovered, setHovered] = useState(null);
-
   const [loading, setLoading] = useState(true);
 
-  /* Search & Pagination */
-  const [query, setQuery] = useState("");
-  const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-
-  const LIMIT = 9;
-  const debounceRef = useRef(null);
-
-  /* -------------------------------------------------- */
-  /* Fetch blogs */
-  /* -------------------------------------------------- */
-
-  const fetchBlogs = async ({ q = query, p = page } = {}) => {
-    setLoading(true);
-    try {
-      const res = await getBlogs({
-        q: q || undefined,
-        page: p,
-        limit: LIMIT,
-      });
-
-      setPosts(res.blogs || []);
-      setTotalPages(res.total_pages || 1);
-    } catch {
-      setPosts([]);
-      setTotalPages(1);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  /* Initial load */
   useEffect(() => {
-    fetchBlogs({ p: 1 });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    let mounted = true;
+
+    (async () => {
+      try {
+        const res = await getBlogs({ limit: 9 });
+        if (mounted) setPosts(res.blogs || []);
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    })();
+
+    return () => {
+      mounted = false;
+    };
   }, []);
-
-  /* Debounced search */
   useEffect(() => {
-    clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => {
-      setPage(1);
-      fetchBlogs({ q: query, p: 1 });
-    }, 400);
+  if (posts.length) {
+    console.log("BLOG IMAGE VALUE:", posts[0].image);
+  }
+}, [posts]);
 
-    return () => clearTimeout(debounceRef.current);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [query]);
-
-  /* Page change */
-  useEffect(() => {
-    fetchBlogs({ p: page });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page]);
-
-  /* -------------------------------------------------- */
-  /* RENDER */
-  /* -------------------------------------------------- */
 
   return (
     <section className="py-32 bg-gradient-to-b from-white via-slate-50 to-white">
       <div className="max-w-7xl mx-auto px-6">
+        <h2 className="text-5xl font-extrabold text-center mb-20">
+          Our Latest Industry Blogs
+        </h2>
 
-        {/* Header */}
-        <div className="text-center mb-16">
-          <h2 className="text-5xl font-extrabold mb-6">
-            Our Latest Industry Blogs
-          </h2>
-
-          {/* Search */}
-          <div className="max-w-xl mx-auto">
-            <input
-              type="search"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search articles..."
-              className="w-full px-5 py-3 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-[#D7B15B]"
-            />
-          </div>
-        </div>
-
-        {/* Grid */}
         {loading && <p className="text-center">Loading…</p>}
-
-        {!loading && posts.length === 0 && (
-          <p className="text-center text-slate-500">No articles found.</p>
-        )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
           {posts.map((p, i) => (
@@ -190,13 +136,21 @@ export default function BlogsSection() {
                 className="bg-white rounded-xl shadow-xl overflow-hidden flex flex-col"
               >
                 <img
-                  src={p.image}
+                  src={resolveSupabaseImage(p.image)}
+                  onError={(e) =>
+                    (e.currentTarget.src = "/img/blog-placeholder.jpg")
+                  }
                   alt={p.title}
                   className="aspect-[3/2] object-cover w-full"
                 />
+
                 <div className="p-6 flex flex-col flex-1">
-                  <h3 className="font-bold text-xl mb-3">{p.title}</h3>
-                  <p className="text-sm text-slate-600 flex-1">{p.summary}</p>
+                  <h3 className="font-bold text-xl mb-3">
+                    {p.title}
+                  </h3>
+                  <p className="text-sm text-slate-600 flex-1">
+                    {p.summary}
+                  </p>
                 </div>
               </motion.div>
 
@@ -206,31 +160,6 @@ export default function BlogsSection() {
             </TiltCard>
           ))}
         </div>
-
-        {/* Pagination */}
-        {totalPages > 1 && (
-          <div className="flex justify-center gap-3 mt-16">
-            <button
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-              disabled={page === 1}
-              className="px-4 py-2 border rounded-lg disabled:opacity-40"
-            >
-              Prev
-            </button>
-
-            <span className="px-4 py-2 text-sm">
-              Page {page} of {totalPages}
-            </span>
-
-            <button
-              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-              disabled={page === totalPages}
-              className="px-4 py-2 border rounded-lg disabled:opacity-40"
-            >
-              Next
-            </button>
-          </div>
-        )}
       </div>
     </section>
   );

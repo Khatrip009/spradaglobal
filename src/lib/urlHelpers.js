@@ -1,57 +1,85 @@
 // src/lib/urlHelpers.js
 // Utilities to build absolute URLs for API and assets
-// Production-ready: prefers VITE_API_URL / VITE_API_BASE_URL and VITE_UPLOADS_BASE_URL.
+// Production-ready and safe for Supabase + legacy uploads
+
+/* ======================================================
+   CONSTANTS
+====================================================== */
 
 const FALLBACK_API = "https://apisprada.exotech.co.in";
 
-/* Supabase storage public base */
+/**
+ * Supabase public storage base
+ * NOTE:
+ *  - Do NOT include bucket name here
+ *  - Project ref MUST match backend exactly
+ */
 const SUPABASE_STORAGE_BASE =
-  "https://kwthxsumqqssiywdcexv.supabase.co/storage/v1/object/public";
+  "https://kwthxsumqqssiywdcevx.supabase.co/storage/v1/object/public";
+
+/** Supabase bucket name */
 const SUPABASE_BUCKET = "sprada_storage";
+
+/* ======================================================
+   API BASE
+====================================================== */
 
 /**
  * Get normalized API base (no trailing slash).
- * Preference order:
+ * Priority:
  *  1) VITE_API_URL
  *  2) VITE_API_BASE_URL
  *  3) FALLBACK_API
  */
 export function getApiBase() {
   const raw =
-    (import.meta.env.VITE_API_URL && String(import.meta.env.VITE_API_URL).trim()) ||
-    (import.meta.env.VITE_API_BASE_URL && String(import.meta.env.VITE_API_BASE_URL).trim()) ||
+    (import.meta.env.VITE_API_URL &&
+      String(import.meta.env.VITE_API_URL).trim()) ||
+    (import.meta.env.VITE_API_BASE_URL &&
+      String(import.meta.env.VITE_API_BASE_URL).trim()) ||
     FALLBACK_API;
 
   return raw.replace(/\/+$/, "");
 }
 
+/* ======================================================
+   UPLOADS BASE
+====================================================== */
+
 /**
  * Get normalized uploads base (no trailing slash).
- * Preference:
- *  1) VITE_UPLOADS_BASE_URL (if set)
- *  2) <API_BASE>/uploads
+ *
+ * Priority:
+ *  1) VITE_UPLOADS_BASE_URL (explicit override)
+ *  2) <API_BASE>/uploads   (legacy backend uploads)
  */
 export function getUploadsBase() {
-  const uploadsRaw = import.meta.env.VITE_UPLOADS_BASE_URL && String(import.meta.env.VITE_UPLOADS_BASE_URL).trim();
-  if (uploadsRaw) return uploadsRaw.replace(/\/+$/, "");
+  const uploadsRaw =
+    import.meta.env.VITE_UPLOADS_BASE_URL &&
+    String(import.meta.env.VITE_UPLOADS_BASE_URL).trim();
+
+  if (uploadsRaw) {
+    return uploadsRaw.replace(/\/+$/, "");
+  }
+
   return `${getApiBase()}/uploads`;
 }
 
+/* ======================================================
+   URL NORMALIZER
+====================================================== */
+
 /**
- * Convert a possibly-relative URL or bare filename into an absolute URL.
+ * Convert a possibly-relative URL into an absolute URL.
  *
- * - Returns null for falsy input.
- * - Leaves absolute http(s) URLs unchanged.
- * - Handles protocol-relative URLs (//cdn...) by prefixing the current protocol (or https: in SSR).
- * - Converts paths starting with /uploads or uploads/ to UPLOADS_BASE + path.
- * - Converts bare filenames (e.g. "img.jpg") or local FS paths that end with an image extension to UPLOADS_BASE/<filename>.
- * - Otherwise prefixes with API base.
- *
- * Examples:
- *   makeAbsoluteUrl('/uploads/x.jpg') -> https://apisprada.exotech.co.in/uploads/x.jpg
- *   makeAbsoluteUrl('uploads/x.jpg')  -> https://apisprada.exotech.co.in/uploads/x.jpg
- *   makeAbsoluteUrl('x.jpg')         -> https://apisprada.exotech.co.in/uploads/x.jpg
- *   makeAbsoluteUrl('https://cdn/x') -> https://cdn/x
+ * Rules:
+ * - null / empty → null
+ * - Absolute http(s) → returned as-is
+ * - Supabase relative paths (products/, blogs/, categories/)
+ *   → Supabase public storage URL
+ * - uploads/* → legacy uploads base
+ * - Bare filename (img.jpg) → uploads base
+ * - Everything else → API base
  */
 export function makeAbsoluteUrl(url) {
   if (!url) return null;
@@ -60,24 +88,46 @@ export function makeAbsoluteUrl(url) {
   const trimmed = url.trim();
   if (!trimmed) return null;
 
-  // Already absolute
-  if (/^https?:\/\//i.test(trimmed)) return trimmed;
+  /* ---------------------------------------------
+     Absolute URLs (Supabase / CDN / External)
+  --------------------------------------------- */
+  if (/^https?:\/\//i.test(trimmed)) {
+    return trimmed;
+  }
 
-  // Supabase relative paths
-  if (/^(blogs|products|categories)\//i.test(trimmed)) {
+  /* ---------------------------------------------
+     Supabase relative storage paths
+     e.g. products/x.jpg
+  --------------------------------------------- */
+  if (/^(products|blogs|categories)\//i.test(trimmed)) {
     return `${SUPABASE_STORAGE_BASE}/${SUPABASE_BUCKET}/${trimmed}`;
   }
 
-  const apiBase = getApiBase();
-
-  // Legacy uploads (keep for backward compatibility)
+  /* ---------------------------------------------
+     Legacy uploads paths
+     e.g. uploads/x.jpg or /uploads/x.jpg
+  --------------------------------------------- */
   if (/^\/?uploads\//i.test(trimmed)) {
-    return `${apiBase}/${trimmed.replace(/^\/+/, "")}`;
+    return `${getUploadsBase()}/${trimmed.replace(/^\/?uploads\//, "")}`;
   }
 
-  // Fallback
-  return `${apiBase}/${trimmed.replace(/^\/+/, "")}`;
+  /* ---------------------------------------------
+     Bare image filename
+     e.g. x.jpg, image.png
+  --------------------------------------------- */
+  if (/\.(png|jpe?g|webp|gif|svg)$/i.test(trimmed)) {
+    return `${getUploadsBase()}/${trimmed}`;
+  }
+
+  /* ---------------------------------------------
+     Final fallback → API base
+  --------------------------------------------- */
+  return `${getApiBase()}/${trimmed.replace(/^\/+/, "")}`;
 }
+
+/* ======================================================
+   EXPORTS
+====================================================== */
 
 export default {
   getApiBase,

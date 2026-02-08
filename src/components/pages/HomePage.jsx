@@ -22,7 +22,7 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import * as api from "../../lib/api";
-import { toAbsoluteImageUrl } from "../../lib/api";
+import { makeAbsoluteUrl } from "../../lib/urlHelpers";
 import HomeHeroSection from "../HomeHeroSection";
 import ImportExportTimeline from "../ImportExportTimeline";
 import AboutUsSection from "../AboutUsSection";
@@ -46,13 +46,14 @@ function slugifyName(name = "") {
 
 function getCategoryImage(cat) {
   return (
-    toAbsoluteImageUrl(cat.image) ||
-    toAbsoluteImageUrl(cat.image_url) ||
-    toAbsoluteImageUrl(cat.cover_image) ||
-    toAbsoluteImageUrl(cat.thumbnail) ||
+    makeAbsoluteUrl(cat.image) ||
+    makeAbsoluteUrl(cat.image_url) ||
+    makeAbsoluteUrl(cat.cover_image) ||
+    makeAbsoluteUrl(cat.thumbnail) ||
     "/images/category-fallback.jpg"
   );
 }
+
 
 
 /* =====================================================

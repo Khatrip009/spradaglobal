@@ -6,11 +6,28 @@ import {
   useSpring,
   useTransform
 } from "framer-motion";
-import { getCategories, getProducts, toAbsoluteImageUrl } from "@/lib/api";
 import { Link } from "react-router-dom";
+import { getCategories, getProducts } from "@/lib/api";
 
 /* =====================================================
-   DATA HELPERS
+   SUPABASE STORAGE CONFIG
+===================================================== */
+const SUPABASE_PROJECT = "kwthxsumqqssiywdcevx";
+const SUPABASE_BUCKET = "sprada_storage";
+const SUPABASE_PUBLIC_BASE =
+  `https://${SUPABASE_PROJECT}.supabase.co/storage/v1/object/public/${SUPABASE_BUCKET}`;
+
+/* =====================================================
+   HELPERS
+===================================================== */
+function makeSupabaseUrl(path) {
+  if (!path) return null;
+  if (/^https?:\/\//i.test(path)) return path;
+  return `${SUPABASE_PUBLIC_BASE}${path}`;
+}
+
+/* =====================================================
+   BUILD CATEGORY → PRODUCT MAP
 ===================================================== */
 function buildCategoryData(products = []) {
   const map = {};
@@ -19,21 +36,26 @@ function buildCategoryData(products = []) {
   );
 
   for (const p of sorted) {
-    const cid = p.category_id; // ✅ FIX
+    const cid = p.category_id; // ✅ ONLY THIS
+
     if (!cid) continue;
 
     if (!map[cid]) {
       map[cid] = {
         heroProduct: p,
-        thumbnail: p.primary_image
-          ? toAbsoluteImageUrl(p.primary_image)
+        fallbackImage: p.primary_image
+          ? makeSupabaseUrl(p.primary_image)
           : null,
         products: []
       };
     }
 
-    if (map[cid].products.length < 3) {
-      map[cid].products.push(p);
+    if (map[cid].products.length < 3 && p.primary_image) {
+      map[cid].products.push({
+        id: p.id,
+        title: p.title,
+        image: makeSupabaseUrl(p.primary_image)
+      });
     }
   }
 
@@ -44,7 +66,6 @@ function buildCategoryData(products = []) {
 /* =====================================================
    3D CATEGORY CARD
 ===================================================== */
-
 function CategoryCard3D({ category, data }) {
   const mx = useMotionValue(0);
   const my = useMotionValue(0);
@@ -70,6 +91,11 @@ function CategoryCard3D({ category, data }) {
     my.set(0);
   }
 
+  const heroImage =
+    makeSupabaseUrl(category.image) ||
+    data?.fallbackImage ||
+    "/img/category-placeholder.jpg";
+
   return (
     <motion.div
       layout
@@ -79,6 +105,7 @@ function CategoryCard3D({ category, data }) {
       className="mb-10 break-inside-avoid"
     >
       <Link to={`/products/category/${category.slug}`}>
+
         <div
           className="
             relative rounded-[28px] overflow-hidden
@@ -87,24 +114,14 @@ function CategoryCard3D({ category, data }) {
           "
           style={{ transformStyle: "preserve-3d" }}
         >
-          {/* HERO IMAGE (shared-element ready) */}
+          {/* HERO IMAGE */}
           <div className="relative h-[300px] overflow-hidden">
-            {data?.heroProduct ? (
-              <motion.img
-                layoutId={`product-hero-${data.heroProduct.id}`}
-                src={data.thumbnail}
-                alt={category.name}
-                className="absolute inset-0 w-full h-full object-cover scale-110"
-                style={{ transform: "translateZ(40px)" }}
-              />
-            ) : (
-              <img
-                src="/img/category-placeholder.jpg"
-                alt={category.name}
-                className="absolute inset-0 w-full h-full object-cover scale-110"
-              />
-            )}
-
+            <motion.img
+              src={heroImage}
+              alt={category.name}
+              className="absolute inset-0 w-full h-full object-cover scale-110"
+              style={{ transform: "translateZ(40px)" }}
+            />
             <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
           </div>
 
@@ -125,28 +142,30 @@ function CategoryCard3D({ category, data }) {
             </span>
           </div>
 
-          {/* HOVER PRODUCT PREVIEW */}
-          <div className="
-            absolute inset-x-0 bottom-0
-            translate-y-full hover:translate-y-0
-            transition-transform duration-500
-            bg-black/85 backdrop-blur-xl p-4
-          ">
-            <p className="text-xs text-[#d7b15b] mb-2 tracking-wide">
-              FEATURED PRODUCTS
-            </p>
+          {/* HOVER PRODUCTS */}
+          {data?.products?.length > 0 && (
+            <div className="
+              absolute inset-x-0 bottom-0
+              translate-y-full hover:translate-y-0
+              transition-transform duration-500
+              bg-black/85 backdrop-blur-xl p-4
+            ">
+              <p className="text-xs text-[#d7b15b] mb-2 tracking-wide">
+                FEATURED PRODUCTS
+              </p>
 
-            <div className="flex gap-3">
-              {data?.products?.map(p => (
-                <img
-                  key={p.id}
-                  src={toAbsoluteImageUrl(p.primary_image)}
-                  alt={p.title}
-                  className="w-16 h-16 rounded-xl object-cover ring-1 ring-white/20"
-                />
-              ))}
+              <div className="flex gap-3">
+                {data.products.map(p => (
+                  <img
+                    key={p.id}
+                    src={p.image}
+                    alt={p.title}
+                    className="w-16 h-16 rounded-xl object-cover ring-1 ring-white/20"
+                  />
+                ))}
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </Link>
     </motion.div>
@@ -154,9 +173,8 @@ function CategoryCard3D({ category, data }) {
 }
 
 /* =====================================================
-   MAIN GRID
+   MAIN CATEGORY GRID
 ===================================================== */
-
 export default function CategoryGrid() {
   const [categories, setCategories] = useState([]);
   const [products, setProducts] = useState([]);
@@ -166,18 +184,13 @@ export default function CategoryGrid() {
   useEffect(() => {
     Promise.all([
       getCategories({ limit: 100 }),
-      getProducts({ limit: 300 })
-    ]).then(([c, p]) => {
-      setCategories(
-  Array.isArray(c) ? c : c.categories || []
-);
-
-setProducts(
-  Array.isArray(p) ? p : p.products || []
-);
-
-      setLoading(false);
-    });
+      getProducts({ limit: 400 })
+    ])
+      .then(([c, p]) => {
+        setCategories(Array.isArray(c) ? c : c.categories || []);
+        setProducts(Array.isArray(p) ? p : p.products || []);
+      })
+      .finally(() => setLoading(false));
   }, []);
 
   const dataMap = useMemo(

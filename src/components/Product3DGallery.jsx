@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { toAbsoluteImageUrl } from "@/lib/api";
 
+import { makeAbsoluteUrl } from "@/lib/urlHelpers";
 /* =====================================================
    PRODUCT IMAGE GALLERY (PRODUCTION FINAL)
    - Main image
@@ -14,7 +14,7 @@ export default function ProductImageGallery({
   onRequestQuote
 }) {
   const safeImages = images.length
-    ? images.map(toAbsoluteImageUrl)
+    ? images.map(makeAbsoluteUrl)
     : ["/img/product-placeholder.jpg"];
 
   const [active, setActive] = useState(0);

@@ -7,8 +7,16 @@ import {
   useTransform,
 } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-
 import { getBlogs } from "../lib/api";
+import { resolveSupabaseImage } from "../lib/supabaseImages";
+/* =====================================================
+   SUPABASE IMAGE HELPER (BLOGS)
+===================================================== */
+
+const SUPABASE_PROJECT = "kwthxsumqqssiywdcevx";
+const SUPABASE_BUCKET = "sprada_storage";
+
+
 
 /* =====================================================
    ICONS
@@ -24,7 +32,7 @@ const Calendar = (p) => (
 );
 
 /* =====================================================
-   3D TILT CARD (GPU SAFE)
+   3D TILT CARD
 ===================================================== */
 
 const TiltCard = ({ children, onClick, onHover }) => {
@@ -66,7 +74,7 @@ const TiltCard = ({ children, onClick, onHover }) => {
 };
 
 /* =====================================================
-   HOVER PREVIEW (READ-ONLY)
+   HOVER PREVIEW
 ===================================================== */
 
 const HoverPreview = ({ post }) => (
@@ -78,7 +86,8 @@ const HoverPreview = ({ post }) => (
     className="absolute z-40 top-6 left-6 w-[320px] bg-white rounded-xl shadow-2xl border p-4 pointer-events-none"
   >
     <img
-      src={post.image}
+      src={resolveBlogImage(post.image)}
+      onError={(e) => (e.currentTarget.src = "/img/blog-placeholder.jpg")}
       alt={post.title}
       className="w-full h-36 object-cover rounded-lg mb-3"
     />
@@ -137,7 +146,8 @@ export default function BlogsSection() {
                 className="bg-white rounded-xl shadow-xl overflow-hidden flex flex-col"
               >
                 <img
-                  src={p.image}
+                  src={resolveSupabaseImage(p.image)}
+                  onError={(e) => (e.currentTarget.src = "/img/blog-placeholder.jpg")}
                   alt={p.title}
                   className="aspect-[3/2] object-cover w-full"
                 />

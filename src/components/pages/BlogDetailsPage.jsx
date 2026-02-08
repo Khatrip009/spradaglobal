@@ -7,6 +7,7 @@ import { Button } from "../ui/button";
 import { Calendar, User, Mail as MailIcon, Heart } from "lucide-react";
 import * as api from "../../lib/api";
 import { useToast } from "../ui/ToastProvider";
+import { resolveSupabaseImage } from "../../lib/supabaseImages";
 
 /* -------------------------------------------------------------------------- */
 /* Helpers - Logic Preserved */
@@ -19,7 +20,7 @@ import { useToast } from "../ui/ToastProvider";
  * - If url is relative, prefix with api.UPLOADS_BASE if available
  */
 const SUPABASE_STORAGE_BASE =
-  "https://kwthxsumqqssiywdcexv.supabase.co/storage/v1/object/public";
+  "https://kwthxsumqqssiywdcevx.supabase.co/storage/v1/object/public";
 const SUPABASE_BUCKET = "sprada_storage";
 
 function makeAbsoluteImageUrl(url, fallback = "/images/blog-hero.jpg") {

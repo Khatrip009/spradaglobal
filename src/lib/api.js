@@ -1,11 +1,15 @@
 // src/lib/api.js
 // API helpers for the frontend (credentials included)
 // Backend base is controlled ONLY by .env → VITE_API_URL
-
+import { makeAbsoluteUrl } from "./urlHelpers";
 const FALLBACK_BACKEND = "http://localhost:4200";
 
 const SUPABASE_STORAGE_BASE =
-  "https://kwthxsumqqssiywdcexv.supabase.co/storage/v1/object/public";
+  "https://kwthxsumqqssiywdcevx.supabase.co/storage/v1/object/public";
+
+const SUPABASE_BUCKET = "sprada_storage";
+
+
 /* -----------------------------------------------------
    BASE URL
 ----------------------------------------------------- */
@@ -37,17 +41,6 @@ const DEFAULT_TIMEOUT = 15000;
  * Returns:
  *   https://<project>.supabase.co/storage/v1/object/public/sprada_storage/...
  */
-export function toAbsoluteImageUrl(path) {
-  if (!path) return null;
-
-  // already absolute
-  if (path.startsWith("http")) return path;
-
-  // normalize (remove accidental leading slash)
-  const clean = path.replace(/^\/+/, "");
-
-  return `${SUPABASE_STORAGE_BASE}/sprada_storage/${clean}`;
-}
 
 /* -----------------------------------------------------
    REQUEST CORE
@@ -257,17 +250,17 @@ function normalizeBlogImages(b) {
   if (!b) return b;
 
   ["image", "thumbnail", "og_image"].forEach(k => {
-    if (b[k]) b[k] = toAbsoluteImageUrl(b[k]);
+    if (b[k]) b[k] = makeAbsoluteUrl(b[k]);
   });
 
   if (b.author?.avatar) {
-    b.author.avatar = toAbsoluteImageUrl(b.author.avatar);
+    b.author.avatar = makeAbsoluteUrl(b.author.avatar);
   }
 
   if (Array.isArray(b.images)) {
     b.images = b.images.map(i => ({
       ...i,
-      url: toAbsoluteImageUrl(i.url)
+      url: makeAbsoluteUrl(i.url)
     }));
   }
 

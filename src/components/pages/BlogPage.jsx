@@ -11,7 +11,8 @@ import * as api from "../../lib/api";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "../ui/ToastProvider";
 import bloghero from '../../assets/blog-hero.jpg';
-import { toAbsoluteImageUrl } from "../../lib/api";
+import { makeAbsoluteUrl } from "../../lib/urlHelpers";
+
 import BlogsContainerSection from "../BlogsSection";
 import BlogHeroSection from '../BlogHeroSection';
 
