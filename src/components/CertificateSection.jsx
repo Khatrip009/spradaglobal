@@ -23,7 +23,7 @@ const CERTIFICATES = [
     id: "rcmc",
     name: "RCMC Certificate",
     desc: "Registration-Cum-Membership Certificate validating exporter credibility and compliance.",
-    imgUrl: "/images/certificates/RCMC.jpg",
+    imgUrl: "/images/certificates/RCMC SPICE BOARD CERTIFICATE VALIDATED_page-0001.jpg",
     color: "bg-orange-500",
   },
   {
