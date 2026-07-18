@@ -1,15 +1,9 @@
-import React, { useEffect, useRef, useState, useMemo } from "react";
-import {
-  motion,
-  useMotionValue,
-  useSpring,
-  useTransform,
-} from "framer-motion";
-
+import React, { useEffect, useState } from "react";
+import { motion } from "framer-motion";
 import { getReviews } from "@/lib/api";
 
 /* ======================================================
-   ICONS (UNCHANGED)
+   ICONS
 ====================================================== */
 const Star = (props) => (
   <svg {...props} viewBox="0 0 24 24" fill="currentColor">
@@ -33,141 +27,99 @@ const UserCircle = (props) => (
 );
 
 /* ======================================================
-   TILT CARD (UNCHANGED)
-====================================================== */
-const TiltCard = ({ children }) => {
-  const x = useMotionValue(0);
-  const y = useMotionValue(0);
-
-  const sx = useSpring(x, { stiffness: 300, damping: 40 });
-  const sy = useSpring(y, { stiffness: 300, damping: 40 });
-
-  const rotateX = useTransform(sy, [-100, 100], [6, -6]);
-  const rotateY = useTransform(sx, [-100, 100], [-6, 6]);
-
-  function onMove(e) {
-    const r = e.currentTarget.getBoundingClientRect();
-    x.set(e.clientX - r.left - r.width / 2);
-    y.set(e.clientY - r.top - r.height / 2);
-  }
-
-  function onLeave() {
-    x.set(0);
-    y.set(0);
-  }
-
-  return (
-    <motion.div
-      onMouseMove={onMove}
-      onMouseLeave={onLeave}
-      style={{ rotateX, rotateY, transformStyle: "preserve-3d" }}
-      className="perspective-1000"
-    >
-      {children}
-    </motion.div>
-  );
-};
-
-/* ======================================================
-   REVIEW CARD (UNCHANGED VISUALLY)
+   REVIEW CARD – Simple hover effect
 ====================================================== */
 const ReviewCard = ({ review }) => {
   const stars = Array(5).fill(0);
 
   return (
-    <TiltCard>
-      <div className="relative w-[420px] shrink-0 p-8 bg-white/60 backdrop-blur-xl rounded-3xl border border-white/50 shadow-xl mx-5">
-        <Quote className="absolute top-4 right-4 w-16 h-16 text-slate-900/5" />
-
-        <div className="flex mb-4">
-          {stars.map((_, i) => (
-            <Star
-              key={i}
-              className={`w-5 h-5 ${
-                i < review.rating ? "text-yellow-400" : "text-slate-300"
-              }`}
-            />
-          ))}
-        </div>
-
-        <p className="text-xl italic text-slate-700 leading-relaxed mb-6">
-          “{review.body}”
-        </p>
-
-        <div className="flex items-center gap-4">
-          <UserCircle className="w-9 h-9 text-white p-1 rounded-full bg-gradient-to-r from-emerald-400 to-teal-500" />
-          <div>
-            <div className="text-lg font-bold text-slate-900">
-              {review.author}
-            </div>
-            {review.author_title && (
-              <div className="text-sm text-slate-500">
-                {review.author_title}
-              </div>
-            )}
+    <motion.div
+      whileHover={{ y: -6 }}
+      transition={{ duration: 0.2 }}
+      className="bg-white/80 backdrop-blur-sm rounded-3xl border border-white/50 shadow-lg p-8 hover:shadow-xl transition-shadow duration-300"
+    >
+      <Quote className="w-12 h-12 text-slate-900/5 mb-2" />
+      <div className="flex mb-3">
+        {stars.map((_, i) => (
+          <Star
+            key={i}
+            className={`w-5 h-5 ${
+              i < review.rating ? "text-yellow-400" : "text-slate-300"
+            }`}
+          />
+        ))}
+      </div>
+      <p className="text-slate-700 leading-relaxed mb-4 text-sm">
+        “{review.body}”
+      </p>
+      <div className="flex items-center gap-3">
+        <UserCircle className="w-8 h-8 text-white p-1 rounded-full bg-gradient-to-r from-emerald-400 to-teal-500" />
+        <div>
+          <div className="text-base font-bold text-slate-900">
+            {review.author_name || review.author || "Customer"}
           </div>
+          {review.author_title && (
+            <div className="text-xs text-slate-500">{review.author_title}</div>
+          )}
         </div>
       </div>
-    </TiltCard>
+    </motion.div>
   );
 };
 
 /* ======================================================
-   MAIN COMPONENT – AUTO SCROLLING
+   MAIN COMPONENT – Clean grid
 ====================================================== */
 const ReviewSection = () => {
   const [reviews, setReviews] = useState([]);
-  const trackRef = useRef(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    getReviews({ limit: 12 }).then((list) => {
-      const clean = list.filter(Boolean);
-      setReviews(clean);
-    });
+    getReviews({ limit: 6 })
+      .then((list) => {
+        const clean = Array.isArray(list) ? list : [];
+        setReviews(clean);
+      })
+      .catch(console.warn)
+      .finally(() => setLoading(false));
   }, []);
 
-  /* duplicate for infinite loop */
-  const looped = useMemo(() => {
-    if (reviews.length < 4) return reviews;
-    return [...reviews, ...reviews];
-  }, [reviews]);
-
   return (
-    <div className="relative py-32 bg-slate-50 overflow-hidden">
-      {/* HEADER */}
-      <div className="text-center mb-24">
-        <h2 className="text-m uppercase text-bold tracking-widest text-emerald-600 mb-4">
-          Trusted by Clients
-        </h2>
-        <h3 className="text-5xl md:text-5xl font-black text-slate-900 bg-clip-text bg-gradient-to-r from-slate-800 to-slate-600">
-          What People Say
-        </h3>
-      </div>
+    <div className="relative py-24 bg-slate-50 overflow-hidden">
+      {/* Decorative blobs (static) */}
+      <div className="absolute top-10 left-10 w-72 h-72 bg-emerald-200/30 blur-3xl rounded-full pointer-events-none" />
+      <div className="absolute bottom-10 right-10 w-72 h-72 bg-blue-200/30 blur-3xl rounded-full pointer-events-none" />
 
-      {/* AUTO SCROLL STRIP */}
-      <div className="relative">
-        <motion.div
-          ref={trackRef}
-          className="flex w-max"
-          animate={{
-            x: ["0%", "-50%"],
-          }}
-          transition={{
-            duration: 60,
-            ease: "linear",
-            repeat: Infinity,
-          }}
-          whileHover={{ animationPlayState: "paused" }}
-        >
-          {looped.map((r, i) => (
-            <ReviewCard key={`${r.id}-${i}`} review={r} />
-          ))}
-        </motion.div>
-      </div>
+      <div className="relative z-10 max-w-7xl mx-auto px-6">
+        {/* Header */}
+        <div className="text-center mb-16">
+          <p className="text-sm font-bold uppercase tracking-widest text-emerald-600 mb-2">
+            Trusted by Clients
+          </p>
+          <h2 className="text-4xl md:text-5xl font-extrabold text-slate-900">
+            What People Say
+          </h2>
+        </div>
 
-      {/* BLOBS */}
-      <div className="absolute top-10 left-10 w-72 h-72 bg-emerald-200/40 blur-3xl rounded-full" />
-      <div className="absolute bottom-10 right-10 w-72 h-72 bg-blue-200/40 blur-3xl rounded-full" />
+        {/* Grid */}
+        {loading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="h-48 bg-slate-200/50 rounded-3xl animate-pulse" />
+            ))}
+          </div>
+        ) : reviews.length === 0 ? (
+          <div className="text-center text-slate-500 py-12">
+            No reviews yet.
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {reviews.map((r) => (
+              <ReviewCard key={r.id || r.created_at} review={r} />
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 };

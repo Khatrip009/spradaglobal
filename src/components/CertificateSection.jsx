@@ -1,8 +1,8 @@
+// src/components/CertificateSection.jsx
 import React, { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
 
 // =================================================================================
-// 1. CERTIFICATION DATA – UPDATED WITH YOUR ACTUAL FILE NAMES
+// 1. CERTIFICATION DATA
 // =================================================================================
 const CERTIFICATES = [
   {
@@ -30,7 +30,7 @@ const CERTIFICATES = [
     id: "fssai",
     name: "FSSAI License",
     desc: "Food safety and quality compliance certificate – Central License for export operations.",
-    imgUrl: "/images/certificates/FSSAI LICENCE Page_page-0001.jpg", // exact filename
+    imgUrl: "/images/certificates/FSSAI LICENCE Page_page-0001.jpg",
     color: "bg-red-500",
   },
   {
@@ -40,8 +40,6 @@ const CERTIFICATES = [
     imgUrl: "/images/certificates/gst01.jpg",
     color: "bg-purple-500",
   },
-  
-  // --- NEW CERTIFICATES ---
   {
     id: "gmp",
     name: "GMP Certification",
@@ -59,22 +57,19 @@ const CERTIFICATES = [
 ];
 
 // =================================================================================
-// 2. SIMPLE CERTIFICATE CARD (NO 3D)
+// 2. CERTIFICATE CARD – No Framer Motion
 // =================================================================================
 const CertificateCard = ({ item, index, onClick }) => {
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 30 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, delay: index * 0.1 }}
-      viewport={{ once: true, amount: 0.3 }}
-      className="group"
+    <div
+      className="group opacity-0 translate-y-5 animate-fadeInUp"
+      style={{ animationDelay: `${index * 100}ms`, animationFillMode: 'forwards' }}
     >
       <div
         onClick={() => onClick(item)}
         className="w-full bg-white rounded-2xl p-5 border border-slate-200 shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer hover:-translate-y-1"
       >
-        {/* Image Container */}
+        {/* Image */}
         <div className="mb-4 rounded-lg overflow-hidden bg-slate-100 flex items-center justify-center border border-slate-200">
           <div className="aspect-[4/2.5] w-full flex items-center justify-center">
             <img
@@ -89,7 +84,7 @@ const CertificateCard = ({ item, index, onClick }) => {
           </div>
         </div>
 
-        {/* Text Content */}
+        {/* Content */}
         <div>
           <span className={`inline-block px-3 py-1 text-xs font-semibold uppercase rounded-full text-white ${item.color} mb-2`}>
             {item.id}
@@ -98,31 +93,26 @@ const CertificateCard = ({ item, index, onClick }) => {
           <p className="text-slate-600 text-sm">{item.desc}</p>
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 };
 
 // =================================================================================
-// 3. MODAL COMPONENT (SIMPLE)
+// 3. MODAL – Pure CSS transitions
 // =================================================================================
 const CertificateModal = ({ certificate, onClose }) => {
   if (!certificate) return null;
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
+    <div
+      className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4 opacity-0 pointer-events-none transition-opacity duration-300"
+      style={{ opacity: 1, pointerEvents: 'auto' }}
       onClick={onClose}
-      className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4"
     >
-      <motion.div
+      <div
+        className="relative bg-white rounded-2xl p-6 md:p-8 max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl scale-95 transition-transform duration-300"
+        style={{ transform: 'scale(1)' }}
         onClick={(e) => e.stopPropagation()}
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        exit={{ opacity: 0, scale: 0.9 }}
-        transition={{ duration: 0.3 }}
-        className="relative bg-white rounded-2xl p-6 md:p-8 max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl"
       >
         <button
           onClick={onClose}
@@ -148,21 +138,21 @@ const CertificateModal = ({ certificate, onClose }) => {
             }}
           />
         </div>
-      </motion.div>
-    </motion.div>
+      </div>
+    </div>
   );
 };
 
 // =================================================================================
-// 4. MAIN COMPONENT
+// 4. MAIN SECTION
 // =================================================================================
 const CertificateSection = () => {
   const [selectedCertificate, setSelectedCertificate] = useState(null);
 
   return (
     <div className="relative w-full py-24 md:py-32 bg-slate-50 overflow-hidden font-sans">
-      {/* Background Pattern (optional) */}
-      <div className="absolute inset-0 opacity-5">
+      {/* Decorative grid */}
+      <div className="absolute inset-0 opacity-5 pointer-events-none">
         <svg className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
           <defs>
             <pattern id="grid" width="32" height="32" patternUnits="userSpaceOnUse">
@@ -174,14 +164,8 @@ const CertificateSection = () => {
       </div>
 
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Section Header */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          viewport={{ once: true }}
-          className="text-center mb-16 md:mb-24 max-w-2xl mx-auto"
-        >
+        {/* Header */}
+        <div className="text-center mb-16 md:mb-24 max-w-2xl mx-auto">
           <p className="text-base font-bold uppercase tracking-widest text-blue-600 mb-2">
             Certified & Compliant
           </p>
@@ -191,7 +175,7 @@ const CertificateSection = () => {
           <p className="text-lg text-slate-600 mt-4">
             Our adherence to key regulatory and quality certifications ensures secure and dependable trade worldwide.
           </p>
-        </motion.div>
+        </div>
 
         {/* Certificates Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 md:gap-12">
@@ -202,11 +186,20 @@ const CertificateSection = () => {
       </div>
 
       {/* Modal */}
-      <AnimatePresence>
-        {selectedCertificate && (
-          <CertificateModal certificate={selectedCertificate} onClose={() => setSelectedCertificate(null)} />
-        )}
-      </AnimatePresence>
+      {selectedCertificate && (
+        <CertificateModal certificate={selectedCertificate} onClose={() => setSelectedCertificate(null)} />
+      )}
+
+      {/* Inject minimal CSS for entrance animation */}
+      <style>{`
+        @keyframes fadeInUp {
+          from { opacity: 0; transform: translateY(20px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fadeInUp {
+          animation: fadeInUp 0.6s ease-out forwards;
+        }
+      `}</style>
     </div>
   );
 };

@@ -1,13 +1,11 @@
 // src/components/ProductImageGallery.jsx
 import React, { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
 import { toAbsoluteImageUrl } from "@/lib/api";
 
 /* =====================================================
-   PRODUCT IMAGE GALLERY (PRODUCTION FINAL)
-   - Main image
-   - Thumbnails below
-   - Optional Request Quote CTA
+   PRODUCT IMAGE GALLERY – Simplified
+   - No framer-motion, pure CSS transitions
+   - Lightweight and fast
 ===================================================== */
 
 export default function ProductImageGallery({
@@ -25,19 +23,13 @@ export default function ProductImageGallery({
     <div className="w-full">
       {/* MAIN IMAGE */}
       <div className="relative rounded-2xl overflow-hidden bg-white shadow">
-        <AnimatePresence mode="wait">
-          <motion.img
-            key={safeImages[active]}
-            src={safeImages[active]}
-            alt=""
-            className="w-full h-[420px] object-contain bg-white"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.35 }}
-            onError={(e) => (e.currentTarget.src = "/img/product-placeholder.jpg")}
-          />
-        </AnimatePresence>
+        <img
+          key={safeImages[active]}
+          src={safeImages[active]}
+          alt="Product"
+          className="w-full h-[420px] object-contain bg-white transition-opacity duration-300"
+          onError={(e) => (e.currentTarget.src = "/img/product-placeholder.jpg")}
+        />
       </div>
 
       {/* THUMBNAILS */}
@@ -48,7 +40,7 @@ export default function ProductImageGallery({
               key={src}
               onClick={() => setActive(i)}
               className={`
-                w-20 h-14 rounded-lg overflow-hidden border transition
+                w-20 h-14 rounded-lg overflow-hidden border-2 transition-all
                 ${
                   i === active
                     ? "border-[#D7B15B] ring-2 ring-[#D7B15B]"
@@ -68,24 +60,22 @@ export default function ProductImageGallery({
         </div>
       )}
 
-      {/* REQUEST QUOTE CTA */}
+      {/* REQUEST QUOTE CTA – Simple button, no framer-motion */}
       {onRequestQuote && (
         <div className="mt-8 flex justify-center">
-          <motion.button
-            whileHover={{ scale: 1.04 }}
-            whileTap={{ scale: 0.97 }}
+          <button
             onClick={onRequestQuote}
             className="
               px-6 py-3 rounded-xl
               bg-[#D7B15B] text-[#164946]
               font-extrabold
-              shadow-md
-              hover:shadow-lg
-              transition
+              shadow-md hover:shadow-lg
+              transition-shadow duration-200
+              active:scale-95
             "
           >
             Request Quote
-          </motion.button>
+          </button>
         </div>
       )}
     </div>

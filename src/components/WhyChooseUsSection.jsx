@@ -1,9 +1,8 @@
 import React from "react";
-// We assume Framer Motion is available
-import { motion, useSpring, useTransform, useMotionValue } from "framer-motion";
+import { motion } from "framer-motion";
 
 // =================================================================================
-// 1. ICONS (Lucide style)
+// 1. ICONS (Lucide style) – kept as inline SVGs
 // =================================================================================
 const Clock = (props) => (
     <svg {...props} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -94,139 +93,66 @@ const WHY_CHOOSE_US = [
 ];
 
 // =================================================================================
-// 3. SPECIAL EFFECTS COMPONENTS (Reused Tilt Logic for interactivity)
-// =================================================================================
-
-const TiltCard = ({ children, className }) => {
-  const x = useMotionValue(0);
-  const y = useMotionValue(0);
-
-  const mouseX = useSpring(x, { stiffness: 500, damping: 100 });
-  const mouseY = useSpring(y, { stiffness: 500, damping: 100 });
-
-  function onMouseMove({ currentTarget, clientX, clientY }) {
-    const { left, top, width, height } = currentTarget.getBoundingClientRect();
-    // Calculate position relative to center
-    x.set(clientX - left - width / 2);
-    y.set(clientY - top - height / 2);
-  }
-
-  function onMouseLeave() {
-    x.set(0);
-    y.set(0);
-  }
-
-  // Increased tilt intensity for a more dramatic 3D effect
-  const rotateX = useTransform(mouseY, [-100, 100], [8, -8]);
-  const rotateY = useTransform(mouseX, [-100, 100], [-8, 8]);
-  // Removed scale transformation, focusing purely on rotation for stability
-  
-  return (
-    <motion.div
-      onMouseMove={onMouseMove}
-      onMouseLeave={onMouseLeave}
-      style={{
-        rotateX,
-        rotateY,
-        transformStyle: "preserve-3d",
-      }}
-      className={className}
-    >
-      {children}
-    </motion.div>
-  );
-};
-
-
-// =================================================================================
-// 4. MAIN COMPONENT: WhyChooseUsSection
+// 3. MAIN COMPONENT – Simplified (no 3D tilt, light animations)
 // =================================================================================
 const WhyChooseUsSection = () => {
     return (
         <div className="relative w-full py-24 md:py-32 bg-white overflow-hidden font-sans">
-            
-            {/* Background Texture/Grid (Light color for background) */}
+            {/* Background Grid */}
             <div className="absolute inset-0 opacity-50">
                 <div className="w-full h-full bg-[radial-gradient(#E2E8F0_1px,transparent_1px)] [background-size:16px_16px] blur-[1px]"></div>
             </div>
 
             <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                
                 {/* Section Header */}
                 <motion.div
-                    initial={{ opacity: 0, y: 50 }}
+                    initial={{ opacity: 0, y: 40 }}
                     whileInView={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.8, ease: "easeOut" }}
+                    transition={{ duration: 0.7, ease: "easeOut" }}
                     viewport={{ once: true, amount: 0.3 }}
                     className="text-center mb-16 md:mb-24 max-w-2xl mx-auto"
                 >
-                    {/* Updated text color for light background */}
                     <p className="text-base font-bold uppercase tracking-widest text-emerald-600 mb-2">
                         Commitment to Excellence
                     </p>
-                    {/* Updated text color for light background */}
                     <h2 className="text-4xl md:text-5xl font-extrabold tracking-tight mb-6">
-                    Why Choose{" "}
+                        Why Choose{" "}
                         <span className="text-[#164946]">Sprada</span>
                         <span className="text-[#d7b15b]">2Global</span>
                     </h2>
-                    {/* Updated text color for light background */}
                     <p className="text-lg text-slate-600 mt-4">
                         Advantages of partnering with us for compliant, reliable and globally integrated export–import operations.
                     </p>
                 </motion.div>
 
-
-                {/* Features Grid */}
+                {/* Cards Grid – simpler animations */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 md:gap-12">
                     {WHY_CHOOSE_US.map((item, index) => (
                         <motion.div
                             key={item.id}
-                            // ENHANCED 3D ANIMATION: Added rotateX and perspective for a dramatic, 3D entrance
-                            initial={{ opacity: 0, scale: 0.8, rotateX: 20, y: 30 }}
-                            whileInView={{ opacity: 1, scale: 1, rotateX: 0, y: 0 }}
-                            transition={{ duration: 0.6, delay: index * 0.15, type: "spring", stiffness: 100 }}
-                            viewport={{ once: true, amount: 0.4 }}
-                            className="perspective-1000"
+                            initial={{ opacity: 0, y: 30 }}
+                            whileInView={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.5, delay: index * 0.1 }}
+                            viewport={{ once: true, amount: 0.3 }}
+                            className="group"
                         >
-                            <TiltCard className="w-full h-full">
-                                {/* Added `transform-gpu` for better rendering performance of 3D transforms */}
-                                <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-xl transition-all duration-300 hover:shadow-cyan-500/30 h-full flex flex-col items-start text-left transform-gpu">
-                                    
-                                    {/* Icon & ID */}
-                                    {/* ENHANCED ANIMATION: Added pulse/lift effect on hover for the icon container */}
-                                    <motion.div 
-                                        whileHover={{ scale: 1.1, rotate: 5 }}
-                                        transition={{ type: "spring", stiffness: 300 }}
-                                        className={`w-14 h-14 p-3 mb-4 rounded-xl flex items-center justify-center bg-gradient-to-br ${item.gradient} shadow-lg shadow-slate-300/50 cursor-pointer`}
-                                    >
-                                        <item.Icon className="w-full h-full text-white" />
-                                    </motion.div>
-                                    
-                                    {/* Content */}
-                                    <h3 className="text-xl font-bold text-slate-900 mb-2">
-                                        {item.title}
-                                    </h3>
-                                    <p className="text-slate-600 text-sm mb-4 flex-grow">
-                                        {item.detail}
-                                    </p>
-                                    
-                                    {/* Callout Link (Remains gradient for pop) */}
-                                    
+                            <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-xl hover:shadow-cyan-500/30 transition-shadow duration-300 h-full flex flex-col items-start text-left hover:-translate-y-2 transition-transform duration-300">
+                                {/* Icon */}
+                                <div className={`w-14 h-14 p-3 mb-4 rounded-xl flex items-center justify-center bg-gradient-to-br ${item.gradient} shadow-lg shadow-slate-300/50`}>
+                                    <item.Icon className="w-full h-full text-white" />
                                 </div>
-                            </TiltCard>
+                                <h3 className="text-xl font-bold text-slate-900 mb-2">
+                                    {item.title}
+                                </h3>
+                                <p className="text-slate-600 text-sm mb-4 flex-grow">
+                                    {item.detail}
+                                </p>
+                                {/* Optional callout link can be added here if needed */}
+                            </div>
                         </motion.div>
                     ))}
                 </div>
-
             </div>
-            
-             {/* CSS for Tilt Perspective */}
-             <style>{`
-                .perspective-1000 {
-                    perspective: 1000px;
-                }
-            `}</style>
         </div>
     );
 };

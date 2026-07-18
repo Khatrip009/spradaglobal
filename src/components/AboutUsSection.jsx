@@ -1,9 +1,8 @@
+// src/components/AboutUsSection.jsx
 import React from "react";
-// We assume Framer Motion is available
-import { motion, useScroll, useTransform, useSpring, useMotionValue } from "framer-motion";
 
 // =================================================================================
-// 1. ICONS (Playful & Bold)
+// 1. ICONS
 // =================================================================================
 const GlobeIcon = (props) => (
   <svg {...props} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -42,8 +41,7 @@ const FEATURES = [
     title: "Global Import & Export",
     desc: "Global sourcing from verified suppliers and manufacturers. End-to-end import and export operations with structured processes and global compliance.",
     Icon: GlobeIcon,
-    // Brand Teal Primary
-    gradient: "from-teal-500 via-teal-700 to-cyan-600",
+    gradient: "from-teal-500 to-cyan-600",
     badge: "Worldwide",
   },
   {
@@ -51,17 +49,15 @@ const FEATURES = [
     title: "Multi-Category Expertise",
     desc: "A diversified export portfolio sourced directly from verified manufacturing partners. Reliable logistics and timely worldwide delivery",
     Icon: LayersIcon,
-    // Brand Amber Accent
-    gradient: "from-amber-500 via-orange-600 to-red-500",
+    gradient: "from-amber-500 to-red-500",
     badge: "Diverse",
   },
   {
     id: 3,
     title: "Verified Manufacturers",
-    desc: "Compliance with international trade and quality standards. Direct sourcing from import - export-ready manufacturers with international certifications.",
+    desc: "Compliance with international trade and quality standards. Direct sourcing from import-export-ready manufacturers with international certifications.",
     Icon: FactoryIcon,
-    // Teal/Green blend for manufacturing
-    gradient: "from-green-500 via-emerald-600 to-teal-500",
+    gradient: "from-green-500 to-teal-500",
     badge: "Certified",
   },
   {
@@ -69,60 +65,22 @@ const FEATURES = [
     title: "Compliance & Trust",
     desc: "Efficient handling, packaging, and documentation. Documentation, certifications and regulatory compliance handled seamlessly",
     Icon: ShieldIcon,
-    // Strong Teal/Accent for trust
-    gradient: "from-teal-600 via-blue-600 to-amber-500",
+    gradient: "from-teal-600 to-amber-500",
     badge: "Secure",
   },
 ];
 
 // =================================================================================
-// 3. UTILITY COMPONENTS (3D Tilt & Blobs)
-// =================================================================================
-
-const TiltCard = ({ children, className }) => {
-  const x = useMotionValue(0);
-  const y = useMotionValue(0);
-
-  const mouseX = useSpring(x, { stiffness: 500, damping: 100 });
-  const mouseY = useSpring(y, { stiffness: 500, damping: 100 });
-
-  function onMouseMove({ currentTarget, clientX, clientY }) {
-    const { left, top, width, height } = currentTarget.getBoundingClientRect();
-    x.set(clientX - left - width / 2);
-    y.set(clientY - top - height / 2);
-  }
-
-  function onMouseLeave() {
-    x.set(0);
-    y.set(0);
-  }
-
-  const rotateX = useTransform(mouseY, [-100, 100], [7, -7]); 
-  const rotateY = useTransform(mouseX, [-100, 100], [-7, 7]);
-
-  return (
-    <motion.div
-      onMouseMove={onMouseMove}
-      onMouseLeave={onMouseLeave}
-      style={{ rotateX, rotateY, transformStyle: "preserve-3d" }}
-      className={className}
-    >
-      {children}
-    </motion.div>
-  );
-};
-
-// =================================================================================
-// 4. MAIN COMPONENT
+// 3. MAIN COMPONENT – Simplified
 // =================================================================================
 const AboutUsSection = () => {
   return (
     <div className="relative bg-slate-50 py-24 px-4 sm:px-6 lg:px-8 font-sans overflow-hidden">
       
-      {/* Background Ambience (Floating Blobs) - Updated to Teal/Amber Brand Colors */}
+      {/* Background blobs (static, no animation) */}
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">
-        <div className="absolute top-[-10%] left-[-5%] w-[40rem] h-[40rem] bg-teal-200/30 rounded-full mix-blend-multiply filter blur-3xl animate-blob"></div>
-        <div className="absolute bottom-[-10%] right-[-5%] w-[35rem] h-[35rem] bg-amber-200/30 rounded-full mix-blend-multiply filter blur-3xl animate-blob animation-delay-4000"></div>
+        <div className="absolute top-[-10%] left-[-5%] w-[40rem] h-[40rem] bg-teal-200/20 rounded-full mix-blend-multiply filter blur-3xl"></div>
+        <div className="absolute bottom-[-10%] right-[-5%] w-[35rem] h-[35rem] bg-amber-200/20 rounded-full mix-blend-multiply filter blur-3xl"></div>
       </div>
 
       <div className="relative z-10 max-w-7xl mx-auto">
@@ -130,14 +88,9 @@ const AboutUsSection = () => {
         {/* === HEADER SECTION === */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center mb-24">
           
-          {/* Text Content */}
-          <motion.div
-             initial={{ opacity: 0, x: -50 }}
-             whileInView={{ opacity: 1, x: 0 }}
-             transition={{ duration: 0.8, ease: "easeOut" }}
-          >
+          {/* Text Content – simple fade-in with CSS */}
+          <div className="opacity-0 animate-fadeInUp" style={{ animationDelay: '0.1s', animationFillMode: 'forwards' }}>
             <div className="inline-flex items-center space-x-2 bg-white/60 backdrop-blur-md px-4 py-2 rounded-full border border-slate-200 shadow-sm mb-6">
-              {/* Pulse in Brand Teal */}
               <span className="w-2 h-2 rounded-full bg-teal-500 animate-pulse"></span>
               <span className="text-sm font-bold text-slate-600 uppercase tracking-wider">Who We Are</span>
             </div>
@@ -150,103 +103,85 @@ const AboutUsSection = () => {
             </h2>
             
             <div className="relative p-6 bg-white/40 backdrop-blur-xl rounded-2xl border border-white/60 shadow-lg">
-                <p className="text-lg text-slate-700 leading-relaxed font-medium">
-                  {/* Text Accent in Brand Teal */}
-                  <span className="text-teal-700 font-bold">Sprada2Global</span> is a professionally managed import–export company delivering reliable, scalable and fully compliant trade solutions.
-                </p>
-                <div className="h-px w-full bg-gradient-to-r from-slate-300 to-transparent my-4"></div>
-                <p className="text-slate-600 leading-relaxed">
-                  With extensive experience in international trade, we specialize in importing and exporting a wide variety of goods across industries. Our focus on quality, transparency and efficient logistics enables us to build long-term global partnerships.
-                </p>
+              <p className="text-lg text-slate-700 leading-relaxed font-medium">
+                <span className="text-teal-700 font-bold">Sprada2Global</span> is a professionally managed import–export company delivering reliable, scalable and fully compliant trade solutions.
+              </p>
+              <div className="h-px w-full bg-gradient-to-r from-slate-300 to-transparent my-4"></div>
+              <p className="text-slate-600 leading-relaxed">
+                With extensive experience in international trade, we specialize in importing and exporting a wide variety of goods across industries. Our focus on quality, transparency and efficient logistics enables us to build long-term global partnerships.
+              </p>
             </div>
-          </motion.div>
+          </div>
 
-          {/* Abstract Visual / Image Placeholder - Updated to Brand Colors */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.8, rotate: 5 }}
-            whileInView={{ opacity: 1, scale: 1, rotate: 0 }}
-            transition={{ duration: 0.8 }}
-            className="relative h-[500px] w-full hidden lg:block perspective-1000"
-          >
-             {/* 3D layered abstract composition - Teal Gradient */}
-             <div className="absolute inset-0 bg-gradient-to-br from-teal-700 to-teal-900 rounded-[2rem] shadow-2xl transform rotate-3 opacity-90"></div>
-             <div className="absolute inset-0 bg-slate-900 rounded-[2rem] shadow-2xl transform -rotate-2 scale-[0.98] overflow-hidden flex items-center justify-center">
-                {/* Abstract Map Grid */}
-                <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'radial-gradient(circle, #ffffff 1px, transparent 1px)', backgroundSize: '30px 30px' }}></div>
-                <div className="text-center p-8">
-                   <h3 className="text-4xl font-black text-white mb-2">SPRADA</h3>
-                   {/* GLOBAL EXIM in Brand Amber Accent */}
-                   <div className="text-amber-400 font-bold tracking-[0.5em] text-sm">GLOBAL EXIM</div>
+          {/* Abstract Visual – simplified, no motion */}
+          <div className="relative h-[500px] w-full hidden lg:block">
+            <div className="absolute inset-0 bg-gradient-to-br from-teal-700 to-teal-900 rounded-[2rem] shadow-2xl transform rotate-3 opacity-90"></div>
+            <div className="absolute inset-0 bg-slate-900 rounded-[2rem] shadow-2xl transform -rotate-2 scale-[0.98] overflow-hidden flex items-center justify-center">
+              <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'radial-gradient(circle, #ffffff 1px, transparent 1px)', backgroundSize: '30px 30px' }}></div>
+              <div className="text-center p-8">
+                <h3 className="text-4xl font-black text-white mb-2">SPRADA</h3>
+                <div className="text-amber-400 font-bold tracking-[0.5em] text-sm">GLOBAL EXIM</div>
+              </div>
+            </div>
+            
+            {/* Floating Badge – simple */}
+            <div className="absolute -bottom-8 -left-8 bg-white p-6 rounded-2xl shadow-xl border border-slate-100 max-w-[200px]">
+              <div className="flex items-center space-x-3 mb-2">
+                <div className="bg-teal-100 p-2 rounded-lg text-teal-600">
+                  <ShieldIcon className="w-6 h-6" />
                 </div>
-             </div>
-             
-             {/* Floating Badge */}
-             <motion.div 
-               animate={{ y: [0, -15, 0] }}
-               transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-               className="absolute -bottom-8 -left-8 bg-white p-6 rounded-2xl shadow-xl border border-slate-100 max-w-[200px]"
-             >
-                <div className="flex items-center space-x-3 mb-2">
-                   {/* Icon background in lighter Teal */}
-                   <div className="bg-teal-100 p-2 rounded-lg text-teal-600">
-                      <ShieldIcon className="w-6 h-6" />
-                   </div>
-                   <span className="font-bold text-slate-800">100% Secure</span>
-                </div>
-                <p className="text-xs text-slate-500">Fully compliant & certified trade operations.</p>
-             </motion.div>
-          </motion.div>
+                <span className="font-bold text-slate-800">100% Secure</span>
+              </div>
+              <p className="text-xs text-slate-500">Fully compliant & certified trade operations.</p>
+            </div>
+          </div>
         </div>
 
-        {/* === GRID FEATURES SECTION === */}
+        {/* === GRID FEATURES === */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {FEATURES.map((feature, index) => (
-            <TiltCard key={feature.id} className="relative group perspective-1000">
-               <motion.div
-                 initial={{ opacity: 0, y: 50 }}
-                 whileInView={{ opacity: 1, y: 0 }}
-                 transition={{ delay: index * 0.1, duration: 0.5 }}
-                 className="h-full bg-white/60 backdrop-blur-md rounded-3xl p-8 border border-white/50 shadow-xl hover:shadow-2xl hover:bg-white/80 transition-all duration-300 flex flex-col items-start relative overflow-hidden"
-               >
-                 {/* Top Badge */}
-                 <div className="absolute top-4 right-4 text-[10px] font-bold uppercase tracking-widest text-slate-400 border border-slate-200 px-2 py-1 rounded-md bg-white/50">
-                    {feature.badge}
-                 </div>
+            <div
+              key={feature.id}
+              className="group h-full bg-white/60 backdrop-blur-md rounded-3xl p-8 border border-white/50 shadow-xl hover:shadow-2xl hover:bg-white/80 transition-all duration-300 flex flex-col items-start relative overflow-hidden opacity-0 animate-fadeInUp"
+              style={{ animationDelay: `${0.2 + index * 0.1}s`, animationFillMode: 'forwards' }}
+            >
+              {/* Badge */}
+              <div className="absolute top-4 right-4 text-[10px] font-bold uppercase tracking-widest text-slate-400 border border-slate-200 px-2 py-1 rounded-md bg-white/50">
+                {feature.badge}
+              </div>
 
-                 {/* Animated Icon Background */}
-                 <div className="relative w-16 h-16 mb-6 flex items-center justify-center">
-                    <div className={`absolute inset-0 bg-gradient-to-br ${feature.gradient} rounded-2xl opacity-20 group-hover:opacity-30 transition-opacity duration-300 animate-blob`}></div>
-                    <div className={`absolute inset-0 bg-gradient-to-br ${feature.gradient} rounded-2xl opacity-40 blur-lg group-hover:opacity-60 transition-opacity duration-300`}></div>
-                    <feature.Icon className="relative z-10 w-8 h-8 text-slate-800" />
-                 </div>
+              {/* Icon */}
+              <div className="relative w-16 h-16 mb-6 flex items-center justify-center">
+                <div className={`absolute inset-0 bg-gradient-to-br ${feature.gradient} rounded-2xl opacity-20 group-hover:opacity-30 transition-opacity duration-300`}></div>
+                <div className={`absolute inset-0 bg-gradient-to-br ${feature.gradient} rounded-2xl opacity-40 blur-lg group-hover:opacity-60 transition-opacity duration-300`}></div>
+                <feature.Icon className="relative z-10 w-8 h-8 text-slate-800" />
+              </div>
 
-                 <h3 className="text-xl font-bold text-slate-900 mb-3 group-hover:text-teal-600 transition-colors">
-                   {feature.title}
-                 </h3>
-                 
-                 <p className="text-sm text-slate-600 leading-relaxed mb-6">
-                   {feature.desc}
-                 </p>
+              <h3 className="text-xl font-bold text-slate-900 mb-3 group-hover:text-teal-600 transition-colors">
+                {feature.title}
+              </h3>
+              
+              <p className="text-sm text-slate-600 leading-relaxed mb-6">
+                {feature.desc}
+              </p>
 
-                 {/* Bottom Decorative Line */}
-                 <div className={`mt-auto w-12 h-1.5 rounded-full bg-gradient-to-r ${feature.gradient} group-hover:w-full transition-all duration-500`}></div>
-               </motion.div>
-            </TiltCard>
+              {/* Decorative line */}
+              <div className={`mt-auto w-12 h-1.5 rounded-full bg-gradient-to-r ${feature.gradient} group-hover:w-full transition-all duration-500`}></div>
+            </div>
           ))}
         </div>
 
       </div>
 
+      {/* CSS animations */}
       <style>{`
-        .perspective-1000 { perspective: 1000px; }
-        @keyframes blob {
-          0% { transform: translate(0px, 0px) scale(1); }
-          33% { transform: translate(5px, -10px) scale(1.05); }
-          66% { transform: translate(-5px, 5px) scale(0.95); }
-          100% { transform: translate(0px, 0px) scale(1); }
+        @keyframes fadeInUp {
+          from { opacity: 0; transform: translateY(30px); }
+          to { opacity: 1; transform: translateY(0); }
         }
-        .animate-blob { animation: blob 5s infinite; }
-        .animation-delay-4000 { animation-delay: 4s; }
+        .animate-fadeInUp {
+          animation: fadeInUp 0.7s ease-out forwards;
+        }
       `}</style>
     </div>
   );

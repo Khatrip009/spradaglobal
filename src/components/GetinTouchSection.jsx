@@ -1,15 +1,10 @@
-import React, { useRef, useEffect, useState } from "react";
-import {
-  motion,
-  useMotionValue,
-  useSpring,
-  useTransform,
-} from "framer-motion";
+// src/components/ContactUsSection.jsx
+import React from "react";
+import { motion } from "framer-motion";
 
 /* ======================================================
    ICONS (INLINE SVG – NO DEPENDENCIES)
 ====================================================== */
-
 const MapPin = (p) => (
   <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
     <path d="M12 21.7c-3.3 0-6-2.7-6-6s6-15 6-15 6 11.7 6 15-2.7 6-6 6z" />
@@ -41,7 +36,6 @@ const ExternalLink = (p) => (
 /* ======================================================
    DATA
 ====================================================== */
-
 const contactInfo = [
   {
     icon: MapPin,
@@ -76,92 +70,17 @@ const contactInfo = [
 ];
 
 /* ======================================================
-   RESPONSIVE TILT CARD (DESKTOP ONLY)
+   MAIN SECTION – Simplified
 ====================================================== */
-
-const TiltCard = ({ children }) => {
-  const ref = useRef(null);
-  const mx = useMotionValue(0);
-  const my = useMotionValue(0);
-
-  const sx = useSpring(mx, { stiffness: 180, damping: 26 });
-  const sy = useSpring(my, { stiffness: 180, damping: 26 });
-
-  const rx = useTransform(sy, [-120, 120], [8, -8]);
-  const ry = useTransform(sx, [-120, 120], [-6, 6]);
-
-  const handleMove = (e) => {
-    if (window.innerWidth < 1024) return;
-    const r = ref.current.getBoundingClientRect();
-    mx.set(e.clientX - r.left - r.width / 2);
-    my.set(e.clientY - r.top - r.height / 2);
-  };
-
-  return (
-    <motion.div
-      ref={ref}
-      onMouseMove={handleMove}
-      onMouseLeave={() => {
-        mx.set(0);
-        my.set(0);
-      }}
-      style={{
-        rotateX: rx,
-        rotateY: ry,
-        transformStyle: "preserve-3d",
-      }}
-      whileHover={window.innerWidth >= 1024 ? { y: -10 } : {}}
-      transition={{ type: "spring", stiffness: 140 }}
-      className="relative will-change-transform"
-    >
-      {children}
-    </motion.div>
-  );
-};
-
-/* ======================================================
-   MAIN SECTION
-====================================================== */
-
 const ContactUsSection = () => {
-  const [reduceMotion, setReduceMotion] = useState(false);
-
-  useEffect(() => {
-    const media = window.matchMedia("(prefers-reduced-motion: reduce)");
-    setReduceMotion(media.matches);
-  }, []);
-
   return (
-    <section
-      className="
-        relative
-        py-20 sm:py-24 md:py-28 lg:py-36
-        bg-gradient-to-b from-white via-slate-50 to-white
-        overflow-hidden
-      "
-    >
-      {/* Ambient background – desktop only */}
-      {!reduceMotion && (
-        <motion.div
-          aria-hidden
-          className="
-            hidden lg:block
-            absolute -top-40 -right-40
-            w-[45rem] h-[45rem]
-            bg-gradient-to-br from-indigo-300/30 to-cyan-300/30
-            rounded-full blur-3xl
-          "
-          animate={{ scale: [1, 1.12, 1], rotate: [0, 10, 0] }}
-          transition={{ duration: 24, repeat: Infinity, ease: "easeInOut" }}
-        />
-      )}
-
+    <section className="relative py-20 sm:py-24 md:py-28 lg:py-36 bg-gradient-to-b from-white via-slate-50 to-white overflow-hidden">
       <div className="relative max-w-7xl mx-auto px-6">
-        {/* Header */}
+        {/* Header – simple fade-in */}
         <motion.div
-          initial={{ opacity: 0, y: 32 }}
+          initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, ease: "easeOut" }}
+          transition={{ duration: 0.6, ease: "easeOut" }}
           viewport={{ once: true }}
           className="text-center mb-16 md:mb-20 lg:mb-24"
         >
@@ -173,63 +92,46 @@ const ContactUsSection = () => {
           </h2>
         </motion.div>
 
-        {/* Cards */}
-        <div
-          className="
-            grid grid-cols-1
-            md:grid-cols-2
-            lg:grid-cols-3
-            gap-10 md:gap-12 lg:gap-16
-          "
-        >
+        {/* Cards – grid with simple hover effect */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10 md:gap-12 lg:gap-16">
           {contactInfo.map((item, i) => {
             const Icon = item.icon;
             const ActionIcon = item.actionIcon;
 
             return (
-              <TiltCard key={i}>
+              <div
+                key={i}
+                className="group w-full max-w-sm mx-auto bg-white/90 backdrop-blur-sm rounded-3xl border border-slate-200 shadow-lg hover:shadow-2xl transition-shadow duration-300 p-7 sm:p-8 hover:-translate-y-1 transition-transform duration-300"
+              >
+                {/* Icon */}
                 <div
-                  className="
-                    relative
-                    w-full max-w-sm
-                    mx-auto
-                    bg-white/90 backdrop-blur-xl
-                    rounded-3xl
-                    border border-slate-200
-                    shadow-xl lg:shadow-2xl
-                    p-7 sm:p-8
-                  "
+                  className={`w-14 h-14 sm:w-16 sm:h-16 mb-6 rounded-2xl bg-gradient-to-br ${item.gradient} flex items-center justify-center shadow-lg`}
                 >
-                  {/* Icon */}
-                  <div
-                    className={`w-14 h-14 sm:w-16 sm:h-16 mb-6 rounded-2xl bg-gradient-to-br ${item.gradient} flex items-center justify-center shadow-xl`}
-                  >
-                    <Icon className="w-7 h-7 sm:w-8 sm:h-8 text-white" />
-                  </div>
-
-                  <h4 className="font-extrabold text-slate-900 text-lg">
-                    {item.title}
-                  </h4>
-                  <p className="font-semibold text-slate-800 break-words">
-                    {item.primary}
-                  </p>
-                  <p className="text-sm text-slate-500 mb-6">
-                    {item.secondary}
-                  </p>
-
-                  <a
-                    href={item.href}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 font-bold text-sm text-slate-800 hover:opacity-80 transition"
-                  >
-                    {item.action}
-                    <ActionIcon className="w-4 h-4" />
-                  </a>
-
-                  <div className="pointer-events-none absolute inset-0 rounded-3xl ring-1 ring-inset ring-white/40" />
+                  <Icon className="w-7 h-7 sm:w-8 sm:h-8 text-white" />
                 </div>
-              </TiltCard>
+
+                <h4 className="font-extrabold text-slate-900 text-lg">
+                  {item.title}
+                </h4>
+                <p className="font-semibold text-slate-800 break-words">
+                  {item.primary}
+                </p>
+                <p className="text-sm text-slate-500 mb-6">
+                  {item.secondary}
+                </p>
+
+                <a
+                  href={item.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 font-bold text-sm text-slate-800 hover:opacity-80 transition"
+                >
+                  {item.action}
+                  <ActionIcon className="w-4 h-4" />
+                </a>
+
+                <div className="pointer-events-none absolute inset-0 rounded-3xl ring-1 ring-inset ring-white/40" />
+              </div>
             );
           })}
         </div>
