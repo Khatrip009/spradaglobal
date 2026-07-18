@@ -1,7 +1,8 @@
+// src/components/ProductImageGallery.jsx
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { toAbsoluteImageUrl } from "@/lib/api";
 
-import { makeAbsoluteUrl } from "@/lib/urlHelpers";
 /* =====================================================
    PRODUCT IMAGE GALLERY (PRODUCTION FINAL)
    - Main image
@@ -13,8 +14,9 @@ export default function ProductImageGallery({
   images = [],
   onRequestQuote
 }) {
+  // Convert all image URLs to absolute Supabase URLs
   const safeImages = images.length
-    ? images.map(makeAbsoluteUrl)
+    ? images.map(url => toAbsoluteImageUrl(url) || "/img/product-placeholder.jpg")
     : ["/img/product-placeholder.jpg"];
 
   const [active, setActive] = useState(0);
@@ -33,6 +35,7 @@ export default function ProductImageGallery({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.35 }}
+            onError={(e) => (e.currentTarget.src = "/img/product-placeholder.jpg")}
           />
         </AnimatePresence>
       </div>
@@ -58,6 +61,7 @@ export default function ProductImageGallery({
                 src={src}
                 alt=""
                 className="w-full h-full object-cover bg-white"
+                onError={(e) => (e.currentTarget.src = "/img/product-placeholder.jpg")}
               />
             </button>
           ))}

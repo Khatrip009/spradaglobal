@@ -1,3 +1,4 @@
+// src/components/pages/BlogDetailsPage.jsx
 import React, { useEffect, useState, useCallback, useMemo } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -7,101 +8,11 @@ import { Button } from "../ui/button";
 import { Calendar, User, Mail as MailIcon, Heart } from "lucide-react";
 import * as api from "../../lib/api";
 import { useToast } from "../ui/ToastProvider";
-import { resolveSupabaseImage } from "../../lib/supabaseImages";
-
-/* -------------------------------------------------------------------------- */
-/* Helpers - Logic Preserved */
-/* -------------------------------------------------------------------------- */
-/**
- * Normalize image URL to a usable absolute URL.
- * - If url is absolute (http/https) return it unchanged, except:
- *     * if it points to the current origin and looks like an uploads path, rewrite to api.UPLOADS_BASE if provided
- * - If url is root-relative (/uploads/...), prefix with api.UPLOADS_BASE if available, otherwise leave as-is
- * - If url is relative, prefix with api.UPLOADS_BASE if available
- */
-const SUPABASE_STORAGE_BASE =
-  "https://kwthxsumqqssiywdcevx.supabase.co/storage/v1/object/public";
-const SUPABASE_BUCKET = "sprada_storage";
-
-function makeAbsoluteImageUrl(url, fallback = "/images/blog-hero.jpg") {
-  if (!url || typeof url !== "string") return fallback;
-
-  const trimmed = url.trim();
-  if (!trimmed) return fallback;
-
-  // 1️⃣ Already absolute → keep if Supabase
-  if (/^https?:\/\//i.test(trimmed)) {
-    if (trimmed.includes("supabase.co/storage")) return trimmed;
-
-    // 🔁 Rewrite old API-hosted uploads → Supabase
-    if (trimmed.includes("/uploads/")) {
-      const path = trimmed.split("/uploads/")[1];
-      return `${SUPABASE_STORAGE_BASE}/${SUPABASE_BUCKET}/${path}`;
-    }
-
-    return trimmed;
-  }
-
-  // 2️⃣ New-style Supabase relative paths
-  if (/^(blogs|products|categories)\//i.test(trimmed)) {
-    return `${SUPABASE_STORAGE_BASE}/${SUPABASE_BUCKET}/${trimmed}`;
-  }
-
-  // 3️⃣ Legacy uploads paths → Supabase
-  if (trimmed.startsWith("uploads/")) {
-    return `${SUPABASE_STORAGE_BASE}/${SUPABASE_BUCKET}/${trimmed.replace(/^uploads\//, "")}`;
-  }
-
-  if (trimmed.startsWith("/uploads/")) {
-    return `${SUPABASE_STORAGE_BASE}/${SUPABASE_BUCKET}/${trimmed.replace(/^\/uploads\//, "")}`;
-  }
-
-  // 4️⃣ Last-resort fallback
-  return fallback;
-}
-
-
-function extractImageFromContent(blog) {
-  if (!blog) return "/images/blog-hero.jpg";
-
-  if (blog.og_image) return makeAbsoluteImageUrl(blog.og_image);
-  if (blog.image) return makeAbsoluteImageUrl(blog.image);
-
-  const blocks =
-    blog?.content?.blocks ||
-    blog?.content_json?.blocks ||
-    null;
-
-  if (Array.isArray(blocks)) {
-    for (const b of blocks) {
-      const url = b?.url || b?.image || b?.data?.file?.url;
-      if (url) return makeAbsoluteImageUrl(url);
-    }
-  }
-
-  const htmlSource =
-    blog?.content?.html ||
-    blog?.content ||
-    blog?.content_json?.html ||
-    (typeof blog?.content === "string" ? blog.content : null);
-
-  if (typeof htmlSource === "string") {
-    const m = htmlSource.match(/<img[^>]+src=(?:'|")([^'"]+)(?:'|")/i);
-    if (m?.[1]) return makeAbsoluteImageUrl(m[1]);
-  }
-
-  const first = blog?.images?.[0];
-  if (first?.url || first?.path)
-    return makeAbsoluteImageUrl(first.url || first.path);
-
-  return "/images/blog-hero.jpg";
-}
 
 /* -------------------------------------------------------------------------- */
 /* Component */
 /* -------------------------------------------------------------------------- */
 export default function BlogDetailsPage() {
-  // Hooks and State (Logic Preserved)
   const { slug } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
@@ -129,7 +40,7 @@ export default function BlogDetailsPage() {
   const [topRelated, setTopRelated] = useState([]);
 
   /* -------------------------------------------------------------------------- */
-  /* Fetch Blog (Logic Preserved) */
+  /* Fetch Blog – uses Supabase API */
   /* -------------------------------------------------------------------------- */
   const fetchBlog = useCallback(async () => {
     setLoading(true);
@@ -143,9 +54,8 @@ export default function BlogDetailsPage() {
     }
 
     try {
-      const r = await api.getBlogBySlug(decodedSlug);
-      const b = r?.blog ?? r;
-
+      // getBlogBySlug now returns the blog object directly
+      const b = await api.getBlogBySlug(decodedSlug);
       if (!b) setError("Article not found");
       else setBlog(b);
     } catch (err) {
@@ -157,40 +67,39 @@ export default function BlogDetailsPage() {
   }, [decodedSlug]);
 
   /* -------------------------------------------------------------------------- */
-  /* Fetch Likes (Logic Preserved) */
+  /* Fetch Likes – using getLikesCount */
   /* -------------------------------------------------------------------------- */
   const fetchLikes = useCallback(async (id) => {
     if (!id) return;
     try {
-      const r = await api.apiGet(`/api/blogs/${encodeURIComponent(id)}/count`);
-      const cnt = Number(r?.likes_count ?? r?.likes ?? 0);
-      setLikes({ count: Number.isFinite(cnt) ? cnt : 0, user_liked: false });
+      const result = await api.getLikesCount(id);
+      const cnt = result?.count ?? 0;
+      setLikes({ count: Number(cnt) || 0, user_liked: false });
     } catch {
       setLikes({ count: 0, user_liked: false });
     }
   }, []);
 
   /* -------------------------------------------------------------------------- */
-  /* Fetch Comments (Logic Preserved) */
+  /* Fetch Comments */
   /* -------------------------------------------------------------------------- */
   const fetchComments = useCallback(async (id) => {
     if (!id) return;
     try {
-      const r = await api.getComments(id);
-      const arr = Array.isArray(r) ? r : r?.comments;
-      setComments(arr || []);
+      const data = await api.getComments(id);
+      setComments(data || []);
     } catch {
       setComments([]);
     }
   }, []);
 
   /* -------------------------------------------------------------------------- */
-  /* Fetch Related Posts (Logic Preserved) */
+  /* Fetch Related Posts – uses getBlogs */
   /* -------------------------------------------------------------------------- */
   const loadTopRelated = useCallback(async (currentId) => {
     try {
-      const res = await api.getBlogs({ limit: 20 });
-      const list = res?.blogs || (Array.isArray(res) ? res : []);
+      const result = await api.getBlogs({ limit: 20 });
+      const list = result?.blogs || [];
 
       const filtered = list.filter(
         (b) => b.id !== currentId && b.is_published !== false
@@ -208,7 +117,7 @@ export default function BlogDetailsPage() {
   }, []);
 
   /* -------------------------------------------------------------------------- */
-  /* Effects (Logic Preserved) */
+  /* Effects */
   /* -------------------------------------------------------------------------- */
   useEffect(() => {
     fetchBlog();
@@ -222,7 +131,7 @@ export default function BlogDetailsPage() {
   }, [blog, fetchLikes, fetchComments, loadTopRelated]);
 
   /* -------------------------------------------------------------------------- */
-  /* Events (Logic Preserved) */
+  /* Handlers */
   /* -------------------------------------------------------------------------- */
   const handleLike = async () => {
     if (!blog?.id || loadingLike) return;
@@ -237,14 +146,15 @@ export default function BlogDetailsPage() {
     setLoadingLike(true);
 
     try {
-      const r = await api.likeBlog(blog.id);
-      const newCount = Number(
-        r?.likes_count ?? r?.likes ?? r?.total_likes ?? optimistic.count
-      );
-      const newLiked =
-        typeof r?.user_liked === "boolean" ? r.user_liked : r?.message === "liked";
-
-      setLikes({ count: newCount, user_liked: !!newLiked });
+      const result = await api.likeBlog(blog.id);
+      // likeBlog returns { liked: true/false } and updates the count via getLikesCount? Actually our API does not return the new count directly, so we need to re-fetch.
+      // Better to refresh likes count after toggling.
+      // We'll do a second call to getLikesCount for consistency.
+      const newCount = await api.getLikesCount(blog.id);
+      setLikes({
+        count: newCount.count,
+        user_liked: result.liked !== false, // assume true if not false
+      });
     } catch {
       setLikes(prev);
     } finally {
@@ -278,18 +188,21 @@ export default function BlogDetailsPage() {
     setCommentRating("");
 
     try {
-      const r = await api.postComment(blog.id, {
+      const created = await api.postComment(blog.id, {
         body: optimistic.body,
         rating: optimistic.rating,
         name: optimistic.name,
         email: optimistic.email,
-        publish: false,
+        // publish: false // no longer needed, uses is_approved default true
       });
-
-      if (r?.comment) {
+      // Replace optimistic comment with real one
+      if (created && created.id) {
         setComments((prev) =>
-          prev.map((c) => (c.id === tmpId ? r.comment : c))
+          prev.map((c) => (c.id === tmpId ? created : c))
         );
+      } else {
+        // If creation returned something else, still remove optimistic
+        setComments((prev) => prev.filter((c) => c.id !== tmpId));
       }
     } catch {
       setComments((prev) => prev.filter((c) => c.id !== tmpId));
@@ -304,7 +217,47 @@ export default function BlogDetailsPage() {
   };
 
   /* -------------------------------------------------------------------------- */
-  /* Derived Content (Logic Preserved) */
+  /* Helper: extract image from content – uses toAbsoluteImageUrl */
+  /* -------------------------------------------------------------------------- */
+  const extractImageFromContent = (blog) => {
+    if (!blog) return null;
+
+    if (blog.og_image) return api.toAbsoluteImageUrl(blog.og_image);
+    if (blog.image) return api.toAbsoluteImageUrl(blog.image);
+    if (blog.primary_image) return api.toAbsoluteImageUrl(blog.primary_image);
+
+    const blocks =
+      blog?.content?.blocks ||
+      blog?.content_json?.blocks ||
+      null;
+
+    if (Array.isArray(blocks)) {
+      for (const b of blocks) {
+        const url = b?.url || b?.image || b?.data?.file?.url;
+        if (url) return api.toAbsoluteImageUrl(url);
+      }
+    }
+
+    const htmlSource =
+      blog?.content?.html ||
+      blog?.content ||
+      blog?.content_json?.html ||
+      (typeof blog?.content === "string" ? blog.content : null);
+
+    if (typeof htmlSource === "string") {
+      const m = htmlSource.match(/<img[^>]+src=(?:'|")([^'"]+)(?:'|")/i);
+      if (m?.[1]) return api.toAbsoluteImageUrl(m[1]);
+    }
+
+    const first = blog?.images?.[0];
+    if (first?.url || first?.path)
+      return api.toAbsoluteImageUrl(first.url || first.path);
+
+    return null;
+  };
+
+  /* -------------------------------------------------------------------------- */
+  /* Derived Content */
   /* -------------------------------------------------------------------------- */
   let html = "";
   if (blog?.content) {
@@ -318,8 +271,8 @@ export default function BlogDetailsPage() {
       html = blog.content_json.blocks.map((b) => b?.html || "").join("\n");
   }
 
-  const hero = extractImageFromContent(blog);
-  const heroUrl = makeAbsoluteImageUrl(hero);
+  const hero = extractImageFromContent(blog) || "/images/blog-hero.jpg";
+  const heroUrl = api.toAbsoluteImageUrl(hero) || hero;
 
   const authorName =
     blog?.author?.name || (blog?.author_id ? "Author" : "SPRADA2GLOBAL");
@@ -329,7 +282,7 @@ export default function BlogDetailsPage() {
   );
 
   /* -------------------------------------------------------------------------- */
-  /* SAFE conditional rendering (Enhanced Design) */
+  /* Loading / Error */
   /* -------------------------------------------------------------------------- */
   if (loading)
     return (
@@ -363,13 +316,12 @@ export default function BlogDetailsPage() {
   if (!blog) return null;
 
   /* -------------------------------------------------------------------------- */
-  /* MAIN RENDER (Enhanced Design) */
+  /* Main Render */
   /* -------------------------------------------------------------------------- */
   return (
     <div className="min-h-screen bg-[#F7F7F5] font-sans">
-      {/* HERO SECTION - Dark background with animations */}
+      {/* HERO SECTION */}
       <section className="relative pt-16 pb-24 lg:pt-24 lg:pb-32 bg-[#14301F] overflow-hidden">
-        {/* Background Gradient Effect */}
         <div className="absolute inset-0 opacity-10 bg-gradient-to-br from-gray-900 to-gray-800 pointer-events-none"></div>
         
         <div className="max-w-[1100px] mx-auto px-6 sm:px-12 relative z-10">
@@ -379,7 +331,6 @@ export default function BlogDetailsPage() {
             transition={{ duration: 0.8, delay: 0.1 }}
           >
             <div className="max-w-4xl text-white">
-              {/* Metadata */}
               <div className="mb-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-base text-gray-300 font-medium">
                 <span className="flex items-center gap-2">
                   <User className="w-4 h-4 text-[#D7B15B]" />
@@ -392,12 +343,10 @@ export default function BlogDetailsPage() {
                 </span>
               </div>
 
-              {/* Title */}
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold font-heading text-[#F7F7F5] leading-tight drop-shadow-md">
                 {blog.title}
               </h1>
 
-              {/* Action Button */}
               <div className="mt-8">
                 <Button
                   className="px-8 py-3 bg-[#D7B15B] text-[#14301F] hover:bg-opacity-90 transition-all duration-300 transform hover:scale-[1.02] font-semibold text-lg rounded-xl shadow-xl"
@@ -412,7 +361,6 @@ export default function BlogDetailsPage() {
           </motion.div>
         </div>
 
-        {/* Image Container - Animated */}
         <div className="max-w-[1100px] mx-auto px-6 sm:px-12 mt-12 relative z-10">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -435,11 +383,10 @@ export default function BlogDetailsPage() {
         <div className="max-w-[1100px] mx-auto px-6 sm:px-12">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
             
-            {/* MAIN CONTENT COLUMN */}
+            {/* MAIN CONTENT */}
             <main className="lg:col-span-2">
               <article className="bg-white rounded-3xl shadow-xl p-6 lg:p-10 border border-gray-100">
 
-                {/* AUTHOR + LIKE BAR */}
                 <div className="mb-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b pb-6">
                   <div className="flex items-center gap-4">
                     <div className="w-14 h-14 rounded-full bg-[#E8E9E2] flex items-center justify-center border-2 border-[#D7B15B]">
@@ -455,7 +402,6 @@ export default function BlogDetailsPage() {
                     </div>
                   </div>
 
-                  {/* Like Button - Interactive */}
                   <div className="flex items-center gap-3">
                     <Button
                       className={`px-6 py-3 transition-all duration-200 shadow-md ${
@@ -476,24 +422,21 @@ export default function BlogDetailsPage() {
                   </div>
                 </div>
 
-                {/* ARTICLE HTML - Enhanced Prose Styling */}
                 <div
                   className="prose prose-lg max-w-none text-[#333] leading-relaxed
                              prose-h2:text-2xl prose-h2:font-extrabold prose-h2:text-[#33504F] prose-h2:border-l-4 prose-h2:pl-4 prose-h2:border-[#D7B15B] prose-h2:py-1
                              prose-h3:text-xl prose-h3:font-bold prose-h3:text-[#33504F]
                              prose-p:text-gray-700 prose-a:text-[#D7B15B] prose-a:font-medium hover:prose-a:underline
-                             prose-li:text-gray-700 prose-ul:list-disc prose-ul:list-inside
-                             "
+                             prose-li:text-gray-700 prose-ul:list-disc prose-ul:list-inside"
                   dangerouslySetInnerHTML={{ __html: html }}
                 />
 
-                {/* COMMENTS SECTION */}
+                {/* COMMENTS */}
                 <section className="mt-12 pt-6 border-t border-gray-200">
                   <h3 className="text-2xl font-bold text-[#33504F] mb-6">
                     Leave a Comment ({comments.length})
                   </h3>
 
-                  {/* Form */}
                   <form onSubmit={handleSubmitComment} className="space-y-4 mb-8 p-6 bg-gray-50 rounded-xl border border-gray-200 shadow-inner">
                     <textarea
                       value={commentBody}
@@ -560,7 +503,6 @@ export default function BlogDetailsPage() {
                     </div>
                   </form>
 
-                  {/* Comments List */}
                   <div className="space-y-5">
                     {comments.length === 0 ? (
                       <div className="text-center py-6 text-base text-gray-500 bg-gray-100 rounded-xl">Be the first to comment!</div>
@@ -602,9 +544,8 @@ export default function BlogDetailsPage() {
               </article>
             </main>
 
-            {/* SIDEBAR COLUMN */}
+            {/* SIDEBAR */}
             <aside className="space-y-8">
-              {/* Contact Card */}
               <Card className="p-6 rounded-2xl shadow-xl border-t-4 border-[#D7B15B] bg-white">
                 <CardContent className="p-0">
                   <h4 className="text-xl font-bold text-[#33504F] mb-4 border-b pb-3">
@@ -627,7 +568,6 @@ export default function BlogDetailsPage() {
                 </CardContent>
               </Card>
 
-              {/* Related Posts Card */}
               <Card className="p-6 rounded-2xl shadow-xl bg-white">
                 <CardContent className="p-0">
                   <h4 className="text-xl font-bold text-[#33504F] mb-5 border-b pb-3">
@@ -639,8 +579,7 @@ export default function BlogDetailsPage() {
                       <div className="text-sm text-gray-500 p-3 bg-gray-50 rounded-lg">No other related posts found.</div>
                     ) : (
                       topRelated.map((t) => {
-                        const thumb =
-                          t.og_image || t.image || "/images/placeholder.png";
+                        const thumb = api.toAbsoluteImageUrl(t.primary_image || t.og_image || t.image) || "/images/placeholder.png";
                         const postDate = new Date(t.published_at || t.created_at || Date.now()).toLocaleDateString();
 
                         return (
@@ -651,9 +590,8 @@ export default function BlogDetailsPage() {
                               navigate(`/blog/${encodeURIComponent(t.slug)}`)
                             }
                           >
-                            {/* Image component - must use Image import */}
                             <Image
-                              src={makeAbsoluteImageUrl(thumb)}
+                              src={thumb}
                               alt={t.title}
                               width={140}
                               height={88}

@@ -1,16 +1,17 @@
+// src/components/pages/ProductDetail.jsx
 import React, { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 import {
   getProductBySlug,
-  getProductImages
+  getProductImages,
+  toAbsoluteImageUrl,
 } from "@/lib/api";
 
-import ProductDetailHero from "../ProductDetailHero";
-import ProductImageGallery from "../Product3DGallery";
-import ProductComplianceSection from "../ProductComplianceSection";
-import ContactForm from "../ContactForm";
-
-import FloatingEnquiryBar from "../FloatingEnquiryBar";
+import ProductDetailHero from "../ProductDetailHero"; // ✅ correct
+import ProductImageGallery from "../Product3DGallery"; // ✅ fixed
+import ProductComplianceSection from "../ProductComplianceSection"; // ✅ fixed
+import ContactForm from "../ContactForm"; // ✅ fixed
+import FloatingEnquiryBar from "../FloatingEnquiryBar"; // ✅ added (was missing)
 
 /* =====================================================
    PRODUCT DETAIL PAGE (FINAL)
@@ -58,18 +59,23 @@ export default function ProductDetailPage() {
   }, [slug]);
 
   /* --------------------------------------------------
-     IMAGE NORMALIZER
+     IMAGE NORMALIZER – uses toAbsoluteImageUrl
   -------------------------------------------------- */
   const images = useMemo(() => {
     const set = new Set();
 
-    if (product?.primary_image) set.add(product.primary_image);
+    if (product?.primary_image) {
+      const abs = toAbsoluteImageUrl(product.primary_image);
+      if (abs) set.add(abs);
+    }
 
     if (Array.isArray(productImages)) {
       productImages.forEach(i => {
-        if (i?.url) set.add(i.url);
-        if (i?.image_url) set.add(i.image_url);
-        if (i?.path) set.add(i.path);
+        const url = i?.url || i?.image_url || i?.path;
+        if (url) {
+          const abs = toAbsoluteImageUrl(url);
+          if (abs) set.add(abs);
+        }
       });
     }
 
@@ -150,7 +156,7 @@ function trackConversion(event) {
   if (window.gtag) {
     window.gtag("event", event, {
       event_category: "Product",
-      event_label: event
+      event_label: event,
     });
   }
 

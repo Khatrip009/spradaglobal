@@ -1,7 +1,7 @@
 // src/components/ui/image.jsx
 import React, { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
 import { assetPath } from "../../lib/assetPath";
-import { makeAbsoluteUrl } from "../../lib/urlHelpers";
+import { toAbsoluteImageUrl } from "../../lib/api"; // ✅ replaced makeAbsoluteUrl
 
 /**
  * Image (named + default export)
@@ -9,7 +9,7 @@ import { makeAbsoluteUrl } from "../../lib/urlHelpers";
  * - Exports: named `Image` and default export
  * - Preserves forwardRef API from previous component
  * - Lazy loads with IntersectionObserver, fallback graceful placeholder
- * - Resolves URLs using makeAbsoluteUrl (uploads) and assetPath (public assets)
+ * - Resolves URLs using toAbsoluteImageUrl (Supabase) and assetPath (public assets)
  *
  * Props:
  *  - src, alt, className, width, height, style
@@ -63,12 +63,12 @@ const ImageBase = forwardRef(function ImageBase(
 
     if (/^https?:\/\//i.test(t) || /^\/\//.test(t)) return t;
     if (/^(?:\/)?(?:src\/)?uploads\/?/i.test(t) || /[^\\/]+\.(jpe?g|png|gif|webp|svg|bmp|avif)$/i.test(t)) {
-      return makeAbsoluteUrl(t);
+      return toAbsoluteImageUrl(t);
     }
     if (t.startsWith("/")) {
       return assetPath(t);
     }
-    return makeAbsoluteUrl(t);
+    return toAbsoluteImageUrl(t);
   };
 
   const finalSrc = resolveSrc(src);

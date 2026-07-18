@@ -1,3 +1,4 @@
+// src/components/pages/CategoryPage.jsx
 import React, { useEffect, useState, useMemo, useRef } from 'react';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -6,27 +7,7 @@ import { Card, CardContent } from '../ui/card';
 import { Button } from '../ui/button';
 import { ArrowRight, X } from 'lucide-react';
 import * as api from '../../lib/api';
-
-/* ------------------------------------------------------------------
-   Supabase Storage Config (PUBLIC)
-------------------------------------------------------------------- */
-const SUPABASE_PROJECT_REF = 'kwthxsumqqssiywdcevx';
-const SUPABASE_BUCKET = 'sprada_storage';
-const SUPABASE_PUBLIC_BASE =
-  `https://${SUPABASE_PROJECT_REF}.supabase.co/storage/v1/object/public/${SUPABASE_BUCKET}`;
-
-/* ------------------------------------------------------------------
-   Helpers
-------------------------------------------------------------------- */
-function makeSupabaseImageUrl(path) {
-  if (!path) return null;
-
-  // already absolute (products already come like this)
-  if (/^https?:\/\//i.test(path)) return path;
-
-  // DB value like "/categories/xxx.jpg"
-  return `${SUPABASE_PUBLIC_BASE}${path}`;
-}
+import { supabase } from '../../lib/supabaseClient';
 
 /* ------------------------------------------------------------------
    Trade options
@@ -39,7 +20,7 @@ const TRADE_OPTIONS = [
 ];
 
 /* ------------------------------------------------------------------
-   Sample Modal (unchanged)
+   Sample Modal (uses supabase directly)
 ------------------------------------------------------------------- */
 function SampleModal({ open, onClose, productTitle = '', productSlug = '' }) {
   const [form, setForm] = useState({
@@ -80,20 +61,23 @@ function SampleModal({ open, onClose, productTitle = '', productSlug = '' }) {
     setResult(null);
 
     try {
-      const res = await api.apiPost('/api/leads', {
-        ...form,
-        name: form.name.trim(),
-        email: form.email.trim()
-      });
-
-      if (res?.ok) {
-        setResult({ ok: true, message: 'Request submitted successfully.' });
-        setTimeout(onClose, 1200);
-      } else {
-        setResult({ ok: false, message: res?.error || 'Submission failed.' });
-      }
-    } catch {
-      setResult({ ok: false, message: 'Network error.' });
+      const { error } = await supabase
+        .from('leads')
+        .insert({
+          name: form.name.trim(),
+          email: form.email.trim(),
+          phone: form.phone || null,
+          company: form.company || null,
+          country: form.country || null,
+          message: form.message || null,
+          product_interest: form.product_interest || null,
+          status: 'new',
+        });
+      if (error) throw error;
+      setResult({ ok: true, message: 'Request submitted successfully.' });
+      setTimeout(onClose, 1200);
+    } catch (err) {
+      setResult({ ok: false, message: err.message || 'Submission failed.' });
     } finally {
       setSubmitting(false);
     }
@@ -129,7 +113,7 @@ function SampleModal({ open, onClose, productTitle = '', productSlug = '' }) {
 }
 
 /* ------------------------------------------------------------------
-   Category Page
+   Category Page – robust handling with explicit array extraction
 ------------------------------------------------------------------- */
 const CategoryPage = () => {
   const { slug } = useParams();
@@ -150,20 +134,64 @@ const CategoryPage = () => {
     const load = async () => {
       setLoading(true);
 
-      const [catsRes, prodRes] = await Promise.all([
-        api.apiGet('/api/categories', { include_counts: true, limit: 500 }),
-        api.apiGet('/api/products', { category_slug: slug, page, limit })
-      ]);
+      try {
+        // 1. Fetch categories
+        const result = await api.getCategories({ limit: 500 });
+        console.log('[CategoryPage] Raw getCategories result:', result);
 
-      if (!mounted) return;
+        // 2. Extract categories array – SAFE approach
+        let categories = [];
 
-      const categories = catsRes?.categories || [];
-      const found = categories.find(c => c.slug === slug);
+        // Case: result is an array
+        if (Array.isArray(result)) {
+          categories = result;
+        }
+        // Case: result is an object with a 'categories' array
+        else if (result && typeof result === 'object' && Array.isArray(result.categories)) {
+          categories = result.categories;
+        }
+        // Case: result has a 'data' array
+        else if (result && typeof result === 'object' && Array.isArray(result.data)) {
+          categories = result.data;
+        }
+        // Case: result has an 'items' array
+        else if (result && typeof result === 'object' && Array.isArray(result.items)) {
+          categories = result.items;
+        }
+        // Case: result is something else – fallback to empty array
+        else {
+          console.warn('[CategoryPage] Unexpected response shape, using empty array.');
+          categories = [];
+        }
 
-      setCategory(found || null);
-      setProducts(prodRes?.products || []);
-      setTotal(prodRes?.total || null);
-      setLoading(false);
+        // Final safety – force array
+        if (!Array.isArray(categories)) {
+          console.warn('[CategoryPage] categories is not an array, forcing empty array.');
+          categories = [];
+        }
+
+        console.log('[CategoryPage] Extracted categories (length):', categories.length);
+
+        // 3. Find the category by slug
+        let found = null;
+        if (slug && categories.length > 0) {
+          found = categories.find(c => c.slug === slug) || null;
+        }
+        setCategory(found);
+
+        // 4. Fetch products for this category
+        const prodResult = await api.getProducts({
+          category_slug: slug,
+          page,
+          limit
+        });
+        setProducts(prodResult.products || []);
+        setTotal(prodResult.total || null);
+      } catch (err) {
+        console.error('[CategoryPage] load error', err);
+      } finally {
+        if (mounted) setLoading(false);
+      }
     };
 
     load();
@@ -183,11 +211,11 @@ const CategoryPage = () => {
           {category?.name || slug.replace(/-/g, ' ')}
         </h1>
 
-        {/* CATEGORY IMAGE (FROM SUPABASE) */}
+        {/* Category image */}
         {category?.image && (
           <div className="mt-6 mb-10 rounded-xl overflow-hidden shadow-lg">
             <Image
-              src={makeSupabaseImageUrl(category.image)}
+              src={api.toAbsoluteImageUrl(category.image)}
               alt={category.name}
               width={1600}
               className="w-full h-[320px] object-cover"
@@ -197,16 +225,15 @@ const CategoryPage = () => {
 
         {/* Products grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-          {products.map((product, i) => (
+          {products.map((product) => (
             <motion.div key={product.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
               <Card>
                 <div className="h-56 overflow-hidden">
                   <Image
-                    src={makeSupabaseImageUrl(product.primary_image)}
+                    src={api.toAbsoluteImageUrl(product.primary_image)}
                     alt={product.title}
                     className="w-full h-full object-cover"
                   />
-
                 </div>
 
                 <CardContent className="p-4">

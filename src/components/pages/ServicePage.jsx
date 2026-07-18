@@ -1,5 +1,6 @@
-
 // src/pages/ServicesPage.jsx
+// ✅ Supabase‑ready – all data fetching is handled by child components
+
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Image } from '../ui/image';
@@ -43,7 +44,6 @@ const ServicesPage = () => {
     setShowFooter(!(hasMarkedFooter || hasFooterElement));
   }, []);
 
-  
   const certifications = [
     { name: "IEC", description: "Import Export Code" },
     { name: "MSME", description: "MSME Registration" },
@@ -57,15 +57,14 @@ const ServicesPage = () => {
     <div className="min-h-screen bg-[#E8E9E2]">
       {showHeader && <div data-global-header><Header /></div>}
 
-      {/*Service hero Section*/}
+      {/* Service hero Section */}
       <ServiceHeroSection/>
-           {/* Benefits */}
+      {/* Benefits */}
       <WhyChooseUsSection/>
-      {/*Our Services*/}
+      {/* Our Services */}
       <CoreServicePage/>
       {/* Workflow */}
       <ServicePageProcess/>
- 
       {/* Certificate Section */}
       <CertificateSection/>
       {/* What our Clients Says */}
@@ -75,7 +74,5 @@ const ServicesPage = () => {
     </div>
   );
 };
-
-
 
 export default ServicesPage;

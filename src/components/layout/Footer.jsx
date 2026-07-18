@@ -6,15 +6,13 @@ import {
   Phone,
   Mail,
   Facebook,
-  Twitter,
-  Linkedin,
   Instagram,
   Star,
   MessageSquare,
 } from "lucide-react";
 import {
-  getMetricsVisitorsSummary,
-  getReviewStats,
+  getVisitorSummary,
+  getReviewsStats,
   getReviews,
 } from "../../lib/api";
 
@@ -23,7 +21,7 @@ const OFFICE_ADDRESS_LINE1 = '359, A R Mall, Mota Varachha, Surat';
 const OFFICE_ADDRESS_LINE2 = 'Gujarat, India - 394101';
 const CONTACT_EMAIL = 'sprada2globalexim@gmail.com';
 const PHONE_NUMBER = '+91 72010 65465';
-const WHATSAPP_NUMBER = '917201065465'; // used for floating widget (no +)
+const WHATSAPP_NUMBER = '917201065465';
 
 const VISITOR_BASE = 5000;
 const VISITOR_MULTIPLIER = 5;
@@ -47,21 +45,20 @@ const Footer = () => {
     let mounted = true;
     async function fetchVisitors() {
       try {
-        const data = await getMetricsVisitorsSummary();
-        const rawVisitors = Number(data?.total_visitors || data?.total || 0);
+        const data = await getVisitorSummary();
+        const rawVisitors = Number(data?.total || data?.total_visitors || 0);
         const total = VISITOR_BASE + rawVisitors * VISITOR_MULTIPLIER;
 
         if (!mounted) return;
         visitorsTargetRef.current = total;
-        // animate: smooth count-up
         cancelAnimationFrame(rafRef.current);
-        const duration = 900; // ms
+        const duration = 900;
         const start = performance.now();
         const from = Number(visitorsDisplayRef.current || 0);
         const to = total;
         function step(now) {
           const t = Math.min(1, (now - start) / duration);
-          const eased = 1 - Math.pow(1 - t, 3); // easeOutCubic
+          const eased = 1 - Math.pow(1 - t, 3);
           const val = Math.floor(from + (to - from) * eased);
           visitorsDisplayRef.current = val;
           if (mounted) setVisitors(val);
@@ -81,22 +78,40 @@ const Footer = () => {
     };
   }, []);
 
-  // Load review stats + a couple recent reviews
+  // Load review stats + recent reviews
   useEffect(() => {
     let mounted = true;
     async function loadReviews() {
       try {
-        const stats = await getReviewStats().catch(() => null);
-        const rec = await getReviews(5).catch(() => []);
+        const stats = await getReviewsStats().catch(() => null);
+        const rec = await getReviews({ limit: 50 }).catch(() => []); // fetch more to deduplicate
         if (!mounted) return;
         setReviewStats(stats || null);
+
+        // Extract array
+        let reviewsArray = [];
         if (Array.isArray(rec)) {
-        setRecentReviews(rec.slice(0, 5));
-      } else if (Array.isArray(rec.reviews)) {
-        setRecentReviews(rec.reviews.slice(0, 5));
-      } else {
-        setRecentReviews([]);
-      }
+          reviewsArray = rec;
+        } else if (Array.isArray(rec.reviews)) {
+          reviewsArray = rec.reviews;
+        }
+
+        // Deduplicate by body + rating (case-insensitive)
+        const uniqueMap = new Map();
+        reviewsArray.forEach(r => {
+          const body = (r.body || '').trim().toLowerCase();
+          const key = `${body}_${r.rating || 0}`;
+          if (!uniqueMap.has(key)) {
+            uniqueMap.set(key, r);
+          }
+        });
+
+        // Convert to array and sort by created_at descending
+        const unique = Array.from(uniqueMap.values());
+        unique.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+        // Take first 5
+        setRecentReviews(unique.slice(0, 5));
       } catch (e) {
         console.warn("Failed to load reviews/stats", e);
       }
@@ -109,7 +124,7 @@ const Footer = () => {
     };
   }, []);
 
-  // helper: render star icons for avg rating
+  // Render star icons for average rating
   function renderStars(avg) {
     const full = Math.floor(avg || 0);
     const half = (avg || 0) - full >= 0.5;
@@ -123,18 +138,25 @@ const Footer = () => {
     return <span className="flex items-center gap-1">{arr}</span>;
   }
 
-  // small rating bar component
-  const RatingBar = ({ pct }) => (
-    <div className="w-full bg-white/6 rounded h-2 overflow-hidden">
-      <div style={{ width: `${pct}%` }} className="h-2 bg-yellow-400 rounded transition-all" />
-    </div>
-  );
+  // Render individual review stars
+  function renderReviewStars(rating) {
+    const stars = [];
+    for (let i = 0; i < 5; i++) {
+      stars.push(
+        <Star
+          key={i}
+          className={`w-3 h-3 ${i < (rating || 0) ? 'text-yellow-400 fill-yellow-400' : 'text-white/30'}`}
+        />
+      );
+    }
+    return <span className="flex items-center gap-0.5">{stars}</span>;
+  }
 
   const waLink = `https://wa.me/${WHATSAPP_NUMBER}`;
 
   return (
     <>
-      {/* Floating WhatsApp support widget (bottom-right) */}
+      {/* Floating WhatsApp support widget */}
       <a
         href={waLink}
         target="_blank"
@@ -151,8 +173,7 @@ const Footer = () => {
 
       {/* Main Footer */}
       <footer className="w-full bg-[#33504F] text-[#CFD0C8] relative z-10 text-left">
-  {/* Inner constrained container */}
-  <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8">
 
           {/* Main grid */}
           <div className="py-10 md:py-14 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 md:gap-12">
@@ -161,57 +182,41 @@ const Footer = () => {
               <div className="text-2xl font-heading font-extrabold text-[#D7B15B] mb-3">
                 SPRADA2GLOBAL
               </div>
-
               <p className="text-sm md:text-base mb-4 leading-relaxed">
                 A strategic partner for high-value global import and export operations.
               </p>
-
-             <div className="flex items-center space-x-3 mb-4">
-              {/* Facebook */}
-              <a
-                href="https://www.facebook.com/profile.php?id=61584196460889"
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="Facebook"
-                className="w-9 h-9 bg-white/5 rounded-full flex items-center justify-center hover:bg-[#D7B15B] transition-colors"
-              >
-                <Facebook className="w-4 h-4 text-[#CFD0C8]" />
-              </a>
-
-              {/* Instagram */}
-              <a
-                href="https://www.instagram.com/sprada2global_exim/"
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="Instagram"
-                className="w-9 h-9 bg-white/5 rounded-full flex items-center justify-center hover:bg-[#D7B15B] transition-colors"
-              >
-                <Instagram className="w-4 h-4 text-[#CFD0C8]" />
-              </a>
-
+              <div className="flex items-center space-x-3 mb-4">
+                <a
+                  href="https://www.facebook.com/profile.php?id=61584196460889"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Facebook"
+                  className="w-9 h-9 bg-white/5 rounded-full flex items-center justify-center hover:bg-[#D7B15B] transition-colors"
+                >
+                  <Facebook className="w-4 h-4 text-[#CFD0C8]" />
+                </a>
+                <a
+                  href="https://www.instagram.com/sprada2global_exim/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Instagram"
+                  className="w-9 h-9 bg-white/5 rounded-full flex items-center justify-center hover:bg-[#D7B15B] transition-colors"
+                >
+                  <Instagram className="w-4 h-4 text-[#CFD0C8]" />
+                </a>
               </div>
-
-
-              {/* Highlighted visitors count */}
               <div className="mt-3">
                 <div className="text-xs uppercase tracking-wide text-white/80">Total visitors</div>
-
                 <div className="mt-2 inline-flex items-baseline gap-3">
                   <div
                     aria-live="polite"
                     className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-[#D7B15B] drop-shadow-lg animate-appear"
-                    style={{
-                      textShadow: "0 6px 18px rgba(215,177,91,0.12)",
-                      lineHeight: 1,
-                    }}
+                    style={{ textShadow: "0 6px 18px rgba(215,177,91,0.12)", lineHeight: 1 }}
                   >
                     {visitors !== null ? `${visitors.toLocaleString()}+` : "—"}
-
                   </div>
-
                   <div className="text-xs text-white/70">since launch</div>
                 </div>
-
                 <style>{`
                   .animate-appear { transform-origin: left center; animation: popIn 550ms cubic-bezier(.2,.9,.2,1); }
                   @keyframes popIn {
@@ -248,45 +253,35 @@ const Footer = () => {
                 {/* Average rating */}
                 <div className="flex items-center gap-3">
                   <div className="text-3xl font-extrabold text-[#D7B15B]">
-                    {reviewStats && typeof reviewStats.avg_rating === "number" ? Number(reviewStats.avg_rating).toFixed(1) : "—"}
+                    {reviewStats && typeof reviewStats.average === "number" ? Number(reviewStats.average).toFixed(1) : "—"}
                   </div>
                   <div>
                     <div className="text-sm text-white/80">Average Rating</div>
                     <div className="mt-1">
-                      {renderStars(reviewStats ? reviewStats.avg_rating : 0)}
+                      {renderStars(reviewStats ? reviewStats.average : 0)}
                     </div>
                   </div>
                 </div>
 
-                {/* distribution */}
-                <div className="mt-4 space-y-2">
-                  {[5,4,3,2,1].map((r) => {
-                    const pct = reviewStats && reviewStats.counts ? Math.round(( (reviewStats.counts[String(r)] || 0) / (reviewStats.total || 1) ) * 100) : 0;
-                    return (
-                      <div key={r} className="flex items-center gap-3">
-                        <div className="text-sm w-6 text-white/80">{r}★</div>
-                        <div className="flex-1">
-                          <RatingBar pct={pct} />
-                        </div>
-                        <div className="text-xs w-10 text-right text-white/80">{pct}%</div>
-                      </div>
-                    );
-                  })}
-                </div>
-
+                {/* Recent reviews list with individual ratings */}
                 {reviewsOpen && (
                   <div className="mt-4 border-t border-white/6 pt-3 space-y-3">
                     {recentReviews.length === 0 ? (
                       <div className="text-sm text-white/70">No reviews yet.</div>
-                    ) : recentReviews.map((rv) => (
-                      <div key={rv.id || rv.title} className="text-sm">
-                        <div className="flex items-center justify-between">
-                          <div className="font-semibold text-white/90">{rv.author || rv.author_name || "Customer"}</div>
-                          <div className="text-xs text-white/70">{new Date(rv.created_at || Date.now()).toLocaleDateString()}</div>
+                    ) : (
+                      recentReviews.map((rv) => (
+                        <div key={rv.id || rv.created_at} className="text-sm border-b border-white/10 pb-2 last:border-0">
+                          <div className="flex items-center justify-between">
+                            <div className="font-semibold text-white/90">{rv.author_name || rv.author || "Customer"}</div>
+                            <div className="text-xs text-white/70">{new Date(rv.created_at || Date.now()).toLocaleDateString()}</div>
+                          </div>
+                          <div className="flex items-center gap-1 mt-1">
+                            {renderReviewStars(rv.rating)}
+                          </div>
+                          <div className="text-xs text-white/80 mt-1">“{rv.body || rv.title || ''}”</div>
                         </div>
-                        <div className="text-xs text-white/80">“{rv.body || rv.title || ''}”</div>
-                      </div>
-                    ))}
+                      ))
+                    )}
                   </div>
                 )}
               </div>
@@ -295,22 +290,18 @@ const Footer = () => {
             {/* Contact */}
             <div>
               <h3 className="text-lg sm:text-xl font-heading font-semibold mb-4 text-white">Contact Info</h3>
-
               <div className="space-y-4 text-sm text-[#CFD0C8]">
                 <div className="flex items-start gap-3">
                   <MapPin className="w-5 h-5 text-[#D7B15B] mt-1" />
                   <p className="text-sm leading-relaxed text-left">
-  {OFFICE_ADDRESS_LINE1}<br />
-  {OFFICE_ADDRESS_LINE2}
-</p>
-
+                    {OFFICE_ADDRESS_LINE1}<br />
+                    {OFFICE_ADDRESS_LINE2}
+                  </p>
                 </div>
-
                 <div className="flex items-center gap-3">
                   <Phone className="w-5 h-5 text-[#D7B15B]" />
                   <a href={`tel:${PHONE_NUMBER.replace(/\s/g,'')}`} className="hover:text-[#D7B15B]">{PHONE_NUMBER}</a>
                 </div>
-
                 <div className="flex items-center gap-3">
                   <Mail className="w-5 h-5 text-[#D7B15B]" />
                   <a href={`mailto:${CONTACT_EMAIL}`} className="hover:text-[#D7B15B]">{CONTACT_EMAIL}</a>
@@ -326,7 +317,6 @@ const Footer = () => {
                 © {currentYear} Sprada2Global Exim. All rights reserved.
                 <span className="block md:inline text-[#D7B15B] md:ml-2">Design & Managed by EXOTECH DEVELOPERS</span>
               </p>
-
               <div className="flex gap-5">
                 <Link to="/privacy-policy" className="hover:text-[#D7B15B]">Privacy Policy</Link>
                 <Link to="/terms-of-service" className="hover:text-[#D7B15B]">Terms of Service</Link>

@@ -11,24 +11,10 @@ import * as api from "../../lib/api";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "../ui/ToastProvider";
 import bloghero from '../../assets/blog-hero.jpg';
-import { makeAbsoluteUrl } from "../../lib/urlHelpers";
 
-import BlogsContainerSection from "../BlogsSection";
-import BlogHeroSection from '../BlogHeroSection';
-
-
-
-/* Convert various forms of image paths into an absolute URL */
-/**
- * Normalize image URL to a usable absolute URL.
- * - If url is absolute (http/https) return it unchanged, except:
- *     * if it points to the current origin and looks like an uploads path, rewrite to api.UPLOADS_BASE if provided
- * - If url is root-relative (/uploads/...), prefix with api.UPLOADS_BASE if available, otherwise leave as-is
- * - If url is relative, prefix with api.UPLOADS_BASE if available
- */
-
-
-
+/* -------------------------------------------------------------------------- */
+/* Component */
+/* -------------------------------------------------------------------------- */
 export default function BlogPage() {
   const navigate = useNavigate();
   const toast = useToast();
@@ -58,6 +44,7 @@ export default function BlogPage() {
     return () => clearTimeout(t);
   }, [query]);
 
+  // Load blogs using Supabase API
   const load = useCallback(async (opts = {}) => {
     const pageArg = opts.page ?? page;
     setLoading(true);
@@ -71,18 +58,19 @@ export default function BlogPage() {
     const signal = abortRef.current.signal;
 
     try {
-      const qs = {};
-      if (debouncedQuery) qs.q = debouncedQuery;
-      if (pageArg) qs.page = pageArg;
-      if (limit) qs.limit = limit;
+      const params = {
+        page: pageArg,
+        limit: limit,
+      };
+      if (debouncedQuery) params.q = debouncedQuery;
 
-      const res = await api.getBlogs(qs);
+      const res = await api.getBlogs(params);
 
       if (signal.aborted) return;
 
-      // unify response shape
-      let list = Array.isArray(res) ? res : (res.blogs || res.items || []);
-      let fetchedTotal = res.total ?? res.total_count ?? (Array.isArray(res) ? res.length : null);
+      // getBlogs returns { blogs, total, page, limit }
+      let list = res.blogs || [];
+      let fetchedTotal = res.total ?? list.length;
 
       // client-side filter if activeFilter isn't All
       if (activeFilter && activeFilter !== "All") {
@@ -92,7 +80,6 @@ export default function BlogPage() {
           const meta = String(b.meta_title || b.meta_description || "").toLowerCase();
           return String(cat).toLowerCase().includes(filterLower) || meta.includes(filterLower) || String(b.title || "").toLowerCase().includes(filterLower);
         });
-        // if server total exists, we show it but users should expect client-side filtered counts may differ
         fetchedTotal = fetchedTotal != null ? fetchedTotal : list.length;
       }
 
@@ -100,7 +87,6 @@ export default function BlogPage() {
       setTotal(typeof fetchedTotal === "number" ? Number(fetchedTotal) : null);
     } catch (err) {
       if (err && err.name === "AbortError") {
-        // request was canceled; ignore
         return;
       }
       console.error("[BlogPage] getBlogs error", err);
@@ -116,8 +102,7 @@ export default function BlogPage() {
   useEffect(() => {
     if (page < 1) setPage(1);
     load({ page });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [debouncedQuery, page, activeFilter]);
+  }, [debouncedQuery, page, activeFilter, load]);
 
   const totalPages = useMemo(() => {
     if (total != null) return Math.max(1, Math.ceil(total / limit));
@@ -177,7 +162,21 @@ export default function BlogPage() {
     return !!post.user_liked;
   };
 
-  // Small card skeleton for loading state
+  // Helper to extract blog image
+  const getBlogImage = (blog) => {
+    if (blog.primary_image) return api.toAbsoluteImageUrl(blog.primary_image);
+    if (blog.og_image) return api.toAbsoluteImageUrl(blog.og_image);
+    if (blog.image) return api.toAbsoluteImageUrl(blog.image);
+    // Try to extract from content
+    if (blog.content?.blocks) {
+      for (const block of blog.content.blocks) {
+        if (block.url) return api.toAbsoluteImageUrl(block.url);
+      }
+    }
+    return bloghero; // fallback
+  };
+
+  // Skeleton for loading state
   const CardSkeleton = () => (
     <div className="animate-pulse space-y-3">
       <div className="w-full h-44 bg-gray-200 rounded-md" />
@@ -192,13 +191,192 @@ export default function BlogPage() {
   );
 
   return (
-        <div className="min-h-screen bg-[#E8E9E2]">
-      {/* Header hero */}
-      <BlogHeroSection/>
-      
+    <div className="min-h-screen bg-[#E8E9E2]">
+      {/* Hero Section */}
+      <section className="relative bg-[#14301F] text-white py-20 md:py-28">
+        <div className="absolute inset-0 opacity-20 bg-gradient-to-br from-[#0F2419] to-[#1A3F2B] pointer-events-none" />
+        <div className="max-w-7xl mx-auto px-6 text-center relative z-10">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+          >
+            <h1 className="text-4xl md:text-6xl font-extrabold font-heading tracking-tight">
+              Our <span className="text-[#D7B15B]">Blog</span>
+            </h1>
+            <p className="mt-4 text-lg text-gray-300 max-w-2xl mx-auto">
+              Insights, stories, and updates from Sprada2Global
+            </p>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Search & Filters */}
+      <div className="max-w-7xl mx-auto px-6 py-8 -mt-6 relative z-20">
+        <div className="bg-white rounded-2xl shadow-xl p-4 md:p-6 flex flex-col md:flex-row gap-4 items-center">
+          <div className="relative flex-1 w-full">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+            <Input
+              type="text"
+              placeholder="Search articles..."
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              className="pl-10 w-full border-gray-200 focus:border-[#D7B15B] focus:ring-[#D7B15B]"
+            />
+          </div>
+          <div className="flex gap-2 flex-wrap">
+            {["All", "Spices", "Peanuts", "Trade", "Export"].map((filter) => (
+              <Button
+                key={filter}
+                variant={activeFilter === filter ? "default" : "outline"}
+                className={`rounded-full px-4 py-1 ${
+                  activeFilter === filter
+                    ? "bg-[#14301F] text-white hover:bg-[#1A3F2B]"
+                    : "border-gray-300 text-gray-600 hover:bg-gray-50"
+                }`}
+                onClick={() => setActiveFilter(filter)}
+              >
+                {filter}
+              </Button>
+            ))}
+          </div>
+        </div>
+      </div>
+
       {/* Blog Grid */}
-      <BlogsContainerSection/>
-      
+      <section className="max-w-7xl mx-auto px-6 pb-20">
+        {loading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <CardSkeleton key={i} />
+            ))}
+          </div>
+        ) : error ? (
+          <div className="text-center py-16">
+            <p className="text-red-600 text-lg">{error}</p>
+            <Button
+              variant="outline"
+              className="mt-4"
+              onClick={() => load({ page })}
+            >
+              Retry
+            </Button>
+          </div>
+        ) : blogs.length === 0 ? (
+          <div className="text-center py-16">
+            <p className="text-gray-500 text-lg">No articles found.</p>
+          </div>
+        ) : (
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {blogs.map((blog) => {
+                const imgSrc = getBlogImage(blog);
+                const postDate = new Date(blog.published_at || blog.created_at || Date.now()).toLocaleDateString('en-US', {
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric'
+                });
+
+                return (
+                  <motion.div
+                    key={blog.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3 }}
+                    className="group"
+                  >
+                    <Card className="overflow-hidden rounded-2xl shadow-lg hover:shadow-xl transition-shadow duration-300 bg-white border border-gray-100 h-full flex flex-col">
+                      <div className="relative overflow-hidden h-48">
+                        <Image
+                          src={imgSrc}
+                          alt={blog.title}
+                          width={400}
+                          height={240}
+                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                        />
+                        {!blog.is_published && (
+                          <Badge className="absolute top-3 right-3 bg-yellow-500 text-white">
+                            Draft
+                          </Badge>
+                        )}
+                      </div>
+
+                      <CardContent className="p-5 flex flex-col flex-1">
+                        <h3 className="text-xl font-bold text-[#14301F] line-clamp-2 group-hover:text-[#D7B15B] transition-colors">
+                          {blog.title}
+                        </h3>
+
+                        {blog.excerpt && (
+                          <p className="text-gray-600 text-sm mt-2 line-clamp-3 flex-1">
+                            {blog.excerpt}
+                          </p>
+                        )}
+
+                        <div className="flex items-center gap-2 text-xs text-gray-400 mt-4">
+                          <Calendar className="w-4 h-4" />
+                          <span>{postDate}</span>
+                        </div>
+
+                        <div className="mt-4 flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="p-1 hover:bg-transparent"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleLikeCard(blog.id);
+                              }}
+                            >
+                              <span className="text-sm font-medium text-gray-600">
+                                {displayedLikes(blog)} ❤️
+                              </span>
+                            </Button>
+                          </div>
+
+                          <Button
+                            variant="default"
+                            size="sm"
+                            className="bg-[#D7B15B] hover:bg-[#C19B4A] text-[#14301F] font-semibold rounded-full px-4"
+                            onClick={() => handleReadMore(blog.slug)}
+                          >
+                            Read More <ArrowRight className="ml-1 w-4 h-4" />
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+                );
+              })}
+            </div>
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="mt-12 flex justify-center gap-2">
+                <Button
+                  variant="outline"
+                  disabled={page <= 1}
+                  onClick={() => setPage(p => Math.max(1, p - 1))}
+                  className="rounded-full"
+                >
+                  Previous
+                </Button>
+                <span className="flex items-center px-4 text-sm text-gray-600">
+                  Page {page} of {totalPages}
+                </span>
+                <Button
+                  variant="outline"
+                  disabled={page >= totalPages}
+                  onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                  className="rounded-full"
+                >
+                  Next
+                </Button>
+              </div>
+            )}
+          </>
+        )}
+      </section>
     </div>
   );
 }

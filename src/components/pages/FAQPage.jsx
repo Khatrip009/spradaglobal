@@ -1,3 +1,4 @@
+// src/components/pages/FAQPage.jsx
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Card, CardContent } from '../ui/card';
@@ -19,9 +20,17 @@ import {
   Users,
   Globe
 } from 'lucide-react';
+import { supabase } from '../../lib/supabaseClient';
 
 const FAQPage = () => {
   const [activeTab, setActiveTab] = useState('products');
+
+  // Quick inquiry form state
+  const [inquiryCategory, setInquiryCategory] = useState('');
+  const [inquiryMessage, setInquiryMessage] = useState('');
+  const [inquirySubmitting, setInquirySubmitting] = useState(false);
+  const [inquirySuccess, setInquirySuccess] = useState(false);
+  const [inquiryError, setInquiryError] = useState('');
 
   const faqCategories = [
     { id: 'products', title: 'Products', icon: Package, description: 'Questions about our product range and quality' },
@@ -61,6 +70,40 @@ const FAQPage = () => {
     { icon: Phone, title: "WhatsApp", content: "+91 98765 43210", action: "Chat Now", link: "https://wa.me/919876543210" },
     { icon: MapPin, title: "Visit Office", content: "Rajkot, Gujarat, India", action: "Get Directions", link: "#" }
   ];
+
+  const handleInquirySubmit = async (e) => {
+    e.preventDefault();
+    if (!inquiryCategory || !inquiryMessage.trim()) {
+      setInquiryError('Please select a category and enter a message.');
+      return;
+    }
+    setInquirySubmitting(true);
+    setInquiryError('');
+    setInquirySuccess(false);
+
+    try {
+      const { error } = await supabase
+        .from('leads')
+        .insert({
+          name: 'FAQ Inquiry',
+          email: 'faq@inquiry.com', // placeholder, or we could ask for email in the form
+          message: `Category: ${inquiryCategory}\n\n${inquiryMessage}`,
+          product_interest: inquiryCategory,
+          source: 'faq_inquiry',
+          status: 'new',
+        });
+      if (error) throw error;
+      setInquirySuccess(true);
+      setInquiryCategory('');
+      setInquiryMessage('');
+      setTimeout(() => setInquirySuccess(false), 4000);
+    } catch (err) {
+      console.error('[FAQPage] inquiry submit error', err);
+      setInquiryError(err.message || 'Failed to send inquiry. Please try again.');
+    } finally {
+      setInquirySubmitting(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-[#E8E9E2]">
@@ -195,26 +238,47 @@ const FAQPage = () => {
                     <p className="text-sm text-[#666666]">Send your question and we will get back promptly.</p>
                   </div>
 
-                  <div className="space-y-4">
+                  <form onSubmit={handleInquirySubmit} className="space-y-4">
                     <div>
                       <label className="text-sm font-medium text-[#33504F] mb-2 block">Category</label>
-                      <select className="w-full p-3 border border-[#CFD0C8] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#D7B15B] text-[#666666]">
-                        <option>Select a category</option>
-                        <option>Product Information</option>
-                        <option>Shipping & Logistics</option>
-                        <option>Documentation</option>
-                        <option>Pricing & Payment</option>
-                        <option>Other</option>
+                      <select
+                        value={inquiryCategory}
+                        onChange={(e) => setInquiryCategory(e.target.value)}
+                        className="w-full p-3 border border-[#CFD0C8] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#D7B15B] text-[#666666]"
+                        required
+                      >
+                        <option value="">Select a category</option>
+                        <option value="Product Information">Product Information</option>
+                        <option value="Shipping & Logistics">Shipping & Logistics</option>
+                        <option value="Documentation">Documentation</option>
+                        <option value="Pricing & Payment">Pricing & Payment</option>
+                        <option value="Other">Other</option>
                       </select>
                     </div>
 
                     <div>
                       <label className="text-sm font-medium text-[#33504F] mb-2 block">Message</label>
-                      <textarea rows={4} placeholder="Describe your question..." className="w-full p-3 border border-[#CFD0C8] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#D7B15B] text-[#666666] resize-none" />
+                      <textarea
+                        value={inquiryMessage}
+                        onChange={(e) => setInquiryMessage(e.target.value)}
+                        rows={4}
+                        placeholder="Describe your question..."
+                        className="w-full p-3 border border-[#CFD0C8] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#D7B15B] text-[#666666] resize-none"
+                        required
+                      />
                     </div>
 
-                    <Button className="w-full bg-[#D7B15B] text-[#33504F] hover:bg-[#D7B15B]/90 font-semibold py-3 rounded-lg">Send Inquiry</Button>
-                  </div>
+                    {inquiryError && <div className="text-red-600 text-sm">{inquiryError}</div>}
+                    {inquirySuccess && <div className="text-green-600 text-sm">Inquiry sent! We'll get back to you shortly.</div>}
+
+                    <Button
+                      type="submit"
+                      disabled={inquirySubmitting}
+                      className="w-full bg-[#D7B15B] text-[#33504F] hover:bg-[#D7B15B]/90 font-semibold py-3 rounded-lg"
+                    >
+                      {inquirySubmitting ? 'Sending...' : 'Send Inquiry'}
+                    </Button>
+                  </form>
                 </CardContent>
               </Card>
             </motion.div>

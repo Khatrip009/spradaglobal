@@ -1,6 +1,6 @@
 // src/components/CookieBanner.jsx
 import React, { useEffect, useState } from 'react';
-import api from '../lib/api';
+import { supabase } from '../lib/supabaseClient';
 
 const COOKIE_NAME = 'exotech_sid';
 
@@ -24,7 +24,16 @@ export default function CookieBanner() {
     const visitor_id = getSid();
     const consent = { analytics: true, marketing: true, personalization: true };
     try {
-      if (visitor_id) await api.postCookieConsent(visitor_id, consent);
+      if (visitor_id) {
+        // Insert or update consent in Supabase
+        const { error } = await supabase
+          .from('cookie_consents')
+          .upsert(
+            { visitor_id, consent, updated_at: new Date().toISOString() },
+            { onConflict: 'visitor_id' }
+          );
+        if (error) console.warn('Consent upsert error:', error);
+      }
     } catch (e) {
       console.warn('cookie consent post failed', e);
     }
@@ -36,7 +45,15 @@ export default function CookieBanner() {
     const visitor_id = getSid();
     const consent = { analytics: false, marketing: false, personalization: false };
     try {
-      if (visitor_id) await api.postCookieConsent(visitor_id, consent);
+      if (visitor_id) {
+        const { error } = await supabase
+          .from('cookie_consents')
+          .upsert(
+            { visitor_id, consent, updated_at: new Date().toISOString() },
+            { onConflict: 'visitor_id' }
+          );
+        if (error) console.warn('Consent upsert error:', error);
+      }
     } catch (e) {
       console.warn('cookie consent post failed', e);
     }

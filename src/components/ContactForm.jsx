@@ -1,3 +1,4 @@
+// src/components/ContactForm.jsx
 import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -12,7 +13,8 @@ import {
   Sparkles,
   Layers
 } from "lucide-react";
-import { apiPost, getCategories } from "@/lib/api";
+import { getCategories } from "@/lib/api";
+import { supabase } from "@/lib/supabaseClient";
 
 /* =====================================================
    PREMIUM CONTACT FORM MODAL (FINAL)
@@ -49,11 +51,14 @@ export default function ContactForm({
     setCatLoading(true);
 
     getCategories({ limit: 100 })
-      .then(r => {
-        if (mounted) setCategories(r.categories || []);
+      .then(data => {
+        if (mounted) {
+          // getCategories returns an array
+          setCategories(Array.isArray(data) ? data : []);
+        }
       })
-      .catch(() => {
-        console.warn("Failed to load categories");
+      .catch(err => {
+        console.warn("Failed to load categories:", err);
       })
       .finally(() => mounted && setCatLoading(false));
 
@@ -83,25 +88,32 @@ export default function ContactForm({
     setLoading(true);
 
     try {
-      await apiPost("/api/leads", {
-        name: form.name,
-        email: form.email,
-        phone: form.phone || null,
-        company: form.company || null,
-        country: form.country || null,
-        message: form.message || null,
+      // Insert directly into Supabase leads table
+      const { error } = await supabase
+        .from('leads')
+        .insert({
+          name: form.name.trim(),
+          email: form.email.trim(),
+          phone: form.phone?.trim() || null,
+          company: form.company?.trim() || null,
+          country: form.country?.trim() || null,
+          message: form.message?.trim() || null,
+          category_id: form.category_id || null,
+          category_name: form.category_name || null,
+          product_interest: form.category_name || null,
+          context: context || 'general',
+          product_id: product?.id || null,
+          product_name: product?.title || null,
+          source: 'contact_form_modal',
+          status: 'new'
+        });
 
-        category_id: form.category_id || null,
-        category_name: form.category_name || null,
-
-        context,
-        product_id: product?.id || null,
-        product_name: product?.title || null
-      });
+      if (error) throw error;
 
       onClose();
       alert("Thank you! Our export team will contact you shortly.");
-    } catch {
+    } catch (err) {
+      console.error("Lead submission error:", err);
       alert("Failed to submit request. Please try again.");
     } finally {
       setLoading(false);

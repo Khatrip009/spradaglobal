@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Bell, BellOff, X } from 'lucide-react';
 import { subscribeForPush, registerServiceWorker } from '../../lib/push';
+import { postVisitorIdentify } from '../../lib/api'; // ✅ new Supabase visitor function
 
 /**
  * NotificationModal
@@ -36,25 +37,20 @@ async function ensureVisitorId() {
     // noop
   }
 
-  // best-effort: create a temporary visitor id on the server
+  // Create a new visitor using Supabase
   try {
-    const base = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '') || '';
-    const tempSession = `client-${Math.random().toString(36).slice(2)}`;
-    const res = await fetch(base + '/api/visitors/identify', {
-      method: 'POST',
-      credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ session_id: tempSession, ua: navigator.userAgent, meta: { source: 'push-opt-in' } })
+    const sessionId = `client-${Math.random().toString(36).slice(2)}`;
+    const visitor = await postVisitorIdentify(sessionId, {
+      user_agent: navigator.userAgent,
+      metadata: { source: 'push-opt-in' }
     });
-    if (!res.ok) return null;
-    const json = await res.json().catch(() => null);
-    const vid = (json && (json.visitor_id || json.visitorId || json.id)) || null;
+    const vid = visitor?.id || visitor?.visitor_id || null;
     if (vid) {
       try { localStorage.setItem(VISITOR_KEY, vid); } catch (e) { /* ignore */ }
       return vid;
     }
   } catch (e) {
-    // ignore
+    console.warn('[NotificationModal] Failed to create visitor:', e);
   }
   return null;
 }
@@ -68,7 +64,6 @@ export default function NotificationModal() {
 
   useEffect(() => {
     // Quietly register service worker (non-subscribing) so client is ready for push later.
-    // If sw registration fails, we still allow user to try subscribe on click.
     if ('serviceWorker' in navigator) {
       registerServiceWorker().catch(() => {});
     }
@@ -99,14 +94,14 @@ export default function NotificationModal() {
       // ensure we have a visitor id (best-effort)
       const visitorId = await ensureVisitorId();
       if (!visitorId) {
-        // still allow subscribe even if visitorId missing — backend may accept anonymous subscriptions in your setup
+        // still allow subscribe even if visitorId missing — backend may accept anonymous subscriptions
       }
 
       // subscribeForPush will:
-      //  - fetch /api/push/vapid
+      //  - fetch VAPID public key from the configured endpoint
       //  - register service worker if needed
       //  - request permission if required
-      //  - subscribe and POST to /api/push/subscribe
+      //  - subscribe and POST to the subscribe endpoint
       await subscribeForPush(visitorId);
       setStatus('subscribed');
     } catch (err) {

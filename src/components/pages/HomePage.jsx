@@ -1,4 +1,4 @@
-// src/pages/HomePage.jsx
+// src/components/pages/HomePage.jsx
 import React, { useEffect, useRef, useState, useCallback } from "react";
 import {
   motion,
@@ -8,7 +8,6 @@ import {
   useMotionValueEvent,
   useSpring
 } from "framer-motion";
-
 
 import { Button } from "../ui/button";
 import { Image } from "../ui/image";
@@ -22,16 +21,15 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import * as api from "../../lib/api";
-import { makeAbsoluteUrl } from "../../lib/urlHelpers";
+import { toAbsoluteImageUrl } from "../../lib/api"; // ✅ replaced makeAbsoluteUrl
 import HomeHeroSection from "../HomeHeroSection";
 import ImportExportTimeline from "../ImportExportTimeline";
 import AboutUsSection from "../AboutUsSection";
 import ProductDisplaySection from "../ProductDisplaySection";
 import ReviewSection from "../ReviewSection";
-import BlogSection from "../BlogsSection"
+import BlogSection from "../BlogsSection";
 import CertificateSection from "../CertificateSection";
 import WhyChooseUsSection from "../WhyChooseUsSection";
-
 
 /* =====================================================
    HELPERS
@@ -46,71 +44,43 @@ function slugifyName(name = "") {
 
 function getCategoryImage(cat) {
   return (
-    makeAbsoluteUrl(cat.image) ||
-    makeAbsoluteUrl(cat.image_url) ||
-    makeAbsoluteUrl(cat.cover_image) ||
-    makeAbsoluteUrl(cat.thumbnail) ||
+    toAbsoluteImageUrl(cat.image) ||
+    toAbsoluteImageUrl(cat.image_url) ||
+    toAbsoluteImageUrl(cat.cover_image) ||
+    toAbsoluteImageUrl(cat.thumbnail) ||
     "/images/category-fallback.jpg"
   );
 }
-
-
-
-/* =====================================================
-   HERO CONFIG
-===================================================== */
-
-
-
-
-/* =====================================================
-   HERO TEXT ANIMATIONS
-===================================================== */
-
 
 /* =====================================================
    PAGE
 ===================================================== */
 export default function HomePage() {
-    /* HERO */
- 
-
-  
-
-return (
+  return (
     <div className="min-h-screen">
-
-
-      
-    
       {/* Home Hero SECTION */}
-    <HomeHeroSection />
+      <HomeHeroSection />
 
-      {/* =================================================
-          ABOUT US SECTION
-      ================================================= */}
       {/* ABOUT US SECTION */}
-    <AboutUsSection />
-      
-    {/* IMPORT EXPORT PROCESS */}
-<ImportExportTimeline />
-   {/* =================================================
-    PRODUCT CATEGORIES
-================================================== */}
-<ProductDisplaySection />
+      <AboutUsSection />
 
-{/* Why to choose Us */}
-<WhyChooseUsSection/>
+      {/* IMPORT EXPORT PROCESS */}
+      <ImportExportTimeline />
 
+      {/* PRODUCT CATEGORIES */}
+      <ProductDisplaySection />
 
-{/* Review Section */}
-< ReviewSection/>
+      {/* Why to choose Us */}
+      <WhyChooseUsSection />
 
-{/* Blogs Section */}
-< BlogSection/>
+      {/* Review Section */}
+      <ReviewSection />
 
-{/* Certificate Section */}
-<CertificateSection/>
+      {/* Blogs Section */}
+      <BlogSection />
+
+      {/* Certificate Section */}
+      <CertificateSection />
     </div>
   );
-} 
+}
