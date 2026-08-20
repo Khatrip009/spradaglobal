@@ -50,9 +50,9 @@ const contactInfo = [
   {
     icon: Mail,
     title: "Email Us",
-    primary: "sprada2globalexim@gmail.com",
-    secondary: "We reply within 24 hours",
-    href: "mailto:sprada2globalexim@gmail.com",
+    primary: "info@sprada2globalexim.com",   // ← primary email
+    secondary: "sprada2globalexim@gmail.com", // ← secondary email
+    href: "mailto:info@sprada2globalexim.com,sprada2globalexim@gmail.com", // ← both addresses
     action: "Send Email",
     gradient: "from-emerald-500 to-teal-600",
     actionIcon: Mail,

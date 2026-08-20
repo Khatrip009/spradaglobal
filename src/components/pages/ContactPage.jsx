@@ -26,11 +26,14 @@ import CTASection from '../CTASection';
 // Supabase client
 import { supabase } from '../../lib/supabaseClient';
 
-// New address and email constants
+// Address and email constants
 const OFFICE_ADDRESS_LINE1 = '359, A R Mall, Mota Varachha, Surat';
 const OFFICE_ADDRESS_LINE2 = 'Gujarat, India - 394101';
 const OFFICE_GOOGLE_MAPS = 'https://www.google.com/maps/search/?api=1&query=359+A+R+Mall+Mota+Varachha+Surat+Gujarat+394101';
-const CONTACT_EMAIL = 'sprada2globalexim@gmail.com';
+
+// Email addresses
+const EMAIL_PRIMARY = 'info@sprada2globalexim.com';
+const EMAIL_SECONDARY = 'sprada2globalexim@gmail.com';
 
 // Google Maps embed URL (no API key required)
 const OFFICE_MAP_EMBED = `https://www.google.com/maps?q=${encodeURIComponent(
@@ -112,10 +115,10 @@ const ContactPage = ({ onRequestQuote }) => {
     {
       icon: Mail,
       title: 'Email Us',
-      primary: CONTACT_EMAIL,
-      secondary: CONTACT_EMAIL,
+      primary: EMAIL_PRIMARY,
+      secondary: EMAIL_SECONDARY,
       action: 'Send Email',
-      actionHref: `mailto:${CONTACT_EMAIL}`,
+      actionHref: `mailto:${EMAIL_PRIMARY},${EMAIL_SECONDARY}`,
       actionIcon: Mail
     },
     {

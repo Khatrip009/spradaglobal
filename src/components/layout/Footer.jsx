@@ -19,7 +19,8 @@ import {
 /* Configuration / contact constants */
 const OFFICE_ADDRESS_LINE1 = '359, A R Mall, Mota Varachha, Surat';
 const OFFICE_ADDRESS_LINE2 = 'Gujarat, India - 394101';
-const CONTACT_EMAIL = 'sprada2globalexim@gmail.com';
+const EMAIL_PRIMARY = 'info@sprada2globalexim.com';
+const EMAIL_SECONDARY = 'sprada2globalexim@gmail.com';
 const PHONE_NUMBER = '+91 72010 65465';
 const WHATSAPP_NUMBER = '917201065465';
 
@@ -302,9 +303,22 @@ const Footer = () => {
                   <Phone className="w-5 h-5 text-[#D7B15B]" />
                   <a href={`tel:${PHONE_NUMBER.replace(/\s/g,'')}`} className="hover:text-[#D7B15B]">{PHONE_NUMBER}</a>
                 </div>
-                <div className="flex items-center gap-3">
-                  <Mail className="w-5 h-5 text-[#D7B15B]" />
-                  <a href={`mailto:${CONTACT_EMAIL}`} className="hover:text-[#D7B15B]">{CONTACT_EMAIL}</a>
+                <div className="flex items-start gap-3">
+                  <Mail className="w-5 h-5 text-[#D7B15B] mt-0.5" />
+                  <div className="flex flex-col">
+                    <a
+                      href={`mailto:${EMAIL_PRIMARY},${EMAIL_SECONDARY}`}
+                      className="hover:text-[#D7B15B]"
+                    >
+                      {EMAIL_PRIMARY}
+                    </a>
+                    <a
+                      href={`mailto:${EMAIL_PRIMARY},${EMAIL_SECONDARY}`}
+                      className="text-xs text-white/70 hover:text-[#D7B15B]"
+                    >
+                      {EMAIL_SECONDARY}
+                    </a>
+                  </div>
                 </div>
               </div>
             </div>
