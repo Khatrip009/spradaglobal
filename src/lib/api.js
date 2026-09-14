@@ -299,6 +299,36 @@ export const getCategoryById = async (id) => {
   return { ...data, image: data.image ? toAbsoluteImageUrl(data.image) : null };
 };
 
+
+// -------------------------------------------------------------
+// Certifications
+// -------------------------------------------------------------
+
+export const getCertifications = async (userId = '8f9e8321-4d16-4812-950d-2e89b5238d06') => {
+  let query = supabase
+    .from('certifications')
+    .select('id, user_id, title, short_details, logo_url, sort_order, is_published')
+    .eq('user_id', userId)
+    .eq('is_published', true)
+    .order('sort_order', { ascending: true });
+
+  const { data, error } = await query;
+
+  if (error) throw error;
+
+  const certifications = (data || []).map((cert) => ({
+    ...cert,
+    logo_url: cert.logo_url
+      ? (toAbsoluteImageUrl(cert.logo_url) || cert.logo_url)
+      : null,
+  }));
+
+  return {
+    certifications,
+    total: certifications.length,
+  };
+};
+
 // -------------------------------------------------------------
 // 6. Blogs
 // -------------------------------------------------------------
@@ -734,6 +764,8 @@ export default {
   getCategories,
   getCategoryById,
 
+  // Certifications
+getCertifications,
   // Reviews
   getReviews,
   getReviewsFor,
